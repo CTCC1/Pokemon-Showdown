@@ -235,7 +235,33 @@ export const commands: ChatCommands = {
 		`/randompokemon uses the same parameters as /dexsearch (see '/help ds').`,
 		`Adding a number as a parameter returns that many random Pok\u00e9mon, e.g., '/randpoke 6' returns 6 random Pok\u00e9mon.`,
 	],
-
+							  
+	'!bp33': true,						  
+	bp33(target, room, user, connection, cmd, message){
+		if (target == "" || target == "gen8"){
+			return this.parse("/randpoke 11");
+		} else if (target == "gen1") {
+			return this.parse("/randpoke 11,!gen2,!gen3,!gen4,!gen5,!gen6,!gen7,!gen8");
+		} else if (target == "gen2") {
+			return this.parse("/randpoke 11,!gen3,!gen4,!gen5,!gen6,!gen7,!gen8");
+		} else if (target == "gen3") {
+			return this.parse("/randpoke 11,!gen4,!gen5,!gen6,!gen7,!gen8");
+		} else if (target == "gen4") {
+			return this.parse("/randpoke 11,!gen5,!gen6,!gen7,!gen8");
+		} else if (target == "gen5") {
+			return this.parse("/randpoke 11,!gen6,!gen7,!gen8");
+		} else if (target == "gen6") {
+			return this.parse("/randpoke 11,!gen7,!gen8");
+		} else if (target == "gen7") {
+			return this.parse("/randpoke 11,!gen8");
+		} else {
+			return this.parse("/bp33help");
+		}
+	},
+	bp33help: [
+		`/randompokemon gen - 指定一个世代开启bp33精灵池`,
+	],
+			
 	'!movesearch': true,
 	ms: 'movesearch',
 	ms1: 'movesearch',
