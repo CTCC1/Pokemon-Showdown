@@ -238,21 +238,21 @@ export const commands: ChatCommands = {
 							  
 	'!bp33': true,						  
 	bp33(target, room, user, connection, cmd, message){
-		if (target == "" || target == "gen8"){
+		if (target === "" || target === "gen8"){
 			return this.parse("/randpoke 11");
-		} else if (target == "gen1") {
+		} else if (target === "gen1") {
 			return this.parse("/randpoke 11,!gen2,!gen3,!gen4,!gen5,!gen6,!gen7,!gen8");
-		} else if (target == "gen2") {
+		} else if (target === "gen2") {
 			return this.parse("/randpoke 11,!gen3,!gen4,!gen5,!gen6,!gen7,!gen8");
-		} else if (target == "gen3") {
+		} else if (target === "gen3") {
 			return this.parse("/randpoke 11,!gen4,!gen5,!gen6,!gen7,!gen8");
-		} else if (target == "gen4") {
+		} else if (target === "gen4") {
 			return this.parse("/randpoke 11,!gen5,!gen6,!gen7,!gen8");
-		} else if (target == "gen5") {
+		} else if (target === "gen5") {
 			return this.parse("/randpoke 11,!gen6,!gen7,!gen8");
-		} else if (target == "gen6") {
+		} else if (target === "gen6") {
 			return this.parse("/randpoke 11,!gen7,!gen8");
-		} else if (target == "gen7") {
+		} else if (target === "gen7") {
 			return this.parse("/randpoke 11,!gen8");
 		} else {
 			return this.parse("/bp33help");
