@@ -3215,4 +3215,153 @@ export const Formats: FormatList = [
 		battle: {trunc: Math.trunc},
 		ruleset: ['HP Percentage Mod', 'Cancel Mod', 'Desync Clause Mod', 'Max Team Size = 24', 'Max Move Count = 24', 'Max Level = 9999', 'Default Level = 100'],
 	},
+
+	// PS China
+	///////////////////////////////////////////////////////////////////
+
+	{
+		section: "PSChina Special",
+		column: 4,
+	},
+	{
+		name: "[Gen 8] PS国服积分",
+		desc: `用于国服论坛积分显示，天梯对战不计分。`,
+
+		mod: 'gen8',
+		team: 'random',
+		challengeShow: false,
+		rated: false,
+		ruleset: ['PotD', 'Obtainable', 'Sleep Clause Mod', 'HP Percentage Mod', 'Cancel Mod'],
+		onBegin() {
+			this.add('html', `<div class="broadcast-red"><strong>本分级仅用于国服论坛积分显示，天梯对战不计分。具体积分规则见<a href="http://chinapsim.org./topic/63/">国服积分说明帖</a>.</strong></div>`);
+		},
+	},
+	{
+		name: "[Gen 8] Runamax",
+		desc: 
+			"1. 在Gen8 OU规则的基础上，允许RU及以下分级的精灵极巨化; " +
+			"2. 以下精灵和极巨化不共存: 波克基斯, 巨牙鲨, 多边兽Z, 龙卷云; " +
+			"3. 以下特性和极巨化不共存: 变身者, 优游自如, 叶绿素, 太阳之力; " +
+			"4. 不允许超极巨化。"
+		,
+
+		mod: 'gen8',
+		ruleset: ['Standard', 'Runamax Clause'],
+		banlist: ['Uber', 'AG', 'Arena Trap', 'Moody', 'Power Construct', 'Shadow Tag', 'Baton Pass'],
+	},
+	{
+		name: "[Gen 8] Durants",
+		desc: `男人的决斗！`,
+
+		mod: 'gen8',
+		team: 'randomDurants',
+		ruleset: ['Team Preview'],
+	},
+	{
+		name: "[Gen 8] Metronome",
+		desc: `真男人的决斗！`,
+
+		mod: 'gen8',
+		team: 'randomMetronome',
+		teamLength: {
+			battle: 1,
+		},
+		ruleset: ['Team Preview'],
+	},
+	{
+		name: "[Gen 8] National Dex BH",
+
+		mod: 'gen8',
+		ruleset: [
+			'[Gen 8] National Dex AG', '!Obtainable', 'Forme Clause', '2 Ability Clause', 'OHKO Clause', 'Evasion Moves Clause',
+			'CFZ Clause', 'Dynamax Clause', 'Sleep Clause Mod'
+	    ],
+		banlist: [
+			'Nonexistent', 'Groudon-Primal', 'Rayquaza-Mega', 'Zacian-Crowned', 'Shedinja', 'Arena Trap', 'Contrary', 'Gorilla Tactics',
+			'Huge Power', 'Illusion', 'Innards Out', 'Intrepid Sword', 'Libero', 'Magnet Pull', 'Moody', 'Neutralizing Gas', 'Parental Bond',
+			'Protean', 'Pure Power', 'Shadow Tag', 'Stakeout', 'Water Bubble', 'Wonder Guard', 'Gengarite', 'Chatter', 'Octolock',
+			'Double Iron Bash', 'Bolt Beak', 'Belly Drum', 'Electrify', 'Comatose + Sleep Talk'
+		],
+	},
+	{
+		name: "[Gen 8] VGC without Restriction",
+		mod: 'gen8',
+		gameType: 'doubles',
+		forcedLevel: 50,
+		teamLength: {
+			validate: [4, 6],
+			battle: 4,
+		},
+		ruleset: ['Obtainable', 'Species Clause', 'Nickname Clause', 'Item Clause', 'Team Preview', 'Cancel Mod', 'VGC Timer'],
+		minSourceGen: 8,
+	},
+	{
+		name: "[Gen 7] Random Formats",
+		desc: `Randomized competitive lower tiers teams of mutiple generations.`,
+
+		// mod: new PRNG().sample(['gen7','gen3']),
+		team: 'randomFormats',
+		ruleset: ['Obtainable', 'Sleep Clause Mod', 'HP Percentage Mod', 'Cancel Mod', 'RF-TeamPreview'],
+		mod: 'gen7',
+		// @ts-ignore
+		formatsList: [
+			'gen1ou', 'gen1ubers', 'gen1uu',
+			'gen2ou', 'gen2ubers', 'gen2uu', 'gen2nu', 'gen2lc',
+			'gen3ou', 'gen3ubers', 'gen3uu', 'gen3nu', 'gen3pu', 'gen3lc',
+			'gen4ou', 'gen4ubers', 'gen4uu', 'gen4nu', 'gen4pu', 'gen4lc',
+			'gen5ou', 'gen5ubers', 'gen5uu', 'gen5ru', 'gen5nu', 'gen5pu', 'gen5lc',
+			'gen6ou', 'gen6ubers', 'gen6uu', 'gen6ru', 'gen6nu', 'gen6pu', 'gen6lc',
+			// 'gen7ou', 'gen7ubers', 'gen7uu', 'gen7ru', 'gen7nu', 'gen7pu', 'gen7lc',
+			// 'gen8ou', 'gen8ubers', 'gen8uu', 'gen8ru', 'gen8nu', 'gen8pu', 'gen8lc',
+		],
+		realFormat: '',
+		onBegin() {
+			this.add('html', `<div class="broadcast-green"><strong>CURRENT FORMAT: ` + this.realFormat + ` </strong></div>`);
+		},
+	},
+	{
+		name: "[Gen 7] Battle Tree 3v3",
+
+		mod: 'gen7',
+		searchShow: false,
+		teamLength: {
+			validate: [1, 3],
+			battle: 3,
+		},
+		ruleset: ['Obtainable', 'Standard'],
+		banlist: ['Uber', 'Power Construct'],
+	},
+	{
+		name: "[Gen 7] Ubers Special",
+		threads: [
+			`&bullet; <a href="https://www.smogon.com/forums/threads/3637068/">Ubers Metagame Discussion</a>`,
+			`&bullet; <a href="https://www.smogon.com/forums/threads/3623296/">Ubers Viability Rankings</a>`,
+			`&bullet; <a href="https://www.smogon.com/forums/threads/3639330/">Ubers Sample Teams</a>`,
+		],
+
+		mod: 'gen7',
+		searchShow: false,
+		ruleset: ['Obtainable', 'Standard', 'Mega Rayquaza Clause'],
+		banlist: ['Baton Pass', 'Gothorita', 'Gothitelle'],
+		onValidateSet(set) {
+			if (set.species === 'Necrozma-Dusk-Mane' && set.moves.includes('swordsdance')) {
+				return [`携带剑舞的奈克洛兹玛-黄昏之鬃在该分级下不可用。`];
+			}
+			if (set.item === 'Red Orb' && (set.moves.includes('swordsdance') || set.moves.includes('rockpolish'))) {
+				return [`携带剑舞和岩切的原始固拉多在该分级下不可用。`];
+			}
+		},
+	},
+	{
+		name: "[Gen 7] Pure Hackmons",
+		threads: [
+			`&bullet; <a href="https://www.smogon.com/forums/threads/om-mashup-megathread.3635904/#post-7802586">HM Sample Teams</a>`,
+			`&bullet; <a href="https://www.smogon.com/forums/threads/om-mashup-megathread.3635904/page-4#post-7866923">HM Viability Rankings</a>`,
+			`&bullet; <a href="https://www.smogon.com/forums/threads/om-mashup-megathread.3635904/page-4#post-7871849">HM Sample Sets</a>`,
+		],
+
+		mod: 'gen7',
+		searchShow: false,
+		ruleset: ['Obtainable', 'Endless Battle Clause', 'Team Preview', 'HP Percentage Mod', 'Cancel Mod'],
+	},
 ];
