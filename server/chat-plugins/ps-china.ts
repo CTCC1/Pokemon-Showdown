@@ -1,3 +1,5 @@
+import {Dex} from '../../sim/dex';
+
 export const commands: Chat.ChatCommands = {
 	async score (target, room, user) {
 		let targetUser = target.trim() || user.id;  // 等积分转移完成后改用toID()
@@ -9,6 +11,7 @@ export const commands: Chat.ChatCommands = {
 		}
 		return this.errorReply(`未找到用户${targetUser}的PS国服积分记录`);
 	},
+
 	bp33 (target, room, user, connection, cmd, message) {
 		this.checkBroadcast();
 		if (target.replace(/gen[1-8]/i, "") == "") {
