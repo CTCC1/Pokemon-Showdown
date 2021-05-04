@@ -3313,28 +3313,12 @@ export const Formats: FormatList = [
 		minSourceGen: 8,
 	},
 	{
-		name: "[Gen 7] Random Formats",
-		desc: `Randomized competitive lower tiers teams of mutiple generations.`,
+		name: "[Gen 7] Random Formats",
+		desc: `Randomized competitive lower tiers teams of mutiple generations.`,
 
-		// mod: new PRNG().sample(['gen7','gen3']),
-		team: 'randomFormats',
-		ruleset: ['Obtainable', 'Sleep Clause Mod', 'HP Percentage Mod', 'Cancel Mod', 'RF-TeamPreview'],
-		mod: 'gen7',
-		// @ts-ignore
-		formatsList: [
-			'gen1ou', 'gen1ubers', 'gen1uu',
-			'gen2ou', 'gen2ubers', 'gen2uu', 'gen2nu', 'gen2lc',
-			'gen3ou', 'gen3ubers', 'gen3uu', 'gen3nu', 'gen3pu', 'gen3lc',
-			'gen4ou', 'gen4ubers', 'gen4uu', 'gen4nu', 'gen4pu', 'gen4lc',
-			'gen5ou', 'gen5ubers', 'gen5uu', 'gen5ru', 'gen5nu', 'gen5pu', 'gen5lc',
-			'gen6ou', 'gen6ubers', 'gen6uu', 'gen6ru', 'gen6nu', 'gen6pu', 'gen6lc',
-			// 'gen7ou', 'gen7ubers', 'gen7uu', 'gen7ru', 'gen7nu', 'gen7pu', 'gen7lc',
-			// 'gen8ou', 'gen8ubers', 'gen8uu', 'gen8ru', 'gen8nu', 'gen8pu', 'gen8lc',
-		],
-		realFormat: '',
-		onBegin() {
-			this.add('html', `<div class="broadcast-green"><strong>CURRENT FORMAT: ` + this.realFormat + ` </strong></div>`);
-		},
+		team: 'randomFormats',
+		ruleset: ['Obtainable', 'Sleep Clause Mod', 'HP Percentage Mod', 'Cancel Mod', 'Random Formats'],
+		mod: 'randomformats',
 	},
 	{
 		name: "[Gen 7] Battle Tree 3v3",
