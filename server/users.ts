@@ -43,6 +43,7 @@ const PERMALOCK_CACHE_TIME = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 const DEFAULT_TRAINER_SPRITES = [1, 2, 101, 102, 169, 170, 265, 266];
 
+import { Integer } from 'better-sqlite3';
 import {FS, Utils, ProcessManager} from '../lib';
 import {
 	Auth, GlobalAuth, SECTIONLEADER_SYMBOL, PLAYER_SYMBOL, HOST_SYMBOL, RoomPermission, GlobalPermission,
@@ -692,6 +693,11 @@ export class User extends Chat.MessageContext {
 				return false;
 			}
 		}
+
+		let date = new Date();
+		let zfill = (x: number) => { return ("0" + x).slice(-2); };
+		FS(`logs/modlog/iplog/${date.getFullYear()}-${zfill(date.getMonth() + 1)}-${zfill((date.getDate()))}.txt`)
+			.append(`${name},${zfill(date.getHours())}:${zfill(date.getMinutes())},${connection.ip}\n`);
 
 		if (!name) name = '';
 		if (!/[a-zA-Z]/.test(name)) {
