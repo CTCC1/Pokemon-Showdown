@@ -3221,7 +3221,7 @@ export const Formats: FormatList = [
 
 	{
 		section: "PSChina Special",
-		column: 4,
+		column: 1,
 	},
 	{
 		name: "[Gen 8] PS国服积分",
@@ -3246,8 +3246,25 @@ export const Formats: FormatList = [
 		,
 
 		mod: 'gen8',
-		ruleset: ['Standard', 'Runamax Clause'],
+		ruleset: ['Standard'],
 		banlist: ['Uber', 'AG', 'Arena Trap', 'Moody', 'Power Construct', 'Shadow Tag', 'Baton Pass'],
+		onValidateSet(set) {
+			if (set.gigantamax) {
+				return [
+					`您的${set.species}是超极巨化个体，但Runamax分级不允许超极巨化。`
+				];
+			}
+		},
+		onBegin() {
+			for (const pokemon of this.getAllPokemon()) {
+				if (["RUBL", "UU", "UUBL", "OU"].indexOf(pokemon.species.tier) >= 0 || 
+					["Togekiss", "Sharpedo", "Porygon-Z", "Tornadus"].indexOf(pokemon.species.baseSpecies) >= 0 ||
+					["imposter", "swiftswim", "chlorophyll", "solarpower"].indexOf(this.toID(pokemon.ability)) >= 0) {
+					pokemon.getDynamaxRequest = (skipChecks?: boolean)  => { return undefined; };
+				}
+			}
+			this.add('rule', 'Runamax模式规则: http://47.94.147.145/topic/1146/runamax-cup-%E6%8A%A5%E5%90%8D%E5%B8%96');
+		},
 	},
 	{
 		name: "[Gen 8] Durants",
