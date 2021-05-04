@@ -17,8 +17,8 @@ export const commands: Chat.ChatCommands = {
 
 		let ladder = await Ladders("gen8ps").getLadder();
 		let userIndex = ladder.length;	
-		for (let [i, user] of ladder.entries()) {
-			if (user[2] === userid) {
+		for (let [i, entry] of ladder.entries()) {
+			if (entry[2] === userid) {
 				userIndex = i;
 				break;
 			}
