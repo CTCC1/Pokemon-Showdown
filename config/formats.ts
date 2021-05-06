@@ -3316,9 +3316,7 @@ export const Formats: FormatList = [
 		name: "[Gen 7] Random Formats",
 		desc: `Randomized competitive lower tiers teams of mutiple generations.`,
 
-		team: 'randomFormats',
-		ruleset: ['Obtainable', 'Sleep Clause Mod', 'HP Percentage Mod', 'Cancel Mod', 'Random Formats'],
-		mod: 'randomformats',
+		team: 'random',
 	},
 	{
 		name: "[Gen 7] Battle Tree 3v3",
