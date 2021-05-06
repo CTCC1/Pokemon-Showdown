@@ -69,6 +69,7 @@ pip-log.txt
 
 # PS China
 *.zip
+!/config/random-formats-teams.json
 !/config/durant-names.txt
 !/config/replay-head.txt
 !/config/replay-tail.txt
