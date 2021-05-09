@@ -3231,10 +3231,7 @@ export const Formats: FormatList = [
 
 		mod: 'pschinaforfun',
 		team: 'randomMetronome',
-		teamLength: {
-			battle: 1,
-		},
-		ruleset: ['Team Preview'],
+		ruleset: ['Team Preview', 'Picked Team Size = 1'],
 	},
 	{
 		name: "[Gen 8] National Dex BH",
@@ -3255,13 +3252,7 @@ export const Formats: FormatList = [
 		name: "[Gen 8] VGC without Restriction",
 		mod: 'gen8',
 		gameType: 'doubles',
-		forcedLevel: 50,
-		teamLength: {
-			validate: [4, 6],
-			battle: 4,
-		},
-		ruleset: ['Obtainable', 'Species Clause', 'Nickname Clause', 'Item Clause', 'Team Preview', 'Cancel Mod', 'VGC Timer'],
-		minSourceGen: 8,
+		ruleset: ['Obtainable', 'Species Clause', 'Nickname Clause', 'Item Clause', 'Team Preview', 'Cancel Mod', 'VGC Timer', 'Min Team Size = 4', 'Max Team Size = 6', 'Picked Team Size = 4', 'Adjust Level = 50', 'Min Source Gen = 8'],
 	},
 	{
 		name: "[Gen 7] Random Formats",
@@ -3274,11 +3265,7 @@ export const Formats: FormatList = [
 
 		mod: 'gen7',
 		searchShow: false,
-		teamLength: {
-			validate: [1, 3],
-			battle: 3,
-		},
-		ruleset: ['Obtainable', 'Standard'],
+		ruleset: ['Obtainable', 'Standard', 'Min Team Size = 3', 'Max Team Size = 3', 'Picked Team Size = 3'],
 		banlist: ['Uber', 'Power Construct'],
 	},
 	{
