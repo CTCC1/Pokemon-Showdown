@@ -162,7 +162,6 @@ export class Battle {
 			const teamPool = JSON.parse(FS('config/random-formats-teams.json').readSync());
 			options.format = Dex.formats.get(this.prng.sample(Object.keys(teamPool)), true);
 			this.add('html', `<div class="broadcast-green"><strong>CURRENT FORMAT: ` + options.format.name + ` </strong></div>`);
-			options.format.name = "[Gen 7] Random Formats";
 			// @ts-ignore
 			this.getTeam = (options: PlayerOptions) => Teams.unpack(this.prng.sample(teamPool[this.format.id]));
 		}
