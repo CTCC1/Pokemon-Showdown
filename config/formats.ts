@@ -3210,6 +3210,15 @@ export const Formats: FormatList = [
 		},
 	},
 	{
+		name: "[Gen 8] Free-For-All OU",
+
+		mod: 'gen8',
+		gameType: 'freeforall',
+		tournamentShow: false,
+		rated: false,
+		ruleset: ['OU'],
+	},
+	{
 		name: "[Gen 8] Runamax",
 		desc: 
 			"1. 在Gen8 OU规则的基础上，允许RU及以下分级的精灵极巨化; " +
