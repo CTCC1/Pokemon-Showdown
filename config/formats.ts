@@ -3236,14 +3236,17 @@ export const Formats: FormatList = [
 			this.add('html', `<div class="broadcast-red"><strong>本分级仅用于国服论坛积分显示，天梯对战不计分。具体积分规则见<a href="http://chinapsim.org./topic/63/">国服积分说明帖</a>.</strong></div>`);
 		},
 	},
+	
 	{
-		name: "[Gen 8] Free-For-All OU",
-
+		name: "[Gen 8]multi(4p for doublesbaltte)",
+		desc: `4 player for 2v2 doubles clause`,
 		mod: 'gen8',
-		gameType: 'freeforall',
 		tournamentShow: false,
-		rated: false,
-		ruleset: ['OU'],
+		rated: true,
+		gameType: 'multi',
+		ruleset: ['Standard Doubles', 'Dynamax Clause',  'Picked Team Size = 3'],
+		banlist: ['DUber', 'Power Construct'],
+		
 	},
 	{
 		name: "[Gen 8] Runamax",
