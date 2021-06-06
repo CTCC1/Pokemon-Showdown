@@ -3195,7 +3195,15 @@ export const Formats: FormatList = [
 		tournamentShow: false,
 		rated: false,
 		ruleset: ['OU'],
+
+		onTeamPreview() {
+			this.add('html', '<strong style="color:#445566;display:block;">' + this.sides[2]?.name + "'s team:</strong>");
+			this.add('html', '<em style="color:#445566;display:block;" >'+this.sides[2]?.pokemon[0].name + '/' + this.sides[2]?.pokemon[1].name + '/' + this.sides[2]?.pokemon[2].name + '/' + this.sides[2]?.pokemon[3].name + '/' + this.sides[2]?.pokemon[4].name + '/' + this.sides[2]?.pokemon[5].name+'</em>');
+			this.add('html', '<strong style="color:#445566;display:block;">' + this.sides[3]?.name + "'s team:</strong>");
+			this.add('html', '<em style="color:#445566;display:block;">' + this.sides[3]?.pokemon[0].name + '/' + this.sides[3]?.pokemon[1].name + '/' + this.sides[3]?.pokemon[2].name + '/' + this.sides[3]?.pokemon[3].name + '/' + this.sides[3]?.pokemon[4].name + '/' + this.sides[3]?.pokemon[5].name + '</em>');
+		},
 	},
+	
 	{
 		name: "[Gen 8] Multi OU",
 		desc: `4 player for 2v2 doubles clause`,
