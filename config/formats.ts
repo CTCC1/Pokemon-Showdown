@@ -3188,33 +3188,51 @@ export const Formats: FormatList = [
 		},
 	},
 	{
-		name: "[Gen 8] OU (Free-For-All)",
-		desc: `4 player for ffa `,
-		mod: 'gen8',
-		gameType: 'freeforall',
-		tournamentShow: false,
-		rated: false,
-		ruleset: ['OU'],
-
-		onTeamPreview() {
-			this.add('html', '<strong style="color:#445566;display:block;">' + this.sides[2]?.name + "'s team:</strong>");
-			this.add('html', '<em style="color:#445566;display:block;" >'+this.sides[2]?.pokemon[0].name + '/' + this.sides[2]?.pokemon[1].name + '/' + this.sides[2]?.pokemon[2].name + '/' + this.sides[2]?.pokemon[3].name + '/' + this.sides[2]?.pokemon[4].name + '/' + this.sides[2]?.pokemon[5].name+'</em>');
-			this.add('html', '<strong style="color:#445566;display:block;">' + this.sides[3]?.name + "'s team:</strong>");
-			this.add('html', '<em style="color:#445566;display:block;">' + this.sides[3]?.pokemon[0].name + '/' + this.sides[3]?.pokemon[1].name + '/' + this.sides[3]?.pokemon[2].name + '/' + this.sides[3]?.pokemon[3].name + '/' + this.sides[3]?.pokemon[4].name + '/' + this.sides[3]?.pokemon[5].name + '</em>');
-		},
-	},
-	
-	{
 		name: "[Gen 8] Multi OU",
-		desc: `4 player for 2v2 doubles clause`,
+		desc: `4-Player 2v2 Doubles OU`,
 		mod: 'gen8',
 		tournamentShow: false,
-		rated: false,
+		rated: true,
 		gameType: 'multi',
 		ruleset: ['Standard Doubles', 'Dynamax Clause',  'Picked Team Size = 3'],
 		banlist: ['DUber', 'Power Construct'],
-		
 	},
+        {
+                name: "[Gen 8] OU (4P)",
+                desc: `4-Player 1v1v1v1 OU`,
+                mod: 'gen8',
+                tournamentShow: false,
+                rated: false,
+                gameType: 'freeforall',
+                ruleset: ['OU'],
+
+		onTeamPreview() {
+			this.sides.slice(2).forEach(side => {
+				this.add(
+					'html',
+					`<strong style="color:#445566;display:block;">${side.name}'s team:</strong><em style="color:#445566;display:block;">${side.pokemon.map(x => x.name).join(' / ')}</em>`
+				);
+			})
+		},
+        },
+        {
+                name: "[Gen 8] OU (4P 2v2)",
+                desc: `4-Player 2v2 OU`,
+                mod: 'gen8',
+                tournamentShow: false,
+                rated: false,
+                gameType: 'multi',
+                ruleset: ['OU'],
+        },
+        {
+                name: "[Gen 7] OU (4P 2v2)",
+                desc: `4-Player 2v2 Gen7 OU`,
+                mod: 'gen7',
+                tournamentShow: false,
+                rated: false,
+                gameType: 'multi',
+                ruleset: ['[Gen 7] OU'],
+        },
 	{
 		name: "[Gen 8] Runamax",
 		desc: 
