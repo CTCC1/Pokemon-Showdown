@@ -3197,14 +3197,14 @@ export const Formats: FormatList = [
 		ruleset: ['Standard Doubles', 'Dynamax Clause',  'Picked Team Size = 3'],
 		banlist: ['DUber', 'Power Construct'],
 	},
-        {
-                name: "[Gen 8] OU (4P)",
-                desc: `4-Player 1v1v1v1 OU`,
-                mod: 'gen8',
-                tournamentShow: false,
-                rated: false,
-                gameType: 'freeforall',
-                ruleset: ['OU'],
+	{
+		name: "[Gen 8] OU (4P)",
+		desc: `4-Player 1v1v1v1 OU`,
+		mod: 'gen8',
+		tournamentShow: false,
+		rated: false,
+		gameType: 'freeforall',
+		ruleset: ['OU'],
 
 		onTeamPreview() {
 			this.sides.slice(2).forEach(side => {
@@ -3214,25 +3214,25 @@ export const Formats: FormatList = [
 				);
 			})
 		},
-        },
-        {
-                name: "[Gen 8] OU (4P 2v2)",
-                desc: `4-Player 2v2 OU`,
-                mod: 'gen8',
-                tournamentShow: false,
-                rated: false,
-                gameType: 'multi',
-                ruleset: ['OU'],
-        },
-        {
-                name: "[Gen 7] OU (4P 2v2)",
-                desc: `4-Player 2v2 Gen7 OU`,
-                mod: 'gen7',
-                tournamentShow: false,
-                rated: false,
-                gameType: 'multi',
-                ruleset: ['[Gen 7] OU'],
-        },
+	},
+	{
+		name: "[Gen 8] OU (4P 2v2)",
+		desc: `4-Player 2v2 OU`,
+		mod: 'gen8',
+		tournamentShow: false,
+		rated: false,
+		gameType: 'multi',
+		ruleset: ['OU'],
+	},
+	{
+		name: "[Gen 7] OU (4P 2v2)",
+		desc: `4-Player 2v2 Gen7 OU`,
+		mod: 'gen7',
+		tournamentShow: false,
+		rated: false,
+		gameType: 'multi',
+		ruleset: ['[Gen 7] OU'],
+	},
 	{
 		name: "[Gen 8] Runamax",
 		desc: 
