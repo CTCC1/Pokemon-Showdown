@@ -1046,6 +1046,9 @@ export const commands: Chat.ChatCommands = {
 			if (room.tour?.forcePublic) {
 				return this.errorReply(`This battle can't be hidden, because the tournament is set to be forced public.`);
 			}
+			if (!room.battle.started) {
+				return this.errorReply(`This battle hasn't been started.`);
+			}
 		} else if (room.settings.isPersonal) {
 			this.checkCan('editroom', null, room);
 		} else {
