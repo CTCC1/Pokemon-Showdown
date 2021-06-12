@@ -1335,9 +1335,11 @@ export const pages: Chat.PageTable = {
 			if (roomid.startsWith('spl') && roomid !== 'splatoon') {
 				return this.errorReply("SPL team discussions are super secret.");
 			}
+			/*
 			if (roomid.startsWith('wcop')) {
 				return this.errorReply("WCOP team discussions are super secret.");
 			}
+			*/
 			if (UPPER_STAFF_ROOMS.includes(roomid) && !user.inRooms.has(roomid)) {
 				return this.errorReply("Upper staff rooms are super secret.");
 			}

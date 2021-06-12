@@ -1487,6 +1487,27 @@ export class GlobalRoomState {
 		for (const player of players) {
 			Chat.runHandlers('BattleStart', player, room);
 		}
+
+		/*
+		let reportToWCOP = true;
+		let aboutWCOP = false;
+		const WCOPRoom = Rooms.get('wcop');
+		for (const player of players) {
+			const playerAuthInWCOP = WCOPRoom?.auth?.get(player.id);
+			if (playerAuthInWCOP !== " ") {
+				aboutWCOP = true;
+			} else {
+				reportToWCOP = false;
+			}
+		}
+		if (aboutWCOP) {
+			room.setPrivate('hidden');
+			room.settings.modjoin = null;
+		}
+		if (reportToWCOP) {
+			WCOPRoom?.add(`|html|<a href='${room.roomid}'>${room.game.title} started: ${room.title}<a>`).update();
+		}
+		*/
 	}
 
 	deregisterChatRoom(id: string) {

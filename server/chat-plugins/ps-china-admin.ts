@@ -1,5 +1,42 @@
 import {FS} from '../../lib';
 
+if (!FS('logs/modlog/iplog').existsSync()) FS('logs/modlog/iplog').mkdir();
+
+export async function addScore(userid: string, score: number): Promise<number[]> {
+	let ladder = await Ladders("gen8ps").getLadder();
+	let userIndex = ladder.length;
+	for (let [i, entry] of ladder.entries()) {
+		if (toID(userid) ? (toID(entry[2]) === toID(userid)) : (entry[2] === userid)) {
+			userIndex = i;
+			break;
+		}
+	}
+	if (userIndex === ladder.length) ladder.push([userid, 0, userid, 0, 0, 0, '']);
+	let oldScore = ladder[userIndex][1];
+	if (score === 0) return [oldScore, oldScore];
+	let newScore = oldScore + score;
+	if (newScore < 0) {
+		return [];
+	}
+	ladder[userIndex][1] = newScore;
+
+	let newIndex = userIndex;
+	while (newIndex > 0 && ladder[newIndex - 1][1] <= newScore) newIndex--;
+	while (ladder[newIndex] && ladder[newIndex][1] >= newScore) newIndex++;
+	if (newIndex !== userIndex && newIndex !== userIndex + 1) {
+		let row = ladder.splice(userIndex, 1)[0];
+		if (newIndex > userIndex) newIndex--;
+		ladder.splice(newIndex, 0, row);
+	}
+
+	let lastIndex = ladder.length - 1;
+	while (ladder[lastIndex][1] <= 0) lastIndex--;
+	ladder.splice(lastIndex + 1, ladder.length);
+
+	Ladders("gen8ps").save();
+	return [oldScore, newScore];
+}
+
 export const commands: Chat.ChatCommands = {
 	async pschinascore(target, room, user) {
 		this.checkCan('lock');
@@ -8,45 +45,22 @@ export const commands: Chat.ChatCommands = {
 			return false;
 		}
 
-		let userid = target.split(',')[0]?.trim();  // 等积分转移完成后改用toID()
-		let score = target.split(',')[1]?.trim();
-		let reason = target.split(',')[2]?.trim();
+		const userid = target.split(',')[0]?.trim();  // 等积分转移完成后改用toID()
+		const score = target.split(',')[1]?.trim();
+		const reason = target.split(',')[2]?.trim();
 		if (!userid || !score || !reason || isNaN(parseInt(score))) {
 			return this.parse("/pschinascorehelp");
 		}
+		const parsedScore = parseInt(score);
+		const changeScore = await addScore(userid, parsedScore);
+		if (changeScore.length !== 2) return this.errorReply("错误：将造成负分。");
 
-		let ladder = await Ladders("gen8ps").getLadder();
-		let userIndex = ladder.length;	
-		for (let [i, entry] of ladder.entries()) {
-			if (entry[2] === userid) {
-				userIndex = i;
-				break;
-			}
+		const CNUser = Users.get(userid);
+		if (CNUser?.connected) {
+			CNUser.popup(`您因为 ${reason} ${parsedScore > 0 ? '获得': '失去'}了 ${Math.abs(parsedScore)} 国服积分`);
 		}
-		if (userIndex === ladder.length) ladder.push([userid, 0, userid, 0, 0, 0, '']);
-		let oldScore = ladder[userIndex][1];
-		let newScore = oldScore + parseInt(score);
-		if (newScore < 0) {
-			return this.errorReply("错误：将造成负分。");
-		}
-		ladder[userIndex][1] = newScore;
-
-		let newIndex = userIndex;
-		while (newIndex > 0 && ladder[newIndex - 1][1] <= newScore) newIndex--;
-		while (ladder[newIndex] && ladder[newIndex][1] >= newScore) newIndex++;
-		if (newIndex !== userIndex && newIndex !== userIndex + 1) {
-			let row = ladder.splice(userIndex, 1)[0];
-			if (newIndex > userIndex) newIndex--;
-			ladder.splice(newIndex, 0, row);
-		}
-
-		let lastIndex = ladder.length - 1;
-		while (ladder[lastIndex][1] <= 0) lastIndex--;
-		ladder.splice(lastIndex + 1, ladder.length);
-
-		Ladders("gen8ps").save();
-		let message = `用户ID: ${userid}, PS国服积分: ` +
-			`${oldScore} ${score < 0 ? "-" : "+"} ${Math.abs(score)} -> ${newScore}, ` +
+		const message = `用户ID: ${userid}, PS国服积分: ` +
+			`${changeScore[0]} ${parsedScore < 0 ? "-" : "+"} ${Math.abs(parsedScore)} -> ${changeScore[1]}, ` +
 			`原因:${reason}, 操作人:${user.name}.`;
 		this.globalModlog(message);
 		this.addModAction(message);

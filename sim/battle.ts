@@ -23,7 +23,7 @@ import {Side} from './side';
 import {State} from './state';
 import {BattleQueue, Action} from './battle-queue';
 import {BattleActions} from './battle-actions';
-import {Utils} from '../lib';
+import {Utils, FS} from '../lib';
 declare const __version: any;
 
 interface BattleOptions {
