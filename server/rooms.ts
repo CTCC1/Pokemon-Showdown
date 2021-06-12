@@ -1484,6 +1484,7 @@ export class GlobalRoomState {
 			void this.ladderIpLog.write(ladderIpLogString);
 		}
 
+		/*
 		let reportToWCOP = true;
 		let aboutWCOP = false;
 		const WCOPRoom = Rooms.get('wcop');
@@ -1502,6 +1503,7 @@ export class GlobalRoomState {
 		if (reportToWCOP) {
 			WCOPRoom?.add(`|html|<a href='${room.roomid}'>${room.game.title} started: ${room.title}<a>`).update();
 		}
+		*/
 	}
 
 	deregisterChatRoom(id: string) {

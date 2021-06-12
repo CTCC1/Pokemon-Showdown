@@ -14209,6 +14209,7 @@ export const Pokedex: {[speciesid: string]: SpeciesData} = {
 		weightkg: 8,
 		color: "Gray",
 		tags: ["Mythical"],
+		evos: ["Melmetal"],
 		eggGroups: ["Undiscovered"],
 	},
 	melmetal: {
@@ -14222,6 +14223,7 @@ export const Pokedex: {[speciesid: string]: SpeciesData} = {
 		weightkg: 800,
 		color: "Gray",
 		tags: ["Mythical"],
+		evoType: "other",
 		eggGroups: ["Undiscovered"],
 		canGigantamax: "G-Max Meltdown",
 	},
