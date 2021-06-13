@@ -30,17 +30,18 @@ type userProperty = { 'bag': pokeList, 'box': pokeList, 'items': itemList };
 type pokePosition = { 'type': 'bag' | 'box', 'index': number };
 
 const prng = new PRNG();
-const ROOMPATH = 'config/pet-mode/room-config.json';
 const USERPATH = 'config/pet-mode/user-properties';
 const POKESHEET = 'https://play.pokemonshowdown.com/sprites/pokemonicons-sheet.png';
 const POKESPRITES = 'https://play.pokemonshowdown.com/sprites/ani';
 const ITEMSHEET = 'https://play.pokemonshowdown.com/sprites/itemicons-sheet.png';
 
 let userOnEx: { [userid: string]: string } = {};
+let userSearch: { [userid: string]: number } = {};
 let userOnDrop: { [userid: string]: string } = {};
 let userLookAt: { [userid: string]: string } = {};
+let userOnBattle: { [userid: string]: string } = {};
 let userEvoStage: { [userid: string]: string | false } = {};
-let userProperties: { [userid: string]: userProperty } = {};
+export let userProperties: { [userid: string]: userProperty } = {};
 let userOnChangeMoves: { [userid: string]: { 'position': pokePosition, 'selected': string[], 'valid': string[] } } = {};
 FS(USERPATH).readdirSync().forEach(x => userProperties[x.split('.')[0]] = JSON.parse(FS(`${USERPATH}/${x}`).readIfExistsSync()));
 
@@ -92,6 +93,11 @@ function randomEvs(): StatsTable {
 
 function initUserProperty(): userProperty {
 	return {'bag': new Array(6).fill(''), 'box': new Array(30).fill(''), 'items': {}}
+}
+
+function loadUser(userid: string) {
+	const userPropString = FS(`${USERPATH}/${userid}.json`).readIfExistsSync();
+	if (userPropString) userProperties[userid] = JSON.parse(userPropString);
 }
 
 function saveUser(userid: string) {
@@ -146,6 +152,7 @@ function parsePosition(target: string): pokePosition | null {
 }
 
 function parseSet(pos: pokePosition, userid: string): PokemonSet | null {
+	loadUser(userid);
 	const sets = Teams.unpack(userProperties[userid][pos['type']][pos['index']]);
 	if (!sets) return null;
 	return completeSet(sets[0]);
@@ -155,6 +162,7 @@ function exchangeSet(target1: string, target2: string, userid: string): boolean 
 	const pos1 = parsePosition(target1);
 	const pos2 = parsePosition(target2);
 	if (!pos1 || !pos2) return null;
+	loadUser(userid);
 	const set1 = userProperties[userid][pos1['type']][pos1['index']];
 	const set2 = userProperties[userid][pos2['type']][pos2['index']];
 	const bagSize = userProperties[userid]['bag'].filter(x => x).length;
@@ -172,6 +180,74 @@ function getAvailableEvos(speciesid: string, level: number): string[] {
 	return Dex.species.get(speciesid).evos.filter(x => level >= (Dex.species.get(x).evoLevel || 0));	
 }
 
+function inPetModeBattle(userid: string): boolean {
+	const battleWithBot = (roomid: string) => {
+		const battle = Rooms.get(roomid)?.battle;
+		return battle && (battle.p1.id === 'pschinabot' || battle.p2.id === 'pschinabot');
+	}
+	let result = false;
+	Users.get(userid)?.inRooms.forEach(x => {
+		result = (x.indexOf('petmode') >= 0 && battleWithBot(x)) || result;
+	})
+	return result;
+}
+
+function genPoke(speciesid: string, level: number): string {
+	const species = Dex.species.get(speciesid);
+	if (species.num <= 0) return ''
+	const set: PokemonSet = {
+		name: species.name,
+		species: species.name,
+		item: "",
+		ability: species.abilities["1"] ? prng.sample([species.abilities["0"], species.abilities["1"]]) : species.abilities["0"],
+		moves: genRandomMoves(species.id, level),
+		nature: prng.sample(Dex.natures.all()).name,
+		gender: prng.randomChance(Math.floor(species.genderRatio.M * 1000), 1000) ? 'M' : 'F',
+		evs: {hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0},
+		ivs: randomEvs(),
+		level: level,
+		happiness: 70,
+		shiny: prng.randomChance(1, 256),
+	};
+	return Teams.pack([set]);
+}
+
+const OUTDOORS = [
+	'Caterpie', 'Weedle', 'Ledyba', 'Spinarak', 'Wurmple', 'Kricketot', 'Sewaddle', 'Venipede',
+	'Scatterbug', 'Grubbin', 'Blipbug', 'Poochyena', 'Shinx', 'Lillipup', 'Purrloin', 'Nickit',
+	'Pidgey', 'Hoothoot', 'Taillow', 'Starly', 'Pidove', 'Fletchling', 'Pikipek', 'Rookidee',
+	'Rattata', 'Sentret', 'Zigzagoon', 'Bidoof', 'Patrat', 'Bunnelby', 'Yungoos', 'Skwovet',
+];
+
+function genWildPoke(roomid: string, maxLevel: number): string {
+	switch (roomid) {
+		case 'lobby':
+			return genPoke(
+				prng.sample(OUTDOORS),
+				Math.max(0, Math.min(100, prng.sample([...new Array(11).keys()].map(x => x + maxLevel - 5))))
+			);
+		case 'skypillar':
+			return genPoke(
+				prng.sample(OUTDOORS),
+				Math.max(0, Math.min(100, prng.sample([...new Array(11).keys()].map(x => x + maxLevel - 5))))
+			);
+		case 'staff':
+			return genPoke(
+				prng.sample(OUTDOORS),
+				Math.max(0, Math.min(100, prng.sample([...new Array(11).keys()].map(x => x + maxLevel - 5))))
+			);
+		default:
+			return genPoke(
+				prng.sample(OUTDOORS),
+				Math.max(0, Math.min(100, prng.sample([...new Array(11).keys()].map(x => x + maxLevel - 5))))
+			);
+	}
+}
+
+function ifCatchSuccessful(species: string): boolean {
+	return prng.randomChance(500, 1000);
+}
+
 
 export const commands: Chat.ChatCommands = {
 
@@ -183,13 +259,13 @@ export const commands: Chat.ChatCommands = {
 			'': 'show',
 			show(target, room, user) {
 				if (!room) return this.popupReply("请在房间里使用宠物系统");
-				if (user.id in userProperties) return this.popupReply("您已领取最初的伙伴！请输入/pet box查看盒子");
+				if (user.id in userProperties) return this.parse('/pet init guide');
 				user.sendTo(room.roomid, `|uhtml|pet-init-show|欢迎使用宠物系统！请选择您最初的伙伴：<br/>${INITMONBUTTONS}`);
 			},
 
 			set(target, room, user) {
 				if (!room) return this.popupReply("请在房间里使用宠物系统");
-				if (user.id in userProperties) return this.popupReply("您已领取最初的伙伴！请输入/pet box查看盒子");
+				if (user.id in userProperties) return this.parse('/pet init guide');
 				user.sendTo(room.roomid, `|uhtml|pet-init-choose|确认选择<div style="${getIconStyle(target)}"></div>作为您最初的伙伴？${
 					BoolButtons(`/pet init confirm ${target}`, '/pet init clear')
 				}`);
@@ -197,32 +273,23 @@ export const commands: Chat.ChatCommands = {
 
 			confirm(target, room, user) {
 				if (!room) return this.popupReply("请在房间里使用宠物系统");
-				if (user.id in userProperties) return this.popupReply("您已领取最初的伙伴！请输入/pet box查看盒子");
-				const species = Dex.species.get(target);
-				if (species.num <= 0) {
-					return this.popupReply(`${target}不是合法的宝可梦`)
-				}
-				const set: PokemonSet = {
-					name: species.name,
-					species: species.name,
-					item: "",
-					ability: species.abilities["0"],
-					moves: genRandomMoves(species.id, 5),
-					nature: prng.sample(Dex.natures.all()).name,
-					gender: prng.randomChance(Math.floor(species.genderRatio.M * 1000), 1000) ? 'M' : 'F',
-					evs: {hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0},
-					ivs: randomEvs(),
-					level: 5,
-					happiness: 70,
-					shiny: prng.randomChance(1, 256),
-				};
+				if (user.id in userProperties) return this.parse('/pet init guide');
+				const initPoke = genPoke(target, 5);
+				if (!initPoke) return this.popupReply(`${target}不是合法的宝可梦`)
 				userProperties[user.id] = initUserProperty();
-				userProperties[user.id]['bag'][0] = Teams.pack([set]);
+				userProperties[user.id]['bag'][0] = initPoke;
 				saveUser(user.id);
 				this.parse('/pet init clear');
 				user.sendTo(room.roomid, `|uhtml|pet-init-confirm|您获得了：<div style="${
 					getIconStyle(target)
-				}"></div>快进入 ${
+				}"></div>`);
+				this.parse('/pet init guide');
+			},
+
+			guide(target, room, user) {
+				if (!room) return this.popupReply("请在房间里使用宠物系统");
+				this.parse('/pet init clear');
+				user.sendTo(room.roomid, `|uhtml|pet-init-guide|您已领取最初的伙伴！快进入 ${
 					MessageButton('', '/pet box show', '盒子')
 				} 查看吧！`);
 			},
@@ -244,6 +311,7 @@ export const commands: Chat.ChatCommands = {
 				if (!(user.id in userProperties)) return this.popupReply("您还未领取最初的伙伴！");
 				this.parse('/pet init clear');
 
+				loadUser(user.id);
 				let pokeDiv = ``;
 				if (target) {
 					const position = parsePosition(target);
@@ -286,7 +354,7 @@ export const commands: Chat.ChatCommands = {
 					const spriteURL = `${POKESPRITES}/${toID(set.species)}.gif`;
 					const sprite = `background: transparent url(${spriteURL}) no-repeat 70% 10% relative;`
 					pokeDiv = `<section style="${sprite} position: relative; display: inline-block; vertical-align: top;` +
-						`width: 350px; height: '100%';">${lines.map(x => `<div style="${lineStyle}">${x}</div>`).join('')}` + 
+						`width: 450px; height: '100%';">${lines.map(x => `<div style="${lineStyle}">${x}</div>`).join('')}` + 
 						`</section>`.split('\n').join('').split('\t').join('');
 				}
 
@@ -350,6 +418,7 @@ export const commands: Chat.ChatCommands = {
 				if (availableEvos.length === 0) {
 					return this.popupReply('不满足进化条件！');
 				}
+				loadUser(user.id);
 				if (user.id in userEvoStage) {
 					if (targets.length !== 2) {
 						delete userEvoStage[user.id];
@@ -381,6 +450,7 @@ export const commands: Chat.ChatCommands = {
 				const set = parseSet(position, user.id);
 				if (!set) return this.popupReply('位置是空的！');
 
+				loadUser(user.id);
 				if (set.item) {
 					if (!(set.item in userProperties[user.id]['items'])) {
 						userProperties[user.id]['items'][set.item] = 0;
@@ -449,6 +519,7 @@ export const commands: Chat.ChatCommands = {
 			setmoves(target, room, user) {
 				if (!room) return this.popupReply("请在房间里使用宠物系统");
 				const targets = target.split('!').map(x => x.trim());
+				loadUser(user.id);
 				target = targets[0];
 				if (targets.length === 2 && userOnChangeMoves[user.id] && userOnChangeMoves[user.id]['selected'].length > 0) {
 					const position = parsePosition(target);
@@ -468,6 +539,7 @@ export const commands: Chat.ChatCommands = {
 				if (!room) return this.popupReply("请在房间里使用宠物系统");
 				const targets = target.split('!').map(x => x.trim());
 				target = targets[0];
+				loadUser(user.id);
 				const position = parsePosition(target);
 				if (!position) return this.popupReply('位置不存在！');
 				const set = parseSet(position, user.id);
@@ -499,40 +571,95 @@ export const commands: Chat.ChatCommands = {
 
 		},
 
-		ballbattle(target, room, user) {
-			// 如果没有用户数据或空背包: 一只5级鲤鱼王
-			const bot = Users.get('pschinabot');
-			if (!bot) return this.popupReply('没有发现野生的宝可梦哦');
-			Rooms.createBattle({
-				format: 'gen8randombattle',
-				p1: {
-					user: user,
-					team: 'random',
-					rating: 0,
-					hidden: true,
-					inviteOnly: false,
-				},
-				p2: {
-					user: bot,
-					team: 'random',
-					rating: 0,
-					hidden: true,
-					inviteOnly: false,
-				},
-				p3: undefined,
-				p4: undefined,
-				rated: 0,
-				challengeType: 'unrated',
-				delayedStart: false,
-			});
+		lawn: {
+
+			'': 'search',
+			search(target, room, user) {
+				if (!room) return this.popupReply("请在房间里使用宠物系统");
+				const bot = Users.get('pschinabot');
+				loadUser(user.id);
+				if (!(user.id in userProperties)) return this.popupReply("您还没有可以战斗的宝可梦哦");
+				const wildPokemon = genWildPoke(
+					room.roomid,
+					Math.max(...userProperties[user.id]['bag'].filter(x => x).map(x => parseInt(x.split('|')[10])))
+				);
+				if (!bot || !wildPokemon || inPetModeBattle(user.id) ||
+					((user.id in userSearch) && (Date.now() - userSearch[user.id] < 60000))) {
+					return this.popupReply('没有发现野生的宝可梦哦');
+				}
+				userSearch[user.id] = Date.now();
+				userOnBattle[user.id] = wildPokemon;
+				Rooms.createBattle({
+					format: 'gen8petmode',
+					p1: {
+						user: user,
+						team: 'randomPetMode',
+						rating: 0,
+						hidden: true,
+						inviteOnly: false,
+					},
+					p2: {
+						user: bot,
+						team: wildPokemon,
+						rating: 0,
+						hidden: true,
+						inviteOnly: false,
+					},
+					p3: undefined,
+					p4: undefined,
+					rated: 0,
+					challengeType: 'unrated',
+					delayedStart: false,
+				});
+			},
+	
+			ball(target, room, user) {
+				if (!room) return this.popupReply("请在房间里使用宠物系统");
+				if (room.roomid.indexOf('gen8petmode') >= 0 && user.id in userOnBattle &&
+					ifCatchSuccessful(userOnBattle[user.id].split('|')[1])) {
+					let type: 'bag' | 'box' = 'bag';
+					let index = 0;
+					loadUser(user.id);
+					while (userProperties[user.id][type][index]) index++;
+					if (index > 5) {
+						type = 'box';
+						index = 0;
+						while (userProperties[user.id][type][index]) index++;
+					}
+					if (index < 36) {
+						userProperties[user.id][type][index] = userOnBattle[user.id];
+						saveUser(user.id);
+						delete userOnBattle[user.id];
+						this.popupReply(`捕捉成功！快进入盒子查看吧！`);
+						return this.parse('/forfeit');
+					}
+				}
+				this.popupReply(`捕捉失败！`);
+				this.parse('/forfeit');
+			},
+
+		},
+
+		shop: {
+
+			'': 'show',
+			show(target, room, user) {
+				this.parse('/pet');
+			},
+
 		},
 
 		'': 'help',
 		help(target, room, user) {
 			if (!room) return this.popupReply("请在房间里使用宠物系统");
 			user.sendTo(room.roomid, `|uhtmlchange|pet-welcome|`);
-			user.sendTo(room.roomid, `|uhtml|pet-welcome|<strong>欢迎来到Pokemon Showdown China宠物系统！</strong><br/>` + 
-				`${MessageButton('', '/pet init', '领取最初的伙伴！')}  ${MessageButton('', '/pet box', '查看盒子')}`);
+			user.sendTo(
+				room.roomid,
+				`|uhtml|pet-welcome|<strong>欢迎来到Pokemon Showdown China宠物系统！</strong><br/>` + 
+				`${MessageButton('', '/pet init', '领取最初的伙伴！')}  ` + 
+				`${MessageButton('', '/pet lawn', '寻找野生的宝可梦！')}  ` +
+				`${MessageButton('', '/pet box', '查看盒子')}`
+			);
 		}
 
 	}
