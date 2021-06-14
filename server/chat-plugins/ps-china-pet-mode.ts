@@ -39,6 +39,13 @@ const POKESPRITES = 'https://play.pokemonshowdown.com/sprites/ani';
 const POKESPRITESSHINY = 'https://play.pokemonshowdown.com/sprites/ani-shiny';
 const ITEMSHEET = 'https://play.pokemonshowdown.com/sprites/itemicons-sheet.png';
 
+const OUTDOORS = [
+	'Caterpie', 'Weedle', 'Ledyba', 'Spinarak', 'Wurmple', 'Kricketot', 'Sewaddle', 'Venipede',
+	'Scatterbug', 'Grubbin', 'Blipbug', 'Poochyena', 'Shinx', 'Lillipup', 'Purrloin', 'Nickit',
+	'Pidgey', 'Hoothoot', 'Taillow', 'Starly', 'Pidove', 'Fletchling', 'Pikipek', 'Rookidee',
+	'Rattata', 'Sentret', 'Zigzagoon', 'Bidoof', 'Patrat', 'Bunnelby', 'Yungoos', 'Skwovet',
+];
+
 const INITMONBUTTONS = [
 	'Bulbasaur', 'Chikorita', 'Treecko', 'Turtwig', 'Snivy', 'Chespin', 'Rowlet', 'Grookey', '<br/>',
 	'Charmander', 'Cyndaquil', 'Torchic', 'Chimchar', 'Tepig', 'Fennekin', 'Litten', 'Scorbunny', '<br/>',
@@ -239,13 +246,6 @@ function getAvailableBalls(userid: string): string[] {
 	const items = userProperties[userid]['items'];
 	return Object.keys(items).filter(x => ['Iron Ball', 'Light Ball', 'Air Balloon'].indexOf(x) < 0 && x.indexOf(' Ball') >= 0);
 }
-
-const OUTDOORS = [
-	'Caterpie', 'Weedle', 'Ledyba', 'Spinarak', 'Wurmple', 'Kricketot', 'Sewaddle', 'Venipede',
-	'Scatterbug', 'Grubbin', 'Blipbug', 'Poochyena', 'Shinx', 'Lillipup', 'Purrloin', 'Nickit',
-	'Pidgey', 'Hoothoot', 'Taillow', 'Starly', 'Pidove', 'Fletchling', 'Pikipek', 'Rookidee',
-	'Rattata', 'Sentret', 'Zigzagoon', 'Bidoof', 'Patrat', 'Bunnelby', 'Yungoos', 'Skwovet',
-];
 
 function restrict(x: number, min: number, max: number): number {
 	return Math.max(min, Math.min(max, x));
@@ -712,7 +712,7 @@ export const commands: Chat.ChatCommands = {
 				this.parse('/pet shop clear');
 				let title = `请选择商品:<br/>${MessageButton('', `/pet box`, '返回')}`;
 				if (GOODNAMES.indexOf(target) >= 0) {
-					const price = PetModeShopConfig[target] || 100;
+					const price = PetModeShopConfig[target] || 50;
 					title = `使用 ${price} 积分购买1个 ${target} ?<br/>` +
 						BoolButtons(`/pet shop buy ${target}`, `/pet shop`) +
 						MessageButton('', `/pet shop buy ${target}!`, '购买5个!');
@@ -729,7 +729,7 @@ export const commands: Chat.ChatCommands = {
 				target = targets[0];
 				const times = targets.length > 1 ? 5 : 1;
 				if (GOODNAMES.indexOf(target) < 0) return this.popupReply(`没有名为 ${target} 的道具`);
-				const changeScores = await addScore(user.id, -(PetModeShopConfig[target] || 100) * times);
+				const changeScores = await addScore(user.id, -(PetModeShopConfig[target] || 50) * times);
 				if (changeScores.length !== 2) return this.popupReply(`积分不足!`);
 				loadUser(user.id);
 				if (!userProperties[user.id]['items'][target]) userProperties[user.id]['items'][target] = 0; 
