@@ -87,7 +87,7 @@ const INITMONBUTTONS = [
 	return x === '<br/>' ? x : MessageButton(getIconStyle(x), `/pet init set ${x}`, '');
 }).join('');
 
-function randomEvs(): StatsTable {
+function randomIvs(): StatsTable {
 	let intArray = [...new Array(32).keys()];
 	return {hp: prng.sample(intArray), atk: prng.sample(intArray), def: prng.sample(intArray),
 		spa: prng.sample(intArray), spd: prng.sample(intArray), spe: prng.sample(intArray)};
@@ -194,7 +194,7 @@ function inPetModeBattle(userid: string): string | undefined {
 	return [...user.inRooms].filter(x => x.indexOf('petmode') >= 0 && battleWithBot(x))[0];
 }
 
-function genPoke(speciesid: string, level: number): string {
+function genPoke(speciesid: string, level: number, fullivs: boolean = false): string {
 	const species = Dex.species.get(speciesid);
 	if (species.num <= 0) return ''
 	const set: PokemonSet = {
@@ -206,7 +206,7 @@ function genPoke(speciesid: string, level: number): string {
 		nature: prng.sample(Dex.natures.all()).name,
 		gender: prng.randomChance(Math.floor(species.genderRatio.M * 1000), 1000) ? 'M' : 'F',
 		evs: {hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0},
-		ivs: randomEvs(),
+		ivs: fullivs ? {hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31} : randomIvs(),
 		level: level,
 		happiness: 70,
 		shiny: prng.randomChance(1, 256),
@@ -306,7 +306,7 @@ export const commands: Chat.ChatCommands = {
 			confirm(target, room, user) {
 				if (!room) return this.popupReply("请在房间里使用宠物系统");
 				if (user.id in userProperties) return this.parse('/pet init guide');
-				const initPoke = genPoke(target, 5);
+				const initPoke = genPoke(target, 5, true);
 				if (!initPoke) return this.popupReply(`${target}不是合法的宝可梦`)
 				userProperties[user.id] = initUserProperty();
 				userProperties[user.id]['bag'][0] = initPoke;
@@ -680,7 +680,7 @@ export const commands: Chat.ChatCommands = {
 					this.popupReply(successful ? `捕获成功！快进入盒子查看吧！` : `捕获失败！`);
 					delete userOnBattle[user.id];
 					user.sendTo(room.roomid, `|uhtmlchange|pet-ball|`);
-					this.parse('/forfeit');
+					if (successful) this.parse('/forfeit');
 				} else {
 					user.sendTo(room.roomid, `|uhtmlchange|pet-ball|`);
 					user.sendTo(room.roomid, `|uhtml|pet-ball|${balls.map(item => MessageButton(

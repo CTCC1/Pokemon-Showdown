@@ -39,8 +39,10 @@ export const Rulesets: {[k: string]: FormatData} = {
 									} else {
 										features[10] = newLevel.toString();
 									}
-									userProperty['bag'][index] = features.join('|');
 								}
+								let evs = (features[6] || ',,,,,').split(',').map((x: string) => parseInt(x) || 0);
+								features[6] = evs.map((x: number) => Math.min(x + 1, 255)).join(',');
+								userProperty['bag'][index] = features.join('|');
 							}
 						}
 						FS(`${USERPATH}/${userid}.json`).writeSync(JSON.stringify(userProperty));
