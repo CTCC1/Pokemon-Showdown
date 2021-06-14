@@ -271,6 +271,7 @@ function parseProperty(propertyString: string): userProperty | null {
 			const parsedNum = parseInt(parsed['items'][item]);
 			if (parsedNum !== NaN) items[item] = parsedNum;
 		}
+		Object.assign(property['items'], items);
 		Object.assign(property['bag'], parsed['bag'].map((x: string) => Teams.pack(Teams.unpack(x))));
 		if (parsed['box']) Object.assign(property['box'], parsed['box'].map((x: string) => Teams.pack(Teams.unpack(x))));
 		if (property['bag'].filter(x => x).length === 0) return null;
