@@ -649,7 +649,7 @@ export const commands: Chat.ChatCommands = {
 			},
 	
 			ball(target, room, user) {
-				if (!room || !room.battle) return this.popupReply("请在对战房间里捕捉宝可梦");
+				if (!room || !room.battle || !userOnBattle[user.id]) return this.popupReply("请在对战房间里捕捉宝可梦");
 				if (!(user.id in userProperties)) return this.popupReply("您没有可以使用的精灵球哦");
 				if (inPetModeBattle(user.id) !== room.roomid) return this.popupReply("没有可以捕捉的宝可梦！");
 				loadUser(user.id);
@@ -680,7 +680,7 @@ export const commands: Chat.ChatCommands = {
 					this.popupReply(successful ? `捕获成功！快进入盒子查看吧！` : `捕获失败！`);
 					delete userOnBattle[user.id];
 					user.sendTo(room.roomid, `|uhtmlchange|pet-ball|`);
-					if (successful) this.parse('/forfeit');
+					this.parse('/forfeit');
 				} else {
 					user.sendTo(room.roomid, `|uhtmlchange|pet-ball|`);
 					user.sendTo(room.roomid, `|uhtml|pet-ball|${balls.map(item => MessageButton(
