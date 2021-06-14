@@ -619,7 +619,7 @@ export const commands: Chat.ChatCommands = {
 					Math.max(...userProperties[user.id]['bag'].filter(x => x).map(x => parseInt(x.split('|')[10])))
 				);
 				if (!bot || !wildPokemon || inPetModeBattle(user.id) ||
-					((user.id in userSearch) && (Date.now() - userSearch[user.id] < 60))) {
+					((user.id in userSearch) && (Date.now() - userSearch[user.id] < 60000))) {
 					return this.popupReply('没有发现野生的宝可梦哦');
 				}
 				userSearch[user.id] = Date.now();
@@ -658,7 +658,7 @@ export const commands: Chat.ChatCommands = {
 				if (target) {
 					if (balls.indexOf(target) < 0) return this.popupReply(`您的背包里没有${target}！`);
 					userProperties[user.id]['items'][target]--;
-					if (userProperties[user.id]['items'][target] <= 0) delete userProperties[user.id]['items'][target];
+					if (userProperties[user.id]['items'][target] === 0) delete userProperties[user.id]['items'][target];
 					let successful = false;
 					const species = userOnBattle[user.id].split('|')[1] || userOnBattle[user.id].split('|')[0];
 					if (ifCatchSuccessful(room.battle.turn, target, species)) {
