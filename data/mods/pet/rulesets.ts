@@ -30,9 +30,10 @@ export const Rulesets: {[k: string]: FormatData} = {
 							const ownPoke = userProperty['bag'][index];
 							if (ownPoke) {
 								let features = ownPoke.split('|');
-								let level = parseFloat(features[10]);
+								let level = parseFloat(features[10]) || 100;
 								if (level) {
-									const newLevel = level + (pokemon.level / level / level * 10);
+									const bst = eval(Object.values(Dex.species.get(features[1] || features[0]).baseStats).join('+'));
+									const newLevel = level + (pokemon.level / level / level * 10) * (300 / bst);
 									levelUp = levelUp || Math.floor(newLevel) - Math.floor(level) > 0;
 									if (level >= 100) {
 										features[10] = '';
