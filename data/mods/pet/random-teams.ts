@@ -9,7 +9,7 @@ export class RandomPSChinaPetModeTeams extends RandomTeams {
 	randomPetModeTeam(options: PlayerOptions) {
 		const userPropertyString = FS(`${USERPATH}/${Dex.toID(options.name)}.json`).readIfExistsSync();
 		if (userPropertyString) {
-			let userDefaultTeam = JSON.parse(userPropertyString)['bag'].filter(x => x);
+			let userDefaultTeam = JSON.parse(userPropertyString)['bag'].filter((x: string) => x);
 			if (userDefaultTeam.length > 0) {
 				return Teams.unpack(userDefaultTeam.join(']'));
 			}

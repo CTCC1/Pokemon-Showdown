@@ -5,6 +5,7 @@ const USERPATH = 'config/pet-mode/user-properties';
 export const Rulesets: {[k: string]: FormatData} = {
 	pschinapetmode: {
 		name: 'PS China Pet Mode',
+		ruleset: ['Dynamax Clause'],
 		onBegin() {
 			this.sides.forEach(side => {
 				if (Dex.toID(side.name) === 'pschinabot') {
@@ -12,12 +13,12 @@ export const Rulesets: {[k: string]: FormatData} = {
 				}
 			})
 		},
-		onBeforeTurn(pokemon) {			
+		onBeforeTurn(pokemon) {
 			if (Dex.toID(pokemon.side.name) === 'pschinabot') {
 				this.add('html', `<button class="button" name="send" value="/pet lawn ball">捕捉！</button>`);
 			}
 		},
-		onFaint(pokemon) {	
+		onFaint(pokemon) {
 			if (Dex.toID(pokemon.side.name) === 'pschinabot') {
 				this.add('html', `<div class="broadcast-green"><strong>野生的${pokemon.name}倒下了！</strong></div>`);
 				let levelUp = false;
@@ -26,17 +27,17 @@ export const Rulesets: {[k: string]: FormatData} = {
 					if (userid !== 'pschinabot') {
 						let userProperty= JSON.parse(FS(`${USERPATH}/${userid}.json`).readIfExistsSync());
 						for (let index in userProperty['bag']) {
-							const pokemon = userProperty['bag'][index];
-							if (pokemon) {
-								let features = pokemon.split('|');
-								let level = parseInt(features[10]);
+							const ownPoke = userProperty['bag'][index];
+							if (ownPoke) {
+								let features = ownPoke.split('|');
+								let level = parseFloat(features[10]);
 								if (level) {
-									level += 1;
-									levelUp = true;
+									const newLevel = level + (pokemon.level / level / level * 10);
+									levelUp = levelUp || Math.floor(newLevel) - Math.floor(level) > 0;
 									if (level >= 100) {
 										features[10] = '';
 									} else {
-										features[10] = level.toString();
+										features[10] = newLevel.toString();
 									}
 									userProperty['bag'][index] = features.join('|');
 								}
@@ -51,6 +52,6 @@ export const Rulesets: {[k: string]: FormatData} = {
 			} else {
 				this.add('html', `<div class="broadcast-red"><strong>${pokemon.name}倒下了！</strong></div>`);
 			}
-		}
+		},
 	},
 };
