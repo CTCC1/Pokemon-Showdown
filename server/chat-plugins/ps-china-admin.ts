@@ -1,5 +1,7 @@
 import {FS} from '../../lib';
 
+if (!FS('logs/modlog/iplog').existsSync()) FS('logs/modlog/iplog').mkdir();
+
 export async function addScore(userid: string, score: number): Promise<number[]> {
 	let ladder = await Ladders("gen8ps").getLadder();
 	let userIndex = ladder.length;	
