@@ -40,6 +40,8 @@ const POKESHEET = 'https://play.pokemonshowdown.com/sprites/pokemonicons-sheet.p
 const POKESPRITES = 'https://play.pokemonshowdown.com/sprites/ani';
 const POKESPRITESSHINY = 'https://play.pokemonshowdown.com/sprites/ani-shiny';
 const ITEMSHEET = 'https://play.pokemonshowdown.com/sprites/itemicons-sheet.png';
+const TYPEICONS = 'https://play.pokemonshowdown.com/sprites/types';
+const CATICONS = 'https://play.pokemonshowdown.com/sprites/categories';
 
 const LAWNCD = 60000;
 const BALLCD = 600000;
@@ -104,6 +106,18 @@ for (let speciesid in Dex.data.Learnsets) {
 		LEARNLEVEL[speciesid][moveid] = minLevel;
 	}
 }
+
+const MOVEICONS: {[movename: string]: string} = {};
+Dex.moves.all().forEach(move => {
+	MOVEICONS[move.name] = `background: url(${TYPEICONS}/${move.type}.png) no-repeat 5%, ` +
+		`url(${CATICONS}/${move.category}.png) no-repeat 95%;`;
+})
+
+const POKETYPEICONS: {[speciesname: string]: string} = {};
+Dex.species.all().forEach(species => {
+	POKETYPEICONS[species.name] = getImage(`background: url(${TYPEICONS}/${species.types[0]}.png); width: 32px; height: 14px`) +
+		(species.types[1] ? getImage(`background: url(${TYPEICONS}/${species.types[1]}.png); width: 32px; height: 14px`) : '');
+})
 
 let userOnEx: { [userid: string]: string } = {};
 let userSearch: { [userid: string]: number } = {};
@@ -483,7 +497,7 @@ export const commands: Chat.ChatCommands = {
 						dropButton = `${st('确认放生? ')}${boolButtons(`/pet box drop ${target}!`, `/pet box drop ${target}`)}`;
 					}
 					const lines = [
-						`${st('昵称')}: ${set.name}  ${st('种类')}: ${set.species}`,
+						`${st('昵称')}: ${set.name}  ${st('种类')}: ${set.species}  ${POKETYPEICONS[set.species]}`,
 						`${st('性别')}: ${set.gender === 'M' ? '♂' : set.gender === 'F' ? '♀' : '∅'}  ` +
 						`${st('亲密度')}: ${set.happiness !== undefined ? set.happiness : 255}  ${exButton}`,
 						`${st('等级')}: ${Math.floor(set.level)} (${Math.floor((set.level - Math.floor(set.level)) * 100)}%)  ` + 
@@ -626,6 +640,7 @@ export const commands: Chat.ChatCommands = {
 	
 			moves(target, room, user) {
 				if (!room) return this.popupReply("请在房间里使用宠物系统");
+				user.sendTo(room.roomid, `|uhtmlchange|pet-box-show|`);
 				const targets = target.split('=>').map(x => x.trim());
 				target = targets[0];
 				const position = parsePosition(target);
@@ -641,17 +656,18 @@ export const commands: Chat.ChatCommands = {
 					};
 				}
 				const section = (x: string) =>
-					`<section style="display: inline-block; position: relative; width: 160px; padding: 5px;` +
+					`<section style="display: inline-block; position: relative; width: 200px; padding: 5px; border: ridge;` +
 					` height: 150px; overflow: auto; vertical-align: top;">${x}</section>`;
 				const valid = userOnChangeMoves[user.id]['valid'].map(move =>
-					messageButton(`/pet box addmove ${target}=>${move}`, move, 'width: 140px;')
+					messageButton(`/pet box addmove ${target}=>${move}`, move, `${MOVEICONS[move]} width: 180px;`)
 				).join('<br/>');
 				const selected = userOnChangeMoves[user.id]['selected'].map(move =>
-					messageButton(`/pet box addmove ${target}=>${move}`, move, 'width: 140px;')
+					messageButton(`/pet box addmove ${target}=>${move}`, move, `${MOVEICONS[move]} width: 180px;`)
 				).join('<br/>');
 				const buttons = boolButtons(`/pet box setmoves ${target}!`, `/pet box setmoves ${target}`);
 				user.sendTo(room.roomid, `|uhtmlchange|pet-moves-show|`);
-				user.sendTo(room.roomid, `|uhtml|pet-moves-show|${section(`${selected}<br/><br/>${buttons}`)}${section(valid)}`);
+				user.sendTo(room.roomid, `|uhtml|pet-moves-show|<strong>请选择招式:</strong><br/>` +
+					`${section(valid)}${section(`${selected}<br/>${buttons}`)}`);
 			},
 
 			addmove(target, room, user) {
@@ -800,9 +816,11 @@ export const commands: Chat.ChatCommands = {
 							this.parse('/forfeit');
 							saveUser(user.id);
 							this.popupReply(`捕获成功! 快进入盒子查看吧!`)
-						} else {							
+						} else {
 							this.popupReply(`捕获失败!`);
 						}
+					} else {
+						this.popupReply(`捕获失败!`);
 					}
 					saveUser(user.id);
 				} else {
@@ -835,8 +853,8 @@ export const commands: Chat.ChatCommands = {
 					}
 				}
 				title = `<section style="height: 50px"><strong>${title}</strong></section>`;
-				user.sendTo(room.roomid, `|uhtml|pet-shop-show|${title}<section style="height: 250px; overflow: auto">` +
-					`${GOODBUTTONS}</section>`);
+				user.sendTo(room.roomid, `|uhtml|pet-shop-show|${title}<section style="height: 250px; overflow: auto; border: ridge;">`
+					+ `${GOODBUTTONS}</section>`);
 			},
 
 			async buy(target, room, user) {
