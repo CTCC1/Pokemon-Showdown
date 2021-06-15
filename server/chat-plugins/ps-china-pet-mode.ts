@@ -338,15 +338,15 @@ function genWildPoke(roomid: string, maxLevel: number, legend: boolean = false):
 	);
 }
 
-function ifCatchSuccessful(turn: number, ball: string, species: string, levelRate: number, roomOfLegend: string): boolean {
+function ifCatchSuccessful(turn: number, ball: string, species: string, level: number, roomOfLegend: string): boolean {
 	let rareLevel = 1;
 	if (roomOfLegend) {
 		if (!(roomOfLegend in legendInRooms)) return false;
 		rareLevel = 20;
 	}
 	const ballLevel = VALIDBALLS[ball] || 1;
-	const catchLevel = Math.pow(eval(Object.values(Dex.species.get(species).baseStats).join('+')), 2) / Math.pow(200, 2) + 1;
-	return prng.randomChance(Math.log10((turn + 5)) / catchLevel * ballLevel / rareLevel * Math.pow(levelRate, 10) * 1000, 1000);
+	const catchLevel = Math.pow(eval(Object.values(Dex.species.get(species).baseStats).join('+')), 2) / 40000 + 1;
+	return prng.randomChance(Math.pow(20 / (level + 20 - Math.sqrt(turn)), 2) / catchLevel * ballLevel / rareLevel * 1000, 1000);
 }
 
 function parseProperty(propertyString: string): userProperty | null {
@@ -798,12 +798,9 @@ export const commands: Chat.ChatCommands = {
 					const parsed = userOnBattle[user.id].split('<=');
 					const features = parsed[0].split('|');
 					const roomOfLegend = parsed[1];
-					const maxLevel = Math.max(...userProperties[user.id]['bag'].map(set => {
-						return parseInt(set.split('|')[10]) || 100;
-					}));
 					const foeLevel = parseInt(features[10]) || 100;
 					const foeSpecies = features[1] || features[0];
-					if (ifCatchSuccessful(room.battle.turn, target, foeSpecies, maxLevel / foeLevel, roomOfLegend)) {
+					if (ifCatchSuccessful(room.battle.turn, target, foeSpecies, foeLevel, roomOfLegend)) {
 						let type: 'bag' | 'box' = 'bag';
 						let index = 0;
 						while (userProperties[user.id][type][index]) index++;
