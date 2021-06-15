@@ -323,7 +323,7 @@ function getAvailableBalls(userid: string): string[] {
 
 function genWildPoke(roomid: string, maxLevel: number, legend: boolean = false): string {
 	if (legend && (roomid in legendInRooms)) {
-		return genPoke(legendInRooms[roomid], 70);
+		return genPoke(legendInRooms[roomid], 70, true);
 	}
 	if (roomid in PetModeRoomConfig) {
 		const roomConfig: {'lawn': string[], 'minlevel': number, 'maxlevel': number} = PetModeRoomConfig[roomid];
@@ -346,7 +346,7 @@ function ifCatchSuccessful(turn: number, ball: string, species: string, levelRat
 	}
 	const ballLevel = VALIDBALLS[ball] || 1;
 	const catchLevel = Math.pow(eval(Object.values(Dex.species.get(species).baseStats).join('+')), 2) / Math.pow(200, 2) + 1;
-	return prng.randomChance(Math.log10((turn + 5) * Math.max(levelRate, 1)) * catchLevel * ballLevel / rareLevel * 1000, 1000);
+	return prng.randomChance(Math.log10((turn + 5) * Math.max(levelRate, 1)) / catchLevel * ballLevel / rareLevel * 1000, 1000);
 }
 
 function parseProperty(propertyString: string): userProperty | null {
