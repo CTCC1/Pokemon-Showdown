@@ -751,10 +751,9 @@ export const commands: Chat.ChatCommands = {
 					Math.max(...userProperties[user.id]['bag'].filter(x => x).map(x => parseInt(x.split('|')[10]) || 100)),
 					wantLegend
 				);
-				if ((!wantLegend) && (!bot || !wildPokemon || inPetModeBattle(user.id) ||
-					((user.id in userSearch) && (Date.now() - userSearch[user.id] < LAWNCD)))) {
-					return this.popupReply('没有发现野生的宝可梦哦');
-				}
+				if (!bot || !wildPokemon || inPetModeBattle(user.id) ||
+					(!wantLegend && ((user.id in userSearch) && (Date.now() - userSearch[user.id] < LAWNCD)))
+				) return this.popupReply('没有发现野生的宝可梦哦');
 				userSearch[user.id] = Date.now();
 				userOnBattle[user.id] = wildPokemon + (wantLegend ? `<=${room.roomid}` : '');
 				const battleRoom = Rooms.createBattle({
@@ -823,9 +822,9 @@ export const commands: Chat.ChatCommands = {
 								Rooms.get(roomOfLegend)?.add(
 									`|html|<div class='broadcast-green' style="text-align: center;"><strong>${
 										user.name
-									} 成功捕获了野生的 ${legendInRooms[room.roomid]}!</strong></div>`
+									} 成功捕获了野生的 ${legendInRooms[roomOfLegend]}!</strong></div>`
 								).update();
-								delete legendInRooms[room.roomid];
+								delete legendInRooms[roomOfLegend];
 							}
 							this.popupReply(`捕获成功! 快进入盒子查看吧!`)
 						} else {
