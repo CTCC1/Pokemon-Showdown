@@ -1,23 +1,5 @@
 /*
 	Pokemon Showdown China Pet Mode Version 1.0 Author: Starmind
-	petmod format: randomteam: 调用<username>.json，如果没有则鲤鱼王
-	/init: 领取第一只宝可梦
-	/box: 盒子UI(所有抓过的精灵, 指定默认队伍, 调出精灵UI); 精灵UI(等级, 性格, 个体, 进化, 招式)
-	/find: 随机遇到精灵(房间config); /petmodbattle: 生成petmod对战; /ball: 抓生成的精灵, 在房间则开启与当前神兽的对战
-	/genpoke: 在房间根据config生成精灵 (无参数: 根据roomconfig.json)
-	bot: 生成的petmod对战的对手; 定时在所有房间/genpoke
-	pschinascore: 购买道具, 盒子上限; 特殊道具: 神奇糖果, 修改性格等
-	config/petmode/user-properties/<username>.json: {
-		'bag': ['Alakazam||||psychic,seismictoss,thunderwave,recover||252,252,252,252,252,252|||||', ...],
-		'box': ['Alakazam||||psychic,seismictoss,thunderwave,recover||252,252,252,252,252,252|||||', ...],
-		'items': {'Master Ball': 1, 'Rare Candy': 5}
-	}
-	config/pet-mode/room-config.json: {'SkyPillar': {
-		'find': {'freqs': [0.9, 0.1], 'pokes': ['Pikachu|||||||||||', 'Alakazam|||||||||||']},
-		'gen': {'freqs': [0.9, 0.1], 'pokes': ['Pikachu|||||||||||', 'Alakazam|||||||||||']}
-	}}
-	维护字典pokeInRooms = {'SkyPillar': Pokemon(Alakazam)}
-	Sky Pillar Room Intro: /box按钮
 */
 
 import { FS } from "../../lib";
@@ -75,7 +57,8 @@ const VALIDGOODS = Dex.items.all().map(item => item.name).filter(itemname => {
 		itemname.indexOf(' Incense') !== itemname.length - 8 &&
 		itemname.indexOf('Power ') !== 0 &&
 		itemname.indexOf('Fossil') < 0 &&
-		itemname.indexOf('TR') < 0;
+		itemname.indexOf('TR') < 0 &&
+		itemname !== 'Berserk Gene';
 });
 
 const GOODNAMES = Object.keys(VALIDBALLS).concat(VALIDGOODS);
@@ -101,7 +84,7 @@ for (let speciesid in Dex.data.Learnsets) {
 			}
 		}
 		if (minLevel > 100) {
-			minLevel = Math.min(minLevel, hashLevel(speciesid + moveid));
+			minLevel = Math.min(minLevel, Math.abs(hash(speciesid + moveid)) % 100 + 1);
 		}
 		LEARNLEVEL[speciesid][moveid] = minLevel;
 	}
@@ -136,7 +119,7 @@ function restrict(x: number, min: number, max: number): number {
 	return Math.max(min, Math.min(max, x));
 }
 
-function hashLevel(s: string): number {
+function hash(s: string): number {
 	let hash = 0, i, chr;
 	if (s.length === 0) return hash;
 	for (i = 0; i < s.length; i++) {
@@ -144,7 +127,7 @@ function hashLevel(s: string): number {
 		hash  = ((hash << 5) - hash) + chr;
 		hash |= 0;
 	}
-	return Math.abs(hash) % 100 + 1;
+	return hash;
 };
 
 function getImage(style: string) {
@@ -378,7 +361,7 @@ function parseProperty(propertyString: string): userProperty | null {
 	}
 }
 
-function addExperience(userid: string, foelevel: number): boolean {
+function addExperience(userid: string, foespecies: string, foelevel: number): boolean {
 	let levelUp = false;
 	let userProperty= userProperties[userid];
 	for (let index in userProperty['bag']) {
@@ -397,7 +380,9 @@ function addExperience(userid: string, foelevel: number): boolean {
 				}
 			}
 			const evs = (features[6] || ',,,,,').split(',').map((x: string) => parseInt(x) || 0);
-			features[6] = evs.map((x: number) => Math.min(x + prng.sample([1, 2, 3]), 255)).join(',');
+			const f = Math.abs(hash(foespecies)) % 6;
+			evs[f] = evs[f] + Math.max(Math.min(10, 252 - evs[f], 510 - eval(evs.join('+'))), 0);
+			features[6] = evs.join(',');
 			features[11] = Math.min((features[11] ? parseInt(features[11]) : 255) + 10, 255).toString();
 			userProperty['bag'][index] = features.join('|');
 		}
@@ -799,7 +784,9 @@ export const commands: Chat.ChatCommands = {
 					const maxLevel = Math.max(...userProperties[user.id]['bag'].map(set => {
 						return parseInt(set.split('|')[10]) || 100;
 					}));
-					const foeLevel = parseInt(userOnBattle[user.id].split('|')[10]) || 100;
+					const features = userOnBattle[user.id].split('|');
+					const foeLevel = parseInt(features[10]) || 100;
+					const foeSpecies = features[1] || features[0];
 					if (ifCatchSuccessful(room.battle.turn, target, species, maxLevel / foeLevel)) {
 						let type: 'bag' | 'box' = 'bag';
 						let index = 0;

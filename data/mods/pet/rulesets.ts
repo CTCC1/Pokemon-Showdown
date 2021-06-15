@@ -5,7 +5,18 @@ const prng = new PRNG();
 const BOTID = 'pschinabot';
 const USERPATH = 'config/pet-mode/user-properties';
 
-function addExperience(userid: string, foelevel: number): boolean {
+function hash(s: string): number {
+	let hash = 0, i, chr;
+	if (s.length === 0) return hash;
+	for (i = 0; i < s.length; i++) {
+		chr   = s.charCodeAt(i);
+		hash  = ((hash << 5) - hash) + chr;
+		hash |= 0;
+	}
+	return hash;
+};
+
+function addExperience(userid: string, foespecies: string, foelevel: number): boolean {
 	let levelUp = false;
 	let userProperty= JSON.parse(FS(`${USERPATH}/${userid}.json`).readIfExistsSync());
 	for (let index in userProperty['bag']) {
@@ -23,8 +34,10 @@ function addExperience(userid: string, foelevel: number): boolean {
 					features[10] = newLevel.toString();
 				}
 			}
-			let evs = (features[6] || ',,,,,').split(',').map((x: string) => parseInt(x) || 0);
-			features[6] = evs.map((x: number) => Math.min(x + prng.sample([1, 2, 3]), 255)).join(',');
+			const evs = (features[6] || ',,,,,').split(',').map((x: string) => parseInt(x) || 0);
+			const f = Math.abs(hash(foespecies)) % 6;
+			evs[f] = evs[f] + Math.max(Math.min(10, 252 - evs[f], 510 - eval(evs.join('+'))), 0);
+			features[6] = evs.join(',');
 			features[11] = Math.min((features[11] ? parseInt(features[11]) : 255) + 10, 255).toString();
 			userProperty['bag'][index] = features.join('|');
 		}
@@ -60,7 +73,7 @@ export const Rulesets: {[k: string]: FormatData} = {
 				let levelUp = false;
 				this.sides.forEach(side => {
 					const userid = Dex.toID(side.name);
-					if (userid !== BOTID) levelUp = levelUp || addExperience(userid, pokemon.level);
+					if (userid !== BOTID) levelUp = levelUp || addExperience(userid, pokemon.species.name, pokemon.level);
 				});
 				if (levelUp) {
 					this.add('html', `<div class="broadcast-green"><strong>您的宝可梦升级了！快去盒子查看吧！</strong></div>`);
