@@ -9,7 +9,7 @@ exports.PetModeRoomConfig = {
 		'minlevel': 5,
 		'maxlevel': 10,
 	},
-                'lc': {
+	'lc': {
 		'lawn': ['Spearow','Ekans','Sandshrew','Sandshrew-Alola','Cleffa','Igglybuff','Zubat','Bellsprout','Geodude','Onix','Krabby','Mareep','Murkrow','Snubbull','Shuckle','Delibird','Tyrogue','Makuhita','Nosepass','Aron','Budew','Gulpin','Spoink','Spheal','Burmy','Combee','Pachirisu','Finneon','Munna','Cottonee','Petilil','Mienfoo','Litleo','Dedenne','Crabrawler','Rockruff','Stufful','Bounsweet','Wimpod','Sandygast','Chewtle','Yamper','Rolycoly'],
 		'minlevel': 11,
 		'maxlevel': 15,
