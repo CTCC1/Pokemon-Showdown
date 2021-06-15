@@ -1,7 +1,5 @@
 import { FS } from "../../../lib";
-import { PRNG } from "../../../sim";
 
-const prng = new PRNG();
 const BOTID = 'pschinabot';
 const USERPATH = 'config/pet-mode/user-properties';
 
@@ -53,33 +51,33 @@ export const Rulesets: {[k: string]: FormatData} = {
 		onBegin() {
 			this.sides.forEach(side => {
 				if (Dex.toID(side.name) === BOTID) {
-					this.add('html', `<div class="broadcast-green"><strong>野生的${side.team[0].name}出现了！</strong></div>`);
+					this.add('html', `<div class="broadcast-green"><strong>野生的${side.team[0].name}出现了!</strong></div>`);
 				}
 			})
 		},
 		onBattleStart() {
 			if (Dex.toID(this.sides[0].name) === BOTID || Dex.toID(this.sides[1].name) === BOTID) {
-				this.add('html', `<button class="button" name="send" value="/pet lawn ball">捕捉！</button>`);
+				this.add('html', `<button class="button" name="send" value="/pet lawn ball">捕捉!</button>`);
 			}
 		},
 		onBeforeTurn(pokemon) {
 			if (Dex.toID(pokemon.side.name) === BOTID) {
-				this.add('html', `<button class="button" name="send" value="/pet lawn ball">捕捉！</button>`);
+				this.add('html', `<button class="button" name="send" value="/pet lawn ball">捕捉!</button>`);
 			}
 		},
 		onFaint(pokemon) {
 			if (Dex.toID(pokemon.side.name) === BOTID) {
-				this.add('html', `<div class="broadcast-green"><strong>野生的${pokemon.name}倒下了！</strong></div>`);
+				this.add('html', `<div class="broadcast-green"><strong>野生的${pokemon.name}倒下了!</strong></div>`);
 				let levelUp = false;
 				this.sides.forEach(side => {
 					const userid = Dex.toID(side.name);
 					if (userid !== BOTID) levelUp = levelUp || addExperience(userid, pokemon.species.name, pokemon.level);
 				});
 				if (levelUp) {
-					this.add('html', `<div class="broadcast-green"><strong>您的宝可梦升级了！快去盒子查看吧！</strong></div>`);
+					this.add('html', `<div class="broadcast-green"><strong>您的宝可梦升级了! 快去盒子查看吧!</strong></div>`);
 				}
 			} else {
-				this.add('html', `<div class="broadcast-red"><strong>${pokemon.name}倒下了！</strong></div>`);
+				this.add('html', `<div class="broadcast-red"><strong>${pokemon.name}倒下了!</strong></div>`);
 			}
 		},
 	},
