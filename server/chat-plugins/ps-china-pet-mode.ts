@@ -70,7 +70,9 @@ const VALIDGOODS = Dex.items.all().map(item => item.name).filter(itemname => {
 		itemname.indexOf(' Gem') !== itemname.length - 4 &&
 		itemname.indexOf(' Plate') !== itemname.length - 6 &&
 		itemname.indexOf(' Memory') !== itemname.length - 7 &&
+		itemname.indexOf(' Incense') !== itemname.length - 8 &&
 		itemname.indexOf('Power ') !== 0 &&
+		itemname.indexOf('Fossil') < 0 &&
 		itemname.indexOf('TR') < 0;
 });
 
