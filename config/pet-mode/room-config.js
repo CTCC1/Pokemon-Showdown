@@ -1,4 +1,4 @@
-exports.RoomConfig = {
+exports.PetModeRoomConfig = {
 	'skypillar': {
 		'lawn': ['Caterpie','Weedle','Ledyba','Spinarak','Wurmple','Kricketot','Sewaddle','Venipede','Scatterbug','Grubbin','Blipbug','Poochyena','Shinx','Lillipup','Purrloin','Nickit','Pidgey','Hoothoot','Taillow','Starly','Pidove','Fletchling','Pikipek','Rookidee','Rattata','Sentret','Zigzagoon','Bidoof','Patrat','Bunnelby','Yungoos', 'Skwovet'],
 		'minlevel': 2,
