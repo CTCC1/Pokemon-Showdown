@@ -1,4 +1,5 @@
 exports.PetModeShopConfig = {
+	'Poke Ball': -1,
 	'Great Ball': 5,
 	'Ultra Ball': 10,
 	'Master Ball': 200,
