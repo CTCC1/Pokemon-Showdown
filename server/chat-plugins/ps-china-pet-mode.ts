@@ -831,7 +831,7 @@ export const commands: Chat.ChatCommands = {
 							this.popupReply(`捕获失败!`);
 						}
 					} else {
-						if (legendInRooms && !(roomOfLegend in legendInRooms)) {
+						if (roomOfLegend && !(roomOfLegend in legendInRooms)) {
 							this.popupReply(`很遗憾, ${roomOfLegend} 房间里的 ${foeSpecies} 已经被别人捕获了。`);
 							userProperties[user.id]['items'][target]++;
 						} else {
