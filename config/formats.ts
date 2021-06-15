@@ -3186,7 +3186,7 @@ export const Formats: FormatList = [
 		column: 1,
 	},
 	{
-		name: "[Gen 8] PS国服积分",
+		name: "[Gen 8] PS 国服积分",
 		desc: `用于国服论坛积分显示，天梯对战不计分。`,
 
 		mod: 'gen8',
@@ -3197,6 +3197,14 @@ export const Formats: FormatList = [
 		onBegin() {
 			this.add('html', `<div class="broadcast-red"><strong>本分级仅用于国服论坛积分显示，天梯对战不计分。具体积分规则见<a href="http://chinapsim.org./topic/63/">国服积分说明帖</a>.</strong></div>`);
 		},
+	},
+	{
+		name: "[Gen 8] Pet Mode 宠物模式",
+		desc: `与自己培养的宝可梦并肩作战吧！`,
+
+		mod: 'pet',
+		team: 'randomPetMode',
+		ruleset: ['PS China Pet Mode'],
 	},
 	{
 		name: "[Gen 8] Multi OU",

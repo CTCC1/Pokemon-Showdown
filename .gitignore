@@ -74,3 +74,5 @@ pip-log.txt
 !/config/replay-head.txt
 !/config/replay-tail.txt
 !/config/intro
+!/config/pet-mode
+/config/pet-mode/user-properties
