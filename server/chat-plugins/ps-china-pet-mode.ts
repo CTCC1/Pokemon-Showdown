@@ -899,7 +899,7 @@ export const commands: Chat.ChatCommands = {
 				if (!(user.id in userProperties)) return this.popupReply("您还未领取最初的伙伴!");
 				const targets = target.split('!');
 				target = targets[0];
-				const times = targets.length > 1 ? 5 : 1;
+				let times = targets.length > 1 ? 5 : 1;
 				if (GOODNAMES.indexOf(target) < 0) return this.popupReply(`没有名为 ${target} 的道具`);
 				const price = PetModeShopConfig[target] || 50;
 				if (price > 0) {
@@ -909,6 +909,15 @@ export const commands: Chat.ChatCommands = {
 				} else {
 					if (Date.now() - userGetBall[user.id] < BALLCD) {
 						return this.popupReply(`您在${Math.floor(BALLCD / 60000)}分钟内已领取过 ${target} !`);
+					}
+					if (userProperties[user.id]['items'][target]) {
+						const num = 10 - userProperties[user.id]['items'][target];
+						if (times > num) {
+							times = num;
+							this.popupReply(`由于免费道具最多只能持有10个, 您领取了${times}个 ${target}`);
+						} else {
+							this.popupReply(`领取成功!`);
+						}
 					}
 					userGetBall[user.id] = Date.now();
 				}
