@@ -49,9 +49,9 @@ exports.PetModeRoomConfig = {
 		'minlevel': 51,
 		'maxlevel': 100,
 	},
-	'wcs': {
+	/*'wcs': {
 		'lawn': ['Porygon','Omanyte','Kabuto','Aerodactyl','Ditto','Dratini','Togepi','Unown','Wynaut','Smeargle','Larvitar','Lileep','Anorith','Feebas','Castform','Bagon','Beldum','Gible','Archen','Cranidos','Shieldon','Zorua','Deino','Goomy','Carbink','Type: Null','Jangmo-o','Dracozolt','Arctozolt','Dracovish','Arctovish','Dreepy'],
 		'minlevel': 100,
 		'maxlevel': 100,
-	}
+	}*/
 }
