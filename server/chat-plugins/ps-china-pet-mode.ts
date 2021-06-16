@@ -357,15 +357,16 @@ function genWildPoke(roomid: string, maxLevel: number, legend: boolean = false):
 	);
 }
 
-function ifCatchSuccessful(turn: number, ball: string, species: string, level: number, roomOfLegend: string): boolean {
-	let rareLevel = 1;
+function ifCatchSuccessful(T: number, L: number, userid: string, ball: string, species: string, roomOfLegend: string): boolean {
+	let R = 1;
 	if (roomOfLegend) {
 		if (!(roomOfLegend in legendInRooms)) return false;
-		rareLevel = 20;
+		R = 10;
 	}
-	const ballLevel = VALIDBALLS[ball] || 1;
-	const catchLevel = Math.pow(eval(Object.values(Dex.species.get(species).baseStats).join('+')), 2) / 40000 + 1;
-	return prng.randomChance(Math.pow(20 / (level + 20 - Math.sqrt(turn)), 3) / catchLevel * ballLevel / rareLevel * 1000, 1000);
+	const U = 1;
+	const B = VALIDBALLS[ball] || 1;
+	const S = Math.pow(eval(Object.values(Dex.species.get(species).baseStats).join('+')), 2) / 1e5 + 1;
+	return prng.randomChance(Math.pow((20 + Math.sqrt(T)) / (20 + L), 2) / S * B * U / R * 1000, 1000);
 }
 
 function parseProperty(propertyString: string): userProperty | null {
@@ -558,10 +559,6 @@ export const commands: Chat.ChatCommands = {
 				const boxMons = userProperties[user.id]['box'].map((x, i) =>
 					petButton(x.split('|')[1] || x.split('|')[0], `box,${i}`) + (i % 6 == 5 ? '<br/>' : '')).join('');
 				let items = ``;
-				// let itemButton = (item: string) => getImage(getItemStyle(item));
-				// if (user.id in userLookAt) {
-				// 	itemButton = (item: string) => messageButton(getItemStyle(item), `/pet box item ${target}=>${item}`, '');
-				// }
 				const itemButton = (item: string) => messageButton(
 					(user.id in userLookAt) ? `/pet box item ${target}=>${item}` : '', '', getItemStyle(item)
 				);
@@ -569,10 +566,10 @@ export const commands: Chat.ChatCommands = {
 				for (let itemName in userProperties[user.id]['items']) {
 					items += `${itemButton(itemName)}x${itemNum(userProperties[user.id]['items'][itemName])} `;
 				}
-				const shopButton = messageButton('/pet shop', '商店');
+				const shopButtons = messageButton('/pet shop', '商店') + messageButton('/pet shop buy Poke Ball!', '领取5个精灵球!');
 				let boxDiv = `<section style="` + 
 					`position: relative; vertical-align: top; display: inline-block;width: 250px; height: '100%'; padding: 5px;` +
-					`"><strong>背包<br/>${bagMons}盒子<br/>${boxMons}道具</strong><br/>${items}${shopButton}</section>`;
+					`"><strong>背包<br/>${bagMons}盒子<br/>${boxMons}道具</strong><br/>${items}${shopButtons}</section>`;
 
 				// TODO: 电脑模式: boxDiv position: absolute; pokeDiv left: 260px;
 				this.parse('/pet box clear');
@@ -628,6 +625,18 @@ export const commands: Chat.ChatCommands = {
 							if (index < 0) return this.popupReply('进化型不合法!');
 							if (availableEvos[index][1]) set.item = '';
 							if (set.species === set.name) set.name = targets[1];
+							const preAbilities = Dex.species.get(set.species).abilities;
+							const postAbilities = Dex.species.get(targets[1]).abilities;
+							switch (set.ability) {
+								case preAbilities['1']:
+									if (postAbilities['1']) { set.ability = postAbilities['1']; break; }
+								case preAbilities['H']:
+									if (postAbilities['H']) { set.ability = postAbilities['H']; break; }
+								case preAbilities['S']:
+									if (postAbilities['S']) { set.ability = postAbilities['S']; break; }
+								default:
+									set.ability = postAbilities['0'];
+							}
 							set.species = targets[1];
 							userProperties[user.id][position['type']][position['index']] = Teams.pack([set]);
 							saveUser(user.id);
@@ -838,8 +847,8 @@ export const commands: Chat.ChatCommands = {
 				});
 				if (wantLegend && battleRoom) {
 					room.add(`|html|<div style="text-align: center;"><a href='${
-						battleRoom.roomid}'><strong>${user.name} 开始了与 ${legendInRooms[room.roomid].split('|')[0]
-					} 的战斗!</strong></a></div>`).update();
+						battleRoom.roomid}'>${user.name} 开始了与 ${legendInRooms[room.roomid].split('|')[0]
+					} 的战斗!</a></div>`).update();
 				}
 			},
 	
@@ -858,7 +867,7 @@ export const commands: Chat.ChatCommands = {
 					const roomOfLegend = parsed[1];
 					const foeLevel = parseInt(features[10]) || 100;
 					const foeSpecies = features[1] || features[0];
-					if (ifCatchSuccessful(room.battle.turn, target, foeSpecies, foeLevel, roomOfLegend)) {
+					if (ifCatchSuccessful(room.battle.turn, foeLevel, user.id, target, foeSpecies, roomOfLegend)) {
 						let type: 'bag' | 'box' = 'bag';
 						let index = 0;
 						while (userProperties[user.id][type][index]) index++;
@@ -944,9 +953,10 @@ export const commands: Chat.ChatCommands = {
 		shop: {
 
 			'': 'show',
-			show(target, room, user) {
+			async show(target, room, user) {
 				if (!room) return this.popupReply("请在房间里使用宠物系统");
 				if (!(user.id in userProperties)) return this.popupReply("您还未领取最初的伙伴!");
+				if (!(await addScore(user.name, 0))[0]) return this.popupReply("您没有国服积分, 不能购买商品哦");
 				this.parse('/pet box clear');
 				this.parse('/pet shop clear');
 				let title = `请选择商品:<br/>${messageButton(`/score pop`, '查看积分')}${messageButton(`/pet box`, '返回')}`;
@@ -971,33 +981,29 @@ export const commands: Chat.ChatCommands = {
 				if (!(user.id in userProperties)) return this.popupReply("您还未领取最初的伙伴!");
 				const targets = target.split('!');
 				target = targets[0];
-				let times = targets.length > 1 ? 5 : 1;
+				let num = targets.length > 1 ? 5 : 1;
 				if (GOODNAMES.indexOf(target) < 0) return this.popupReply(`没有名为 ${target} 的道具`);
 				const price = PetModeShopConfig[target] || 50;
 				if (price > 0) {
-					const changeScores = await addScore(user.id, -price * times);
+					const changeScores = await addScore(user.name, -price * num);
 					if (changeScores.length !== 2) return this.popupReply(`积分不足!`);
-					this.popupReply(`您获得了${times}个 ${target} ! 您现在的积分是: ${changeScores[1]}`);
+					this.popupReply(`您获得了${num}个 ${target} ! 您现在的积分是: ${changeScores[1]}`);
 				} else {
 					if (Date.now() - userGetBall[user.id] < BALLCD) {
 						return this.popupReply(`您在${Math.floor(BALLCD / 60000)}分钟内已领取过 ${target} !`);
 					}
 					if (userProperties[user.id]['items'][target]) {
-						const num = 10 - userProperties[user.id]['items'][target];
-						if (times > num) {
-							times = num;
-							this.popupReply(`由于免费道具最多只能持有10个, 您领取了${times}个 ${target}`);
-						} else {
-							this.popupReply(`领取成功!`);
+						let validNum = Math.min(num, 10 - userProperties[user.id]['items'][target]);
+						if (num > validNum) {
+							num = validNum;
+							this.popupReply(`由于免费道具最多只能持有10个, 您领取了${num}个 ${target}`);
 						}
-					} else {
-						this.popupReply(`领取成功!`);
 					}
-					userGetBall[user.id] = Date.now();
+					if (num > 0) userGetBall[user.id] = Date.now();
 				}
 				loadUser(user.id);
 				if (!userProperties[user.id]['items'][target]) userProperties[user.id]['items'][target] = 0; 
-				userProperties[user.id]['items'][target] = userProperties[user.id]['items'][target] + times;
+				userProperties[user.id]['items'][target] = userProperties[user.id]['items'][target] + num;
 				saveUser(user.id);
 				this.parse('/pet box');
 			},
