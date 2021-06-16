@@ -295,7 +295,7 @@ function inPetModeBattle(userid: string): string | undefined {
 	return [...user.inRooms].filter(x => x.indexOf('petmode') >= 0 && battleWithBot(x))[0];
 }
 
-function genPoke(speciesid: string, level: number, fullivs: boolean = false, happy: number = 0, shiny: number = 1 / 256): string {
+function genPoke(speciesid: string, level: number, fullivs: boolean = false, happy: number = 0, shiny: number = 1 / 512): string {
 	level = restrict(level, 1, 100);
 	const species = Dex.species.get(speciesid);
 	if (species.num <= 0) return '';
@@ -541,12 +541,14 @@ export const commands: Chat.ChatCommands = {
 
 			onex(target, room, user) {
 				if (!room) return this.popupReply("请在房间里使用宠物系统");
+				if (!(user.id in userProperties)) return this.popupReply("您还未领取最初的伙伴!");
 				userOnEx[user.id] = target;
 				this.parse(`/pet box show ${target}`);
 			},
 
 			ex(target, room, user) {
 				if (!room) return this.popupReply("请在房间里使用宠物系统");
+				if (!(user.id in userProperties)) return this.popupReply("您还未领取最初的伙伴!");
 				delete userOnEx[user.id];
 				const targets = target.split('<=>').map(x => x.trim());
 				if (targets.length !== 2) return this.popupReply(`Usage: /pet box ex [bag|box],position1<=>[bag|box],position2`);
@@ -558,6 +560,7 @@ export const commands: Chat.ChatCommands = {
 
 			evo(target, room, user) {
 				if (!room) return this.popupReply("请在房间里使用宠物系统");
+				if (!(user.id in userProperties)) return this.popupReply("您还未领取最初的伙伴!");
 				// [进化]: userEvoStage <- false, /pet box show = 希望的进化型(/pet box evo target=>goal)
 				// [选择进化型]: userEcoStarge <- goal, /pet box show = 确认(/pet box evo target=>goal) | 取消(/pet box evo target)
 				// [确认]: delete userEcoStarge, /pet box show = 进化(/pet box evo target)
@@ -602,6 +605,7 @@ export const commands: Chat.ChatCommands = {
 	
 			item(target, room, user) {
 				if (!room) return this.popupReply("请在房间里使用宠物系统");
+				if (!(user.id in userProperties)) return this.popupReply("您还未领取最初的伙伴!");
 				const targets = target.split('=>').map(x => x.trim());
 				target = targets[0];
 				const position = parsePosition(target);
@@ -632,6 +636,7 @@ export const commands: Chat.ChatCommands = {
 	
 			moves(target, room, user) {
 				if (!room) return this.popupReply("请在房间里使用宠物系统");
+				if (!(user.id in userProperties)) return this.popupReply("您还未领取最初的伙伴!");
 				user.sendTo(room.roomid, `|uhtmlchange|pet-box-show|`);
 				const targets = target.split('=>').map(x => x.trim());
 				target = targets[0];
@@ -665,6 +670,7 @@ export const commands: Chat.ChatCommands = {
 			addmove(target, room, user) {
 				const targets = target.split('=>');
 				if (targets.length !== 2) return this.popupReply('请先指定需要更改招式的宝可梦');
+				if (!(user.id in userProperties)) return this.popupReply("您还未领取最初的伙伴!");
 				if (!(user.id in userOnChangeMoves)) return this.popupReply('请先指定需要更改招式的宝可梦');
 				const selectedIndex = userOnChangeMoves[user.id]['selected'].indexOf(targets[1]);
 				if (selectedIndex >= 0) {
@@ -680,6 +686,7 @@ export const commands: Chat.ChatCommands = {
 
 			setmoves(target, room, user) {
 				if (!room) return this.popupReply("请在房间里使用宠物系统");
+				if (!(user.id in userProperties)) return this.popupReply("您还未领取最初的伙伴!");
 				const targets = target.split('!').map(x => x.trim());
 				loadUser(user.id);
 				target = targets[0];
@@ -697,6 +704,7 @@ export const commands: Chat.ChatCommands = {
 
 			drop(target, room, user) {
 				if (!room) return this.popupReply("请在房间里使用宠物系统");
+				if (!(user.id in userProperties)) return this.popupReply("您还未领取最初的伙伴!");
 				const targets = target.split('!').map(x => x.trim());
 				target = targets[0];
 				loadUser(user.id);
