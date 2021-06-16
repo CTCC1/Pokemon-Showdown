@@ -22,17 +22,22 @@ function addExperience(userid: string, foespecies: string, foelevel: number): bo
 		if (ownPoke) {
 			let features = ownPoke.split('|');
 			let level = parseFloat(features[10]) || 100;
-			if (level) {
-				const bst = eval(Object.values(Dex.species.get(features[1] || features[0]).baseStats).join('+'));
-				let newLevel = level + (foelevel / level / level * 10) * Math.sqrt(300 / bst);
-				newLevel = Math.min(newLevel, 100);
-				levelUp = levelUp || Math.floor(newLevel) - Math.floor(level) > 0;
-				if (level >= 100) {
-					features[10] = '';
-				} else {
-					features[10] = newLevel.toString();
-				}
+			// 经验 = foeLevel * foeBst
+			// level + 1 所需经验 = level * bst * 2
+			const foebst = eval(Object.values(Dex.species.get(foespecies).baseStats).join('+'));
+			let experience = foelevel * foebst;
+			const bst = eval(Object.values(Dex.species.get(features[1] || features[0]).baseStats).join('+'));
+			const needExp = (l: number) => Math.floor(l) * bst * 2;
+			let need = needExp(level);
+			let newLevel = level + experience / need;
+			while (Math.floor(newLevel) > Math.floor(level)) {
+				level += 1;
+				levelUp = true;
+				need = needExp(level);
+				newLevel = level + experience / need;
+				experience = experience - needExp(level);
 			}
+			features[10] = newLevel >= 100 ? '' : newLevel.toString();
 			const evs = (features[6] || ',,,,,').split(',').map((x: string) => parseInt(x) || 0);
 			const f = Math.abs(hash(foespecies)) % 6;
 			evs[f] = evs[f] + Math.max(Math.min(10, 252 - evs[f], 510 - eval(evs.join('+'))), 0);

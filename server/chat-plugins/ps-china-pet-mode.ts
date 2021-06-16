@@ -342,7 +342,7 @@ function getAvailableBalls(userid: string): string[] {
 function genWildPoke(roomid: string, maxLevel: number, legend: boolean = false): string {
 	if (legend && (roomid in legendInRooms)) {
 		const features = legendInRooms[roomid].split('|');
-		return genPoke(features[0], parseInt(features[1]), true, parseInt(features[2]));
+		return genPoke(features[0], parseInt(features[1]), true, 0, parseInt(features[2]));
 	}
 	if (roomid in PetModeRoomConfig) {
 		const roomConfig: {'lawn': string[], 'minlevel': number, 'maxlevel': number} = PetModeRoomConfig[roomid];
@@ -395,17 +395,22 @@ function addExperience(userid: string, foespecies: string, foelevel: number): bo
 		if (ownPoke) {
 			let features = ownPoke.split('|');
 			let level = parseFloat(features[10]) || 100;
-			if (level) {
-				const bst = eval(Object.values(Dex.species.get(features[1] || features[0]).baseStats).join('+'));
-				let newLevel = level + (foelevel / level / level * 10) * Math.sqrt(300 / bst);
-				newLevel = Math.min(newLevel, 100);
-				levelUp = levelUp || Math.floor(newLevel) - Math.floor(level) > 0;
-				if (level >= 100) {
-					features[10] = '';
-				} else {
-					features[10] = newLevel.toString();
-				}
+			// 经验 = foeLevel * foeBst
+			// level + 1 所需经验 = level * bst * 2
+			const foebst = eval(Object.values(Dex.species.get(foespecies).baseStats).join('+'));
+			let experience = foelevel * foebst;
+			const bst = eval(Object.values(Dex.species.get(features[1] || features[0]).baseStats).join('+'));
+			const needExp = (l: number) => Math.floor(l) * bst * 2;
+			let need = needExp(level);
+			let newLevel = level + experience / need;
+			while (Math.floor(newLevel) > Math.floor(level)) {
+				level += 1;
+				levelUp = true;
+				need = needExp(level);
+				newLevel = level + experience / need;
+				experience = experience - needExp(level);
 			}
+			features[10] = newLevel >= 100 ? '' : newLevel.toString();
 			const evs = (features[6] || ',,,,,').split(',').map((x: string) => parseInt(x) || 0);
 			const f = Math.abs(hash(foespecies)) % 6;
 			evs[f] = evs[f] + Math.max(Math.min(10, 252 - evs[f], 510 - eval(evs.join('+'))), 0);
@@ -418,6 +423,17 @@ function addExperience(userid: string, foespecies: string, foelevel: number): bo
 }
 
 export const commands: Chat.ChatCommands = {
+
+	'gen': 'add',
+	add(target) {
+		this.parse(`/pet add ${target}`);
+	},
+
+
+	'rm': 'remove',
+	remove(target) {
+		this.parse(`/pet remove ${target}`);
+	},
 
 	'petmode': 'pet',
 	pet: {
@@ -765,12 +781,15 @@ export const commands: Chat.ChatCommands = {
 
 		},
 
-		gen(target) {
-			this.parse(`/pet lawn gen ${target}`);
+		'gen': 'add',
+		add(target) {
+			this.parse(`/pet lawn add ${target}`);
 		},
 
-		kill(target) {
-			this.parse(`/pet lawn kill ${target}`);
+
+		'rm': 'remove',
+		remove(target) {
+			this.parse(`/pet lawn remove ${target}`);
 		},
 
 		lawn: {
@@ -780,16 +799,19 @@ export const commands: Chat.ChatCommands = {
 				if (!room) return this.popupReply("请在房间里使用宠物系统");
 				const bot = Users.get(BOTID);
 				if (!(user.id in userProperties)) return this.popupReply("您还没有可以战斗的宝可梦哦");
+				if (inPetModeBattle(user.id)) return this.popupReply("没有发现野生的宝可梦哦");
 				loadUser(user.id);
 				const wantLegend = target.indexOf('!') >= 0 && (room.roomid in legendInRooms);
+				if (!bot || ((user.id in userSearch) && (Date.now() - userSearch[user.id] < LAWNCD))) {
+					if (wantLegend) return this.popupReply(`您的宝可梦累了, 请稍后再来!`);
+					return this.popupReply('没有发现野生的宝可梦哦');
+				}
 				const wildPokemon = genWildPoke(
 					room.roomid,
 					Math.max(...userProperties[user.id]['bag'].filter(x => x).map(x => parseInt(x.split('|')[10]) || 100)),
 					wantLegend
 				);
-				if (!bot || !wildPokemon || inPetModeBattle(user.id) ||
-					(!wantLegend && ((user.id in userSearch) && (Date.now() - userSearch[user.id] < LAWNCD)))
-				) return this.popupReply('没有发现野生的宝可梦哦');
+				if (!wildPokemon) return this.popupReply('没有发现野生的宝可梦哦');
 				userSearch[user.id] = Date.now();
 				userOnBattle[user.id] = wildPokemon + (wantLegend ? `<=${room.roomid}` : '');
 				const battleRoom = Rooms.createBattle({
@@ -815,7 +837,7 @@ export const commands: Chat.ChatCommands = {
 					delayedStart: false,
 				});
 				if (wantLegend && battleRoom) {
-					room.add(`|html|<div class='broadcast-green' style="text-align: center;"><a href='${
+					room.add(`|html|<div style="text-align: center;"><a href='${
 						battleRoom.roomid}'><strong>${user.name} 开始了与 ${legendInRooms[room.roomid].split('|')[0]
 					} 的战斗!</strong></a></div>`).update();
 				}
@@ -847,13 +869,14 @@ export const commands: Chat.ChatCommands = {
 						}
 						if (index < 36) {
 							addExperience(user.id, foeSpecies, foeLevel);
-							userProperties[user.id][type][index] = userOnBattle[user.id];
+							userProperties[user.id][type][index] = parsed[0];
 							delete userOnBattle[user.id];
 							this.parse('/forfeit');
 							saveUser(user.id);
 							if (roomOfLegend) {
+								Rooms.get(roomOfLegend)?.add(`|uhtmlchange|pet-legend|`);
 								Rooms.get(roomOfLegend)?.add(
-									`|html|<div class='broadcast-green' style="text-align: center;"><strong>${
+									`|uhtml|pet-legend|<div class='broadcast-green' style="text-align: center;"><strong>${
 										user.name
 									} 成功捕获了野生的 ${foeSpecies}!</strong></div>`
 								).update();
@@ -881,16 +904,17 @@ export const commands: Chat.ChatCommands = {
 				}
 			},
 
-			gen(target, room, user) {
+			'gen': 'add',
+			add(target, room, user) {
 				this.checkCan('bypassall');
 				if (!room) return this.popupReply("请在房间里使用宠物系统");
 				if (room.roomid in legendInRooms) return this.popupReply(`${room.title} 房间里的宝可梦还未被捕获`);
 				const targets = target.split(',');
 				target = targets[0];
-				const level = parseInt(target[1]) || '70';
-				const shiny = parseInt(target[2]) || '0';
 				const species = Dex.species.get(target);
-				if (!species.exists) return this.popupReply(`没有找到名为 ${target} 的宝可梦`);
+				if (!species.exists) return this.popupReply(`Usage: /add 宝可梦, 等级, 闪光率`);
+				const level = parseInt(targets[1]) || 70;
+				const shiny = parseInt(targets[2]) || 0;
 				legendInRooms[room.roomid] = `${species.name}|${level}|${shiny}`;
 				const legendStyle = 'font-size: 12pt; text-align: center; height: 170px';
 				room.add(`|uhtmlchange|pet-legend|`);
@@ -901,14 +925,15 @@ export const commands: Chat.ChatCommands = {
 				}<br/>${messageButton('/pet lawn search !', '挑战!')}</div>`)
 			},
 
-			kill(target, room, user) {
+			'rm': 'remove',
+			remove(target, room, user) {
 				this.checkCan('bypassall');
 				if (!room) return this.popupReply("请在房间里使用宠物系统");
 				if (room.roomid in legendInRooms) {
 					room.add(`|uhtmlchange|pet-legend|`);
-					room.add(`|uhtml|pet-legend|<div class='broadcast-green'>野生的 ${
+					room.add(`|uhtml|pet-legend|<div class='broadcast-green' style="text-align: center;"><strong>野生的 ${
 						legendInRooms[room.roomid].split('|')[0]
-					} 离开了。</div>`);
+					} 离开了。</strong></div>`);
 					delete legendInRooms[room.roomid];
 					this.popupReply(`已删除 ${room.title} 房间里的宝可梦`);
 				}
