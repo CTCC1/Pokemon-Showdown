@@ -24,7 +24,8 @@ function addExperience(userid: string, foespecies: string, foelevel: number): bo
 			let level = parseFloat(features[10]) || 100;
 			if (level) {
 				const bst = eval(Object.values(Dex.species.get(features[1] || features[0]).baseStats).join('+'));
-				const newLevel = level + (foelevel / level / level * 10) * (300 / bst);
+				let newLevel = level + (foelevel / level / level * 10) * Math.sqrt(300 / bst);
+				newLevel = Math.min(newLevel, 100);
 				levelUp = levelUp || Math.floor(newLevel) - Math.floor(level) > 0;
 				if (level >= 100) {
 					features[10] = '';
@@ -48,6 +49,15 @@ export const Rulesets: {[k: string]: FormatData} = {
 	pschinapetmode: {
 		name: 'PS China Pet Mode',
 		ruleset: ['Dynamax Clause'],
+		timer: {
+			starting: 120,
+			addPerTurn: 0,
+			maxPerTurn: 15,
+			maxFirstTurn: 15,
+			grace: 0,
+			timeoutAutoChoose: true,
+			dcTimerBank: false,
+		},
 		onBegin() {
 			this.sides.forEach(side => {
 				if (Dex.toID(side.name) === BOTID) {
