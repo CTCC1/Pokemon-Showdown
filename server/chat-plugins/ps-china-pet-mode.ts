@@ -1,5 +1,16 @@
 /*
 	Pokemon Showdown China Pet Mode Version 1.0 Author: Starmind
+	1. 机器人重连后继续战斗
+	2. 不对称Timer
+	3. 改名
+	4. Box UI
+	5. 徽章
+	6. 道具分类 (挖石头)
+	7. 清努力个体
+	8. 道馆
+	9. 机器人定时开tour
+	10. Bottle Cap & Gold Bottle Cap
+	11. 领取礼物
 */
 
 import { FS } from "../../lib";
@@ -11,7 +22,7 @@ import { PetModeShopConfig } from "../../config/pet-mode/shop-config";
 
 type pokeList = string[];
 type itemList = { [itemName: string]: number };
-type userProperty = { 'bag': pokeList, 'box': pokeList, 'items': itemList };
+type userProperty = { 'bag': pokeList, 'box': pokeList, 'items': itemList, 'badges': string[], 'draw': number };
 type pokePosition = { 'type': 'bag' | 'box', 'index': number };
 
 const prng = new PRNG();
@@ -47,27 +58,16 @@ const INITMONBUTTONS = [
 
 const VALIDBALLS: {[ballname: string]: number} = {'Poke Ball': 1, 'Great Ball': 2, 'Ultra Ball': 4, 'Master Ball': Infinity};
 
-const VALIDGOODS = Dex.items.all().map(item => item.name).filter(itemname => {
-	return (itemname.indexOf(' Ball') < 0 || ['Iron Ball', 'Light Ball', 'Air Balloon'].indexOf(itemname) >= 0) &&
-		itemname.indexOf('ite') !== itemname.length - 3 && itemname.indexOf('ite') !== itemname.length - 5 &&
-		itemname.indexOf(' Z') !== itemname.length - 2 &&
-		itemname.indexOf(' Gem') !== itemname.length - 4 &&
-		itemname.indexOf(' Plate') !== itemname.length - 6 &&
-		itemname.indexOf(' Memory') !== itemname.length - 7 &&
-		itemname.indexOf(' Incense') !== itemname.length - 8 &&
-		itemname.indexOf('Power ') !== 0 &&
-		itemname.indexOf('Fossil') < 0 &&
-		itemname.indexOf('TR') < 0 &&
-		itemname !== 'Berserk Gene';
-});
+const GOODTYPES: {[goodtype: string]: string} = {
+	'ball': '精灵球', 'draw': '进化道具', 'berry': '树果', 'battle': '对战道具', 'special': '专用对战道具'
+};
 
-const GOODNAMES = Object.keys(VALIDBALLS).concat(VALIDGOODS);
-
-const GOODBUTTONS = Object.keys(VALIDBALLS).map(itemname => {
-	return messageButton(`/pet shop show ${itemname}`, '', getItemStyle(itemname));
-}).join('') + '<br/>' + VALIDGOODS.map(itemname => {
-	return messageButton(`/pet shop show ${itemname}`, '', getItemStyle(itemname));
-}).join('');
+const GOODBUTTONS: {[goodtype: string]: string} = {};
+for (let goodtype in PetModeShopConfig) {
+	GOODBUTTONS[goodtype] = Object.keys(PetModeShopConfig[goodtype]).map(goodname => {
+		return messageButton(`/pet shop show ${goodtype}=>${goodname}`, '', getItemStyle(goodname));
+	}).join('')
+}
 
 const LEARNLEVEL: {[speciesid: string]: {[moveid: string]: number}} = {};
 function initLearnLevel(speciesid: string): {[moveid: string]: number} {
@@ -188,16 +188,31 @@ function randomIvs(): StatsTable {
 }
 
 function initUserProperty(): userProperty {
-	return {'bag': new Array(6).fill(''), 'box': new Array(30).fill(''), 'items': {'Poke Ball': 5}}
+	return {
+		'bag': new Array(6).fill(''),
+		'box': new Array(30).fill(''),
+		'items': {'Poke Ball': 5},
+		'badges': [],
+		'draw': 0
+	}
 }
 
 function loadUser(userid: string) {
 	const userPropString = FS(`${USERPATH}/${userid}.json`).readIfExistsSync();
-	if (userPropString) userProperties[userid] = JSON.parse(userPropString);
+	if (userPropString) {
+		const parsed = JSON.parse(userPropString);
+		userProperties[userid] = {
+			'bag': parsed['bag'] || [],
+			'box': parsed['box'] || [],
+			'items': parsed['items'] || {},
+			'badges': parsed['badges'] || [],
+			'draw': parsed['draw'] || 0
+		};
+	}
 }
 
 function saveUser(userid: string) {
-	FS(`${USERPATH}/${userid}.json`).writeSync(JSON.stringify(userProperties[userid]));
+	FS(`${USERPATH}/${userid}.json`).safeWriteSync(JSON.stringify(userProperties[userid]));
 }
 
 function removeUser(userid: string) {
@@ -566,8 +581,10 @@ export const commands: Chat.ChatCommands = {
 				for (let itemName in userProperties[user.id]['items']) {
 					items += `${itemButton(itemName)}x${itemNum(userProperties[user.id]['items'][itemName])} `;
 				}
-				const shopButtons = messageButton('/pet shop', '商店') + messageButton('/pet shop buy Poke Ball!', '领取5个精灵球!');
-				let boxDiv = `<section style="` + 
+				const shopButtons = messageButton('/pet shop', '商店') +
+					messageButton('/pet shop buy ball=>Poke Ball!', '领取5个精灵球!') +
+					messageButton('/pet shop draw', '领取随机道具!');
+				let boxDiv = `<section style="` +
 					`position: relative; vertical-align: top; display: inline-block;width: 250px; height: '100%'; padding: 5px;` +
 					`"><strong>背包<br/>${bagMons}盒子<br/>${boxMons}道具</strong><br/>${items}${shopButtons}</section>`;
 
@@ -956,56 +973,83 @@ export const commands: Chat.ChatCommands = {
 			async show(target, room, user) {
 				if (!room) return this.popupReply("请在房间里使用宠物系统");
 				if (!(user.id in userProperties)) return this.popupReply("您还未领取最初的伙伴!");
-				if (!(await addScore(user.name, 0))[0]) return this.popupReply("您没有国服积分, 不能购买商品哦");
 				this.parse('/pet box clear');
 				this.parse('/pet shop clear');
-				let title = `请选择商品:<br/>${messageButton(`/score pop`, '查看积分')}${messageButton(`/pet box`, '返回')}`;
-				if (GOODNAMES.indexOf(target) >= 0) {
-					const price = PetModeShopConfig[target] || 50;
+				const targets = target.split('=>');
+				const goodtype = GOODTYPES[targets[0]] ? targets[0] : 'ball';
+				const goods = PetModeShopConfig[goodtype];
+				const goodname = targets[1];
+				let title = Object.keys(GOODTYPES).map(x => messageButton(`/pet shop show ${x}`, GOODTYPES[x])).join('');
+				if (goods[goodname]) {
+					const price = goods[goodname];
 					if (price > 0) {
-						title = `购买 ${target} ? (${price}积分/1个)<br/>` +
-							messageButton(`/pet shop buy ${target}!`, '购买5个!') +
-							messageButton(`/pet shop buy ${target}`, '购买1个') +
-							messageButton(`/pet shop`, '取消');
+						title = `购买 ${goodname} ? (${price}积分/1个)<br/>${title}<br/>` +
+							messageButton(`/pet shop buy ${goodtype}=>${goodname}!`, '购买5个!') +
+							messageButton(`/pet shop buy ${goodtype}=>${goodname}`, '购买1个') +
+							messageButton(`/pet shop show ${goodtype}`, '取消');
 					} else {
-						title = `领取5个 ${target} ?<br/>${boolButtons(`/pet shop buy ${target}!`, `/pet shop`)}`
+						title = `领取5个 ${goodname} ?<br/>${title}<br/>` +
+							`${boolButtons(`/pet shop buy ${goodtype}=>${goodname}!`, `/pet shop show ${goodtype}`)}`;
 					}
+				} else {
+					title = `请选择商品:<br/>${title}<br/>` +
+						`${messageButton(`/score pop`, '查看积分')}${messageButton(`/pet box`, '返回')}`
 				}
-				title = `<section style="height: 50px"><strong>${title}</strong></section>`;
-				user.sendTo(room.roomid, `|uhtml|pet-shop-show|${title}<section style="height: 250px; overflow: auto; border: ridge;">`
-					+ `${GOODBUTTONS}</section>`);
+				title = `<section><strong>${title}</strong></section>`;
+				user.sendTo(room.roomid, `|uhtml|pet-shop-show|${title}<section style="border: ridge;">`
+					+ `${GOODBUTTONS[goodtype]}</section>`);
 			},
 
 			async buy(target, room, user) {
 				if (!room) return this.popupReply("请在房间里使用宠物系统");
 				if (!(user.id in userProperties)) return this.popupReply("您还未领取最初的伙伴!");
-				const targets = target.split('!');
-				target = targets[0];
-				let num = targets.length > 1 ? 5 : 1;
-				if (GOODNAMES.indexOf(target) < 0) return this.popupReply(`没有名为 ${target} 的道具`);
-				const price = PetModeShopConfig[target] || 50;
+				const targets = target.split('=>');
+				const goodtype = targets[0];
+				if (!GOODTYPES[goodtype]) return this.popupReply(`没有名为 ${goodtype} 的商品种类`);
+				// if (!(await addScore(user.name, 0))[0]) {return this.popupReply("您没有国服积分, 不能购买商品哦");
+				const goods = PetModeShopConfig[goodtype];
+				let goodname = targets[1];
+				const goodnames = goodname.split('!');
+				goodname = goodnames[0];
+				let num = goodnames.length > 1 ? 5 : 1;
+				if (!goods[goodname]) return this.popupReply(`没有名为 ${goodname} 的${GOODTYPES[goodtype]}!`);
+				const price = goods[goodname];
 				if (price > 0) {
 					const changeScores = await addScore(user.name, -price * num);
 					if (changeScores.length !== 2) return this.popupReply(`积分不足!`);
-					this.popupReply(`您获得了${num}个 ${target} ! 您现在的积分是: ${changeScores[1]}`);
+					this.popupReply(`您获得了${num}个 ${goodname} ! 您现在的积分是: ${changeScores[1]}`);
 				} else {
 					if (Date.now() - userGetBall[user.id] < BALLCD) {
-						return this.popupReply(`您在${Math.floor(BALLCD / 60000)}分钟内已领取过 ${target} !`);
+						return this.popupReply(`您在${Math.floor(BALLCD / 60000)}分钟内已领取过 ${goodname} !`);
 					}
-					if (userProperties[user.id]['items'][target]) {
-						let validNum = Math.min(num, 10 - userProperties[user.id]['items'][target]);
+					if (userProperties[user.id]['items'][goodname]) {
+						let validNum = Math.min(num, 10 - userProperties[user.id]['items'][goodname]);
 						if (num > validNum) {
 							num = validNum;
-							this.popupReply(`由于免费道具最多只能持有10个, 您领取了${num}个 ${target}`);
+							this.popupReply(`由于免费道具最多只能持有10个, 您领取了${num}个 ${goodname}`);
 						}
 					}
 					if (num > 0) userGetBall[user.id] = Date.now();
 				}
 				loadUser(user.id);
-				if (!userProperties[user.id]['items'][target]) userProperties[user.id]['items'][target] = 0; 
-				userProperties[user.id]['items'][target] = userProperties[user.id]['items'][target] + num;
+				if (!userProperties[user.id]['items'][goodname]) userProperties[user.id]['items'][goodname] = 0; 
+				userProperties[user.id]['items'][goodname] = userProperties[user.id]['items'][goodname] + num;
 				saveUser(user.id);
 				this.parse('/pet box');
+			},
+
+			draw(target, room, user) {
+				if (!(user.id in userProperties)) return this.popupReply("您还未领取最初的伙伴!");
+				const day = Math.floor(Date.now() / 24 / 60 / 60 / 1000);
+				if (day <= userProperties[user.id]['draw']) return this.popupReply("您今日已领取随机道具!");
+				const randomItem = prng.sample(Object.keys(PetModeShopConfig['draw']));
+				loadUser(user.id);
+				userProperties[user.id]['draw'] = day;
+				if (!userProperties[user.id]['items'][randomItem]) userProperties[user.id]['items'][randomItem] = 0;
+				userProperties[user.id]['items'][randomItem] += 1;
+				saveUser(user.id);
+				this.popupReply(`您获得了1个 ${randomItem}!`);
+				this.parse(`/pet box show ${userLookAt[user.id] || ''}`)
 			},
 
 			clear(target, room, user) {
