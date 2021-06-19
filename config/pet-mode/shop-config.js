@@ -44,6 +44,7 @@ exports.PetModeShopConfig = {
 		"Sweet Apple": 50,
 		"Tart Apple": 50,
 		"Whipped Dream": 50,
+		"Sachet": 50,
 	},
 	"berry": {
 		"Aguav Berry": 50,
