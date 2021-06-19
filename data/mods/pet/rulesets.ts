@@ -22,20 +22,20 @@ function addExperience(userid: string, foespecies: string, foelevel: number): bo
 		if (ownPoke) {
 			let features = ownPoke.split('|');
 			let level = parseFloat(features[10]) || 100;
-			// 经验 = foeLevel * foeBst
+			// 经验 = sqrt(100 * foeLevel) * foeBst
 			// level + 1 所需经验 = level * bst * 2
-			const foebst = eval(Object.values(Dex.species.get(foespecies).baseStats).join('+'));
-			let experience = foelevel * foebst;
-			const bst = eval(Object.values(Dex.species.get(features[1] || features[0]).baseStats).join('+'));
+			const foebst = Dex.species.get(foespecies).bst;
+			let experience = Math.sqrt(100 * foelevel) * foebst;
+			const bst = Dex.species.get(features[1] || features[0]).bst;
 			const needExp = (l: number) => Math.floor(l) * bst * 2;
 			let need = needExp(level);
 			let newLevel = level + experience / need;
 			while (Math.floor(newLevel) > Math.floor(level)) {
+				experience = experience - need;
 				level += 1;
 				levelUp = true;
 				need = needExp(level);
 				newLevel = level + experience / need;
-				experience = experience - needExp(level);
 			}
 			features[10] = newLevel >= 100 ? '' : newLevel.toString();
 			const evs = (features[6] || ',,,,,').split(',').map((x: string) => parseInt(x) || 0);
