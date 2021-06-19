@@ -76,3 +76,4 @@ pip-log.txt
 !/config/intro
 !/config/pet-mode
 /config/pet-mode/user-properties
+/config/pet-mode/user-gifts
