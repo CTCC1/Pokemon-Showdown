@@ -174,6 +174,8 @@ class Pet {
 			spa: prng.sample(intArray), spd: prng.sample(intArray), spe: prng.sample(intArray)};
 	}
 
+	// gen(宝可梦ID：来自于上级，等级：来自于上级，iv，亲密度，闪光：概率1/512) —— 功能：生成一个新的宝可梦，用于加入对战or加入玩家宝可梦库
+	// 上级主要为wild() 来自于203行（<-该行数可能未更新）
 	static gen(speciesid: string, level: number, fullivs: boolean = false, happy: number = 0, shiny: number = 1 / 512): string {
 		level = Utils.restrict(level, 1, 100);
 		const species = Dex.species.get(speciesid);
@@ -195,6 +197,9 @@ class Pet {
 		return Teams.pack([set]);
 	}
 
+	// wild(房间号：来自于上级,用户等级：来自于上级，legend：还没看懂，疑似判定是否已有正在进行的捕捉对战)
+	// roomid为用户发起战斗找寻时聊天室的id，该项用于启动随机宝可梦的过程，具体地址在config/pet-mode/room-config.js
+	// maxLevel来自于上级maxLevel()，作用为判断用户当前队伍六只宝可梦的最高等级，来自于570行（<-该行数可能未更新）
 	static wild(roomid: string, maxLevel: number, legend: boolean = false): string {
 		if (legend && PetBattle.legends[roomid]) {
 			const features = PetBattle.legends[roomid].split('|');
@@ -1185,6 +1190,7 @@ export const commands: Chat.ChatCommands = {
 				if (!petUser.property) return this.popupReply("您还未领取最初的伙伴!");
 				petUser.chatRoomId = room.roomid;
 				const bot = Users.get(BOTID);
+				// 玩家见对战而非遇见野外宝可梦时此条不触发
 				if (!bot || PetBattle.inBattle(user.id)) return this.popupReply("没有发现野生的宝可梦哦");
 				const wantLegend = target.indexOf('!') >= 0 && !!PetBattle.legends[room.roomid];
 
