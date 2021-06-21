@@ -1,5 +1,10 @@
+//捕获率and稀有度patch
+
 exports.PetModeRoomConfig = {
 	'skypillar': {
+		//因为老超一直碰不到Caterpie所以给老超respect
+		//因为和海星没在同一频道所以这个要交给他重新format
+		//'lawn': {"Caterpie":0.78,"Caterpie":0.78,"Caterpie":0.78,"Caterpie":0.78,"Caterpie":0.78,"Caterpie":0.78,"Weedle":0.81,"Weedle":0.81,"Weedle":0.81,"Ledyba":0.89,"Ledyba":0.89,"Spinarak":0.63,"Spinarak":0.63,"Spinarak":0.63,"Wurmple":0.75,"Wurmple":0.75,"Kricketot":0.59,"Sewaddle":0.84,"Sewaddle":0.84,"Sewaddle":0.84,'"Venipede":0.70,"Venipede":0.70,"Scatterbug":0.84,"Scatterbug":0.84,"Grubbin":0.75,"Grubbin":0.75,"Blipbug":0.72,"Blipbug":0.72,"Poochyena":0.68,"Poochyena":0.68,"Poochyena":0.68,"Poochyena":0.68,"Poochyena":0.68,"Poochyena":0.68,"Poochyena":0.68,"Shinx":0.55,"Shinx":0.55,"Shinx":0.55,"Lillipup":0.76,"Lillipup":0.76,"Lillipup":0.76,"Lillipup":0.76,"Purrloin":0.56,"Purrloin":0.56,"Nickit"0.69,"Pidgey":0.76,"Pidgey":0.76,"Pidgey":0.76,"Pidgey":0.76,"Pidgey":0.76,"Pidgey":0.76,"Hoothoot":0.80,"Hoothoot":0.80,"Hoothoot":0.80,"Hoothoot":0.80,"Taillow":0.12,"Starly":0.34,"Starly":0.34,"Pidove":0.66,"Pidove":0.66,"Pidove":0.66,"Fletchling":0.62,"Fletchling":0.62,"Pikipek":0.74,"Rookidee":0.65,"Rattata":0.82,"Rattata":0.82,"Rattata":0.82,"Rattata":0.82,"Rattata":0.82,"Rattata":0.82,"Rattata":0.82,"Rattata":0.03,"Sentret":0.89,"Sentret":0.89,"Sentret":0.89,"Sentret":0.89,"Zigzagoon":0.74,"Zigzagoon":0.74,"Zigzagoon":0.74,"Bidoof":0.88,"Bidoof":0.88,"Bidoof":0.88,"Patrat":0.87,"Patrat":0.87,"Patrat":0.87,"Bunnelby":0.41,"Yungoos":0.76,"Yungoos":0.76, "Skwovet":0.84},
 		'lawn': ['Caterpie','Weedle','Ledyba','Spinarak','Wurmple','Kricketot','Sewaddle','Venipede','Scatterbug','Grubbin','Blipbug','Poochyena','Shinx','Lillipup','Purrloin','Nickit','Pidgey','Hoothoot','Taillow','Starly','Pidove','Fletchling','Pikipek','Rookidee','Rattata','Sentret','Zigzagoon','Bidoof','Patrat','Bunnelby','Yungoos', 'Skwovet'],
 		'minlevel': 2,
 		'maxlevel': 5,
