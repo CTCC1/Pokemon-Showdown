@@ -3,6 +3,19 @@ import { FS } from "../../../lib";
 const BOTID = 'pschinabot';
 const USERPATH = 'config/pet-mode/user-properties';
 
+function argmax(s: StatsTable): 'hp' | 'atk' | 'def' | 'spa' | 'spd' | 'spe' {
+	let maxValue = 0;
+	let maxIndex: 'hp' | 'atk' | 'def' | 'spa' | 'spd' | 'spe' = 'hp';
+	let i: 'hp' | 'atk' | 'def' | 'spa' | 'spd' | 'spe';
+	for (i in s) {
+		if (s[i] > maxValue) {
+			maxValue = s[i];
+			maxIndex = i;
+		}
+	}
+	return maxIndex;
+}
+
 function hash(s: string): number {
 	let hash = 0, i, chr;
 	if (s.length === 0) return hash;
@@ -17,17 +30,19 @@ function hash(s: string): number {
 function addExperience(userid: string, foespecies: string, foelevel: number): boolean {
 	let levelUp = false;
 	let userProperty= JSON.parse(FS(`${USERPATH}/${userid}.json`).readIfExistsSync());
+	const len = userProperty['bag'].length;
 	for (let index in userProperty['bag']) {
 		const ownPoke = userProperty['bag'][index];
 		if (ownPoke) {
 			let features = ownPoke.split('|');
 			let level = parseFloat(features[10]) || 100;
-			// 经验 = sqrt(100 * foeLevel) * foeBst
-			// level + 1 所需经验 = level * bst * 2
-			const foebst = Dex.species.get(foespecies).bst;
-			let experience = Math.sqrt(100 * foelevel) * foebst;
+			// 经验 = sqrt(100 * foeLevel) * foeBst / log3(team.length + 2)
+			// level + 1 所需经验 = level * bst * 1.5
+			const foespec = Dex.species.get(foespecies);
+			const foebst = foespec.bst;
+			let experience = Math.sqrt(100 * foelevel) * foebst / (Math.log(len + 2) / Math.log(3));
 			const bst = Dex.species.get(features[1] || features[0]).bst;
-			const needExp = (l: number) => Math.floor(l) * bst * 2;
+			const needExp = (l: number) => Math.floor(l) * bst * 1.5;
 			let need = needExp(level);
 			let newLevel = level + experience / need;
 			while (Math.floor(newLevel) > Math.floor(level)) {
@@ -37,10 +52,11 @@ function addExperience(userid: string, foespecies: string, foelevel: number): bo
 				need = needExp(level);
 				newLevel = level + experience / need;
 			}
+			newLevel = Math.min(newLevel, userProperty['badges'].length * 10 + 30);
 			features[10] = newLevel >= 100 ? '' : newLevel.toString();
 			const evs = (features[6] || ',,,,,').split(',').map((x: string) => parseInt(x) || 0);
-			const f = Math.abs(hash(foespecies)) % 6;
-			evs[f] = evs[f] + Math.max(Math.min(10, 252 - evs[f], 510 - eval(evs.join('+'))), 0);
+			const maxEvsIndex = argmax(foespec.baseStats);
+			evs[Object.keys(foespec.baseStats).indexOf(maxEvsIndex)] += Math.floor(foespec.baseStats[maxEvsIndex] / 40) * 4;
 			features[6] = evs.join(',');
 			features[11] = Math.min((features[11] ? parseInt(features[11]) : 255) + 10, 255).toString();
 			userProperty['bag'][index] = features.join('|');

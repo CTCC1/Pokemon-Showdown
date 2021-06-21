@@ -12,7 +12,7 @@ X	7. 清努力个体
 	10. Bottle Cap & Gold Bottle Cap
 X	11. 领取随机道具
 X	12. 领取礼物
-	13. 交换 (国服积分)
+X	13. 交换 (国服积分)
 */
 
 import { FS } from "../../lib";
@@ -55,6 +55,29 @@ class Utils {
 
 	static restrict(x: number, min: number, max: number): number {
 		return Math.max(min, Math.min(max, x));
+	}
+
+	static argmax(s: StatsTable): 'hp' | 'atk' | 'def' | 'spa' | 'spd' | 'spe' {
+		let maxValue = 0;
+		let maxIndex: 'hp' | 'atk' | 'def' | 'spa' | 'spd' | 'spe' = 'hp';
+		let i: 'hp' | 'atk' | 'def' | 'spa' | 'spd' | 'spe';
+		for (i in s) {
+			if (s[i] > maxValue) {
+				maxValue = s[i];
+				maxIndex = i;
+			}
+		}
+		return maxIndex;
+	}
+
+	static sample(s: {[name: string]: number}): string {
+		let r = Math.random();
+		let key = Object.keys(s)[0];
+		for (key in s) {
+			r -= s[key];
+			if (r <= 0) break;
+		}
+		return key;
 	}
 
 	static hash(s: string): number {
@@ -195,23 +218,27 @@ class Pet {
 		return Teams.pack([set]);
 	}
 
-	static wild(roomid: string, maxLevel: number, legend: boolean = false): string {
+	static wild(roomid: string, maxLevel: number, restrictLevel: number, legend: boolean = false): string {
 		if (legend && PetBattle.legends[roomid]) {
 			const features = PetBattle.legends[roomid].split('|');
 			return this.gen(features[0], parseInt(features[1]), true, 0, parseInt(features[2]));
 		}
 		if (PetBattle.roomConfig[roomid]) {
-			const roomConfig: {'lawn': string[], 'minlevel': number, 'maxlevel': number} = PetBattle.roomConfig[roomid];
+			const roomConfig: {
+				'lawn': {[species: string]: number},
+				'minlevel': number,
+				'maxlevel': number
+			} = PetBattle.roomConfig[roomid];
 			return this.gen(
-				prng.sample(roomConfig['lawn'] || this.defaultWildMons),
-				prng.sample([...new Array(11).keys()].map(x => {
+				roomConfig['lawn'] ? Utils.sample(roomConfig['lawn']) : prng.sample(this.defaultWildMons),
+				Math.min(restrictLevel, prng.sample([...new Array(11).keys()].map(x => {
 					return x + Utils.restrict(maxLevel, roomConfig['minlevel'], roomConfig['maxlevel']) - 5;
-				}))
+				})))
 			);
 		}
 		return this.gen(
 			prng.sample(this.defaultWildMons),
-			prng.sample([...new Array(11).keys()].map(x => x + Utils.restrict(maxLevel, 5, 20) - 5))
+			Math.min(restrictLevel, prng.sample([...new Array(11).keys()].map(x => x + Utils.restrict(maxLevel, 5, 20) - 5)))
 		);
 	}
 
@@ -266,7 +293,7 @@ class Pet {
 					case 'trade':
 						return [];
 					default:
-						return set.level > 35 ? [x, ''] : [];
+						return set.level >= 36 ? [x, ''] : [];
 				}
 			}
 			return set.level >= (species.evoLevel || 100) ? [x, ''] : [];
@@ -278,16 +305,10 @@ class Pet {
 		if (set.species === set.name) set.name = targetSpecies;
 		const preAbilities = Dex.species.get(set.species).abilities;
 		const postAbilities = Dex.species.get(targetSpecies).abilities;
-		switch (set.ability) {
-			case preAbilities['1']:
-				if (postAbilities['1']) { set.ability = postAbilities['1']; break; }
-			case preAbilities['H']:
-				if (postAbilities['H']) { set.ability = postAbilities['H']; break; }
-			case preAbilities['S']:
-				if (postAbilities['S']) { set.ability = postAbilities['S']; break; }
-			default:
-				set.ability = postAbilities['0'];
-		}
+		if (set.ability === preAbilities['1'] && postAbilities['1']) set.ability = postAbilities['1'];
+		else if (set.ability === preAbilities['H'] && postAbilities['H']) set.ability = postAbilities['H'];
+		else if (set.ability === preAbilities['S'] && postAbilities['S']) set.ability = postAbilities['S'];
+		else set.ability = postAbilities['0'];
 		set.species = targetSpecies;
 		return set;
 	}
@@ -305,7 +326,11 @@ class PetBattle {
 
 	static legends: {[roomid: string]: string} = {};
 
-	static roomConfig: {[roomid: string]: {'lawn': string[], 'minlevel': number, 'maxlevel': number}} = PetModeRoomConfig;
+	static roomConfig: {[roomid: string]: {
+		'lawn': {[species: string]: number},
+		'minlevel': number,
+		'maxlevel': number
+	}} = PetModeRoomConfig;
 
 	static balls: {[ballname: string]: number} = {'Poke Ball': 1, 'Great Ball': 2, 'Ultra Ball': 4, 'Master Ball': Infinity};
 
@@ -376,10 +401,15 @@ class PetUser {
 	onPosition: petPosition | undefined;
 	onChangeMoves: {'position': petPosition, 'selected': string[], 'valid': string[]} | undefined;
 
+	badgeNum: number;
+	levelRistriction: number;
+
 	constructor(userid: string, dir: string = USERPATH) {
 		this.id = userid;
 		this.path = `${dir}/${this.id}.json`;
 		this.load();
+		this.badgeNum = this.property ? this.property['badges'].length : 0;
+		this.levelRistriction = this.badgeNum * 10 + 30;
 	}
 
 	load() {
@@ -576,17 +606,19 @@ class PetUser {
 	addExperience(foespecies: string, foelevel: number): boolean {
 		if (!this.property) return false;
 		let levelUp = false;
+		const len = this.property['bag'].length;
 		for (let index in this.property['bag']) {
 			const ownPoke = this.property['bag'][index];
 			if (ownPoke) {
 				let features = ownPoke.split('|');
 				let level = parseFloat(features[10]) || 100;
-				// 经验 = sqrt(100 * foeLevel) * foeBst
-				// level + 1 所需经验 = level * bst * 2
-				const foebst = Dex.species.get(foespecies).bst;
-				let experience = Math.sqrt(100 * foelevel) * foebst;
+				// 经验 = sqrt(100 * foeLevel) * foeBst / log3(team.length + 2)
+				// level + 1 所需经验 = level * bst * 1.5
+				const foespec = Dex.species.get(foespecies);
+				const foebst = foespec.bst;
+				let experience = Math.sqrt(100 * foelevel) * foebst / (Math.log(len + 2) / Math.log(3));
 				const bst = Dex.species.get(features[1] || features[0]).bst;
-				const needExp = (l: number) => Math.floor(l) * bst * 2;
+				const needExp = (l: number) => Math.floor(l) * bst * 1.5;
 				let need = needExp(level);
 				let newLevel = level + experience / need;
 				while (Math.floor(newLevel) > Math.floor(level)) {
@@ -596,10 +628,11 @@ class PetUser {
 					need = needExp(level);
 					newLevel = level + experience / need;
 				}
+				newLevel = Math.min(newLevel, this.property['badges'].length * 10 + 30);
 				features[10] = newLevel >= 100 ? '' : newLevel.toString();
 				const evs = (features[6] || ',,,,,').split(',').map((x: string) => parseInt(x) || 0);
-				const f = Math.abs(Utils.hash(foespecies)) % 6;
-				evs[f] = evs[f] + Math.max(Math.min(10, 252 - evs[f], 510 - eval(evs.join('+'))), 0);
+				const maxEvsIndex = Utils.argmax(foespec.baseStats);
+				evs[Object.keys(foespec.baseStats).indexOf(maxEvsIndex)] += Math.floor(foespec.baseStats[maxEvsIndex] / 40) * 4;
 				features[6] = evs.join(',');
 				features[11] = Math.min((features[11] ? parseInt(features[11]) : 255) + 10, 255).toString();
 				this.property['bag'][index] = features.join('|');
@@ -671,7 +704,7 @@ function petBox(petUser: PetUser, target: string): string {
 	let pokeDiv = ``;
 	const set = petUser.checkPet(Utils.parsePosition(target));
 	if (set) {
-		let setTitle = '<br/>';
+		let setTitle = set.level === petUser.levelRistriction ? `<strong>达到${petUser.badgeNum}个徽章的等级上限</strong>` : '<br/>';
 		if (petUser.operation === 'move') {
 			setTitle = st('请选择位置');
 		} else if (petUser.operation === 'drop' + target) {
@@ -751,7 +784,7 @@ function petBox(petUser: PetUser, target: string): string {
 			`">${lines.map(x => `${x}`).join('<br/>')}<br/>${statsTable}</div>`;
 	}
 
-	const boxTitle = `${st('用户ID')} ${petUser.id}&emsp;${st('徽章数')} ${petUser.property['badges'].length}`;
+	const boxTitle = `${st('用户ID')} ${petUser.id}&emsp;${st('徽章数')} ${petUser.badgeNum}`;
 	const petButton = (species: string, pos: string) => {
 		const style = Utils.iconStyle(species);
 		if (petUser.operation === 'move') return Utils.button(`/pet box move ${target}<=>${pos}`, '', style);
@@ -777,7 +810,7 @@ function petBox(petUser: PetUser, target: string): string {
 		`<div style="width: 60px; vertical-align: top; display: inline-block;">` +
 		`<div style="line-height: 35px">${shopButton}</div><div>${st(`道具`)}</div>` +
 		`<div style="height: 210px; overflow: auto;">${items}</div></div></div>`;
-	return `|uhtml|pet-box-show|<div style="height: 300">${boxDiv}${pokeDiv}</div>`;
+	return `<div style="height: 300">${boxDiv}${pokeDiv}</div>`;
 }
 
 export const commands: Chat.ChatCommands = {
@@ -867,18 +900,22 @@ export const commands: Chat.ChatCommands = {
 
 		box: {
 
-			'': 'show',
+			'': 'shownew',
+			shownew(target, room, user) {
+				this.parse('/pet box show new')
+			},
+
 			show(target, room, user) {
 				if (!room) return this.popupReply("请在房间里使用宠物系统");
 				const petUser = getUser(user.id);
 				if (!petUser.property) return this.popupReply("您还未领取最初的伙伴!");
 				this.parse('/pet init clear');
-				this.parse('/pet shop clear');
+				this.parse('/pet shop clear new');
 				petUser.chatRoomId = room.roomid;
 				petUser.load();
 				const div = petBox(petUser, target);
-				this.parse('/pet box clear');
-				user.sendTo(room.roomid, div);
+				this.parse(`/pet box clear ${target}`);
+				user.sendTo(room.roomid, `|uhtml${target === 'new' ? '' : 'change'}|pet-box-show|${div}`);
 			},
 
 			onmove(target, room, user) {
@@ -1160,8 +1197,10 @@ export const commands: Chat.ChatCommands = {
 				const petUser = getUser(user.id);
 				if (!petUser.property) return this.popupReply("您还未领取最初的伙伴!");
 				petUser.onChangeMoves = undefined;
-				user.sendTo(room.roomid, `|uhtmlchange|pet-moves-show|`);
-				user.sendTo(room.roomid, `|uhtmlchange|pet-box-show|`);
+				if (target === 'new') {
+					user.sendTo(room.roomid, `|uhtmlchange|pet-moves-show|`);
+					user.sendTo(room.roomid, `|uhtmlchange|pet-box-show|`);
+				}
 			},
 
 		},
@@ -1192,7 +1231,7 @@ export const commands: Chat.ChatCommands = {
 				if (Date.now() - petUser.property['time']['search'] < LAWNCD) {
 					return this.popupReply(`您的宝可梦累了, 请稍后再来!`);
 				}
-				const wildPokemon = Pet.wild(room.roomid, petUser.maxLevel(), wantLegend);
+				const wildPokemon = Pet.wild(room.roomid, petUser.maxLevel(), petUser.levelRistriction, wantLegend);
 				if (!wildPokemon) return this.popupReply('没有发现野生的宝可梦哦');
 				petUser.property['time']['search'] = Date.now();
 				petUser.battleInfo = wildPokemon + (wantLegend ? `<=${room.roomid}` : '');
@@ -1321,21 +1360,23 @@ export const commands: Chat.ChatCommands = {
 
 		shop: {
 
-			'': 'show',
+			'': 'shownew',
+			shownew(target, room, user) {
+				this.parse('/pet shop show new');
+			},
+
 			async show(target, room, user) {
 				if (!room) return this.popupReply("请在房间里使用宠物系统");
 				const petUser = getUser(user.id);
 				if (!petUser.property) return this.popupReply("您还未领取最初的伙伴!");
 				petUser.chatRoomId = room.roomid;
-				this.parse('/pet box clear');
-				this.parse('/pet shop clear');
+				this.parse('/pet box clear new');
+				this.parse(`/pet shop clear ${target}`);
 				const targets = target.split('=>');
 				const goodtype = Shop.types[targets[0]] ? targets[0] : 'ball';
 				const goods = Shop.shopConfig[goodtype];
 				const goodname = targets[1];
-				let title = `${Utils.button('/pet shop buy ball=>Poke Ball!', '领取5个精灵球!')}` +
-					`${Utils.button('/pet shop draw', '领取随机道具!')}<br/>` +
-					`${Object.keys(Shop.types).map(x => Utils.button(`/pet shop show ${x}`, Shop.types[x])).join('')}`;
+				let title = Object.keys(Shop.types).map(x => Utils.button(`/pet shop show ${x}`, Shop.types[x])).join('');
 				if (goods[goodname]) {
 					const price = goods[goodname];
 					if (price > 0) {
@@ -1348,12 +1389,13 @@ export const commands: Chat.ChatCommands = {
 							`${Utils.boolButtons(`/pet shop buy ${goodtype}=>${goodname}!`, `/pet shop show ${goodtype}`)}`;
 					}
 				} else {
-					title = `请选择商品:<br/>${title}<br/>` +
-						`${Utils.button(`/score pop`, '查看积分')}${Utils.button(`/pet box`, '返回')}`
+					title = `请选择商品:<br/>${title}<br/>`
 				}
-				title = `<div><strong>${title}</strong></div>`;
-				user.sendTo(room.roomid, `|uhtml|pet-shop-show|${title}<div style="border: ridge;">`
-					+ `${Shop.goodButtons[goodtype]}</div>`);
+				title = `<div><strong>${Utils.button('/pet shop buy ball=>Poke Ball!', '领取5个精灵球!')}` +
+					`${Utils.button('/pet shop draw', '领取随机道具!')}<br/>${title}</strong></div>`;
+				user.sendTo(room.roomid, `|uhtml${target === 'new' ? '' : 'change'}|pet-shop-show|` +
+					`${title}<div style="border: ridge;">${Shop.goodButtons[goodtype]}</div>` +
+					`${Utils.button(`/score pop`, '查看积分')}${Utils.button(`/pet box`, '返回')}`);
 			},
 
 			async buy(target, room, user) {
@@ -1410,7 +1452,9 @@ export const commands: Chat.ChatCommands = {
 
 			clear(target, room, user) {
 				if (!room) return this.popupReply("请在房间里使用宠物系统");
-				user.sendTo(room.roomid, `|uhtmlchange|pet-shop-show|`);
+				if (target === 'new') {
+					user.sendTo(room.roomid, `|uhtmlchange|pet-shop-show|`);
+				}
 			}
 
 		},
