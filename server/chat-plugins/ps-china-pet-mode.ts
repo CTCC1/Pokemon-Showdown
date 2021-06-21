@@ -1031,9 +1031,8 @@ export const commands: Chat.ChatCommands = {
 					Utils.button(`/pet box addmove ${target}=>${move}`, move, `${Pet.moveIcons[move]} width: 180px;`)
 				).join('<br/>');
 				const buttons = Utils.boolButtons(`/pet box setmoves ${target}!`, `/pet box setmoves ${target}`);
-				user.sendTo(room.roomid, `|uhtmlchange|pet-moves-show|`);
-				user.sendTo(room.roomid, `|uhtml|pet-moves-show|<strong>请选择招式:</strong><br/>` +
-					`${div(valid)}${div(`${selected}<br/>${buttons}`)}`);
+				user.sendTo(room.roomid, `|uhtml${targets.length === 1 ? '' : 'change'}|pet-moves-show|` +
+					`<strong>请选择招式:</strong><br/>${div(valid)}${div(`${selected}<br/>${buttons}`)}`);
 			},
 
 			addmove(target, room, user) {
@@ -1066,6 +1065,7 @@ export const commands: Chat.ChatCommands = {
 					if (!position) return this.popupReply('位置不存在!');
 					if (petUser.changeMoves(position)) petUser.save();
 				}
+				this.parse(`/pet box show new`);
 				this.parse(`/pet box show ${target}`);
 			},
 
