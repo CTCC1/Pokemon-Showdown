@@ -632,7 +632,9 @@ class PetUser {
 				features[10] = newLevel >= 100 ? '' : newLevel.toString();
 				const evs = (features[6] || ',,,,,').split(',').map((x: string) => parseInt(x) || 0);
 				const maxEvsIndex = Utils.argmax(foespec.baseStats);
-				evs[Object.keys(foespec.baseStats).indexOf(maxEvsIndex)] += Math.floor(foespec.baseStats[maxEvsIndex] / 40) * 4;
+				const f = Object.keys(foespec.baseStats).indexOf(maxEvsIndex);
+				const s = Math.floor(foespec.baseStats[maxEvsIndex] / 40) * 4;
+				evs[f] = evs[f] + Math.max(Math.min(s, 252 - evs[f], 510 - eval(evs.join('+'))), 0);
 				features[6] = evs.join(',');
 				features[11] = Math.min((features[11] ? parseInt(features[11]) : 255) + 10, 255).toString();
 				this.property['bag'][index] = features.join('|');
