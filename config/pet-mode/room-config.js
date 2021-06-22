@@ -40,7 +40,6 @@ exports.PetModeRoomConfig = {
 	"flowerparadise": {
 		'lawn': {
 			"Rattata": 0.1386,
-			"attata": 0.0002,
 			"Oddish": 0.04,
 			"Paras": 0.0815,
 			"Mankey": 0.06,
@@ -76,9 +75,9 @@ exports.PetModeRoomConfig = {
 			"Fomantis": 0.031,
 			"Morelull": 0.0092,
 			"Gossifleur": 0.011,
-			"ooloo": 0.021,
-			"ilcery": 0.0015,
-			"astly": 0.0014
+			"Wooloo": 0.021,
+			"Milcery": 0.0015,
+			"Gastly": 0.0014
 		},
 		'minlevel': 5,
 		'maxlevel': 10,
@@ -143,7 +142,7 @@ exports.PetModeRoomConfig = {
 			"Tentacool": 0.092,
 			"Slowpoke": 0.034,
 			"Magnemite": 0.055,
-			"arfetch'": 0.03,
+			"Farfetch'd": 0.03,
 			"Voltorb": 0.037,
 			"Elekid": 0.0078,
 			"Wooper": 0.034,
