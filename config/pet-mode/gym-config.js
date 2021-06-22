@@ -1,3 +1,3 @@
 exports.PetModeGymConfig = {
-	'TEST1': 'Gligar||Eviolite|Immunity|Earthquake,Toxic,StealthRock,Roost|Impish|,36,236,,236,||||10|]Mantine||HeavyDutyBoots|WaterAbsorb|Scald,Hurricane,Haze,Roost|Bold|36,,236,,236,||,0,,,,||10|]Skarmory||Leftovers|Sturdy|DrillPeck,Toxic,Spikes,Roost|Impish|252,,232,,,24|||||]Yanmega||LifeOrb|SpeedBoost|BugBuzz,AirSlash,AncientPower,Psychic|Modest|28,,,228,,236||,0,,,,||10|]Vullaby||DarkiniumZ|WeakArmor|DarkPulse,AirSlash,HeatWave,NastyPlot|Timid|,,,252,,252||,0,,,,||12|]Scyther||ChartiBerry|Technician|DualWingbeat,BugBite,BrickBreak,SwordsDance|Jolly|,228,,,36,236||||12|',
+	'TEST1': 'Scyther||OccaBerry|Technician|DualWingbeat,BugBite,DoubleHit|Adamant|||0,,0,0,0,15||10|]Mantyke|||WaterAbsorb|BubbleBeam,PowderSnow,Roost,AirCutter|Bold|,,88,,,||,0,15,0,5,0||10|]Gligar||Leftovers|Immunity|Earthquake,Roost,Toxic,KnockOff||||0,0,0,0,0,0||10|]Oricorio-Sensu||SpookyPlate|Dancer|RevelationDance,AirCutter||||0,0,0,0,0,0||10|',
 }
