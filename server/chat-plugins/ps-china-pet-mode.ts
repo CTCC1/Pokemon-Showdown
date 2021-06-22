@@ -23,6 +23,9 @@ import { PokemonIconIndexes } from "../../config/pet-mode/poke-num";
 import { PetModeRoomConfig } from "../../config/pet-mode/room-config";
 import { PetModeShopConfig } from "../../config/pet-mode/shop-config";
 
+import { PetModeGymConfig } from "../../config/pet-mode/gym-config"
+// console.log(Teams.pack(Teams.import(FS('config/pet-mode/tmp.txt').readSync())));
+
 type userProperty = {
 	'bag': string[],
 	'box': string[],
@@ -45,7 +48,7 @@ const ITEMSHEET = 'https://play.pokemonshowdown.com/sprites/itemicons-sheet.png'
 const TYPEICONS = 'https://play.pokemonshowdown.com/sprites/types';
 const CATICONS = 'https://play.pokemonshowdown.com/sprites/categories';
 
-const LAWNCD = 60000;
+const LAWNCD = 60;
 const BALLCD = 600000;
 
 if (!FS(USERPATH).existsSync()) FS(USERPATH).mkdir();
@@ -331,6 +334,8 @@ class PetBattle {
 		'minlevel': number,
 		'maxlevel': number
 	}} = PetModeRoomConfig;
+
+	static gymConfig: {[gymid: string]: string} = PetModeGymConfig;
 
 	static balls: {[ballname: string]: number} = {'Poke Ball': 1, 'Great Ball': 2, 'Ultra Ball': 4, 'Master Ball': Infinity};
 
@@ -1245,8 +1250,13 @@ export const commands: Chat.ChatCommands = {
 				if (Date.now() - petUser.property['time']['search'] < LAWNCD) {
 					return this.popupReply(`您的宝可梦累了, 请稍后再来!`);
 				}
-				const wildPokemon = Pet.wild(room.roomid, petUser.maxLevel(), petUser.levelRistriction, wantLegend);
-				if (!wildPokemon) return this.popupReply('没有发现野生的宝可梦哦');
+				let wildPokemon: string;
+				if (parseInt(target) !== NaN) {
+					wildPokemon = PetBattle.gymConfig[`TEST${parseInt(target)}`] || 'Magikarp|||SwiftSwim|Splash|Hardy||M|0,0,0,0,0,0||5|';
+				} else {
+					wildPokemon = Pet.wild(room.roomid, petUser.maxLevel(), petUser.levelRistriction, wantLegend);
+					if (!wildPokemon) return this.popupReply('没有发现野生的宝可梦哦');
+				}
 				petUser.property['time']['search'] = Date.now();
 				petUser.battleInfo = wildPokemon + (wantLegend ? `<=${room.roomid}` : '');
 				petUser.save();
