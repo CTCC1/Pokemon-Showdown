@@ -197,7 +197,7 @@ class Pet {
 			spa: prng.sample(intArray), spd: prng.sample(intArray), spe: prng.sample(intArray)};
 	}
 
-	static gen(speciesid: string, level: number, fullivs: boolean = false, happy: number = 0, shiny: number = 1 / 512): string {
+	static gen(speciesid: string, level: number, fullivs: boolean = false, happy: number = 0, shiny: number = 1 / 2048): string {
 		level = Utils.restrict(level, 1, 100);
 		const species = Dex.species.get(speciesid);
 		if (species.num <= 0) return '';
@@ -208,7 +208,7 @@ class Pet {
 			ability: species.abilities["1"] ? prng.sample([species.abilities["0"], species.abilities["1"]]) : species.abilities["0"],
 			moves: this.sampleMoves(species.id, level),
 			nature: prng.sample(Dex.natures.all()).name,
-			gender: prng.randomChance(Math.floor(species.genderRatio.M * 1000), 1000) ? 'M' : 'F',
+			gender: species.genderRatio ? (prng.randomChance(Math.floor(species.genderRatio.M * 1000), 1000) ? 'M' : 'F') : 'N',
 			evs: {hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0},
 			ivs: fullivs ? {hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31} : this.randomIvs(),
 			level: level,
@@ -770,7 +770,7 @@ function petBox(petUser: PetUser, target: string): string {
 			}).join('')
 		].join('</tr><tr>')}</tr></table>`;
 		const lines = [
-			`${set.name}&emsp;${st('种类')} ${set.species}&emsp;${Pet.typeIcons[set.species]}`,
+			`${set.name}&emsp;${st('种类')} ${set.species}&emsp;${Pet.typeIcons[set.species]}${set.shiny ? '☆' : ''}`,
 			`${st('性别')} ${{'M': '♂', 'F': '♀'}[set.gender] || '∅'}&emsp;${st('亲密度')} ${set.happiness}`,
 			`${st('等级')} ${Math.floor(set.level)} (${Math.floor((set.level - Math.floor(set.level)) * 100)}%)&emsp;` + 
 			`${st('道具')} ${set.item ? Utils.button(`/pet box item ${target}`, '', Utils.itemStyle(set.item)) : '无'}`,
@@ -823,6 +823,18 @@ export const commands: Chat.ChatCommands = {
 
 	ex(target) {
 		this.parse(`/pet box ex ${target}`);
+	},
+
+	ball() {
+		this.parse(`/pet lawn ball Poke Ball`)
+	},
+
+	ball1() {
+		this.parse(`/pet lawn ball Great Ball`)
+	},
+
+	ball2() {
+		this.parse(`/pet lawn ball Ultra Ball`)
 	},
 
 	'gen': 'add',
@@ -881,7 +893,7 @@ export const commands: Chat.ChatCommands = {
 				if (!room) return this.popupReply("请在房间里使用宠物系统");
 				this.parse('/pet init clear');
 				user.sendTo(room.roomid, `|uhtml|pet-init-show|您已领取最初的伙伴! 快进入 ${
-					Utils.button('/pet box show', '盒子')
+					Utils.button('/pet box show new', '盒子')
 				} 查看吧!`);
 			},
 
@@ -1128,10 +1140,10 @@ export const commands: Chat.ChatCommands = {
 					petFriend.save();
 					const friendRoom = Rooms.get(petFriend.chatRoomId);
 					if (friendRoom) {
-						friend.sendTo(friendRoom.roomid, petBox(
+						friend.sendTo(friendRoom.roomid, `|uhtmlchange|pet-box-show|${petBox(
 							petFriend,
 							petFriend.onPosition ? Object.values(petFriend.onPosition).join(',') : ''
-						));
+						)}`);
 					}
 				} else if (petFriend.operation) {
 					return this.popupReply(`${friend.name}正在操作箱子, 请稍候`);
