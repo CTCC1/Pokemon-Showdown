@@ -40,7 +40,8 @@ const prng = new PRNG();
 
 const BOTID = 'pschinabot';
 const USERPATH = 'config/pet-mode/user-properties';
-const GIFTPATH = 'config/pet-mode/user-gifts'
+const GIFTPATH = 'config/pet-mode/user-gifts';
+const DEPOSITPATH = 'config/pet-mode/deposit';
 const POKESHEET = 'https://play.pokemonshowdown.com/sprites/pokemonicons-sheet.png';
 const POKESPRITES = 'https://play.pokemonshowdown.com/sprites/ani';
 const POKESPRITESSHINY = 'https://play.pokemonshowdown.com/sprites/ani-shiny';
@@ -606,6 +607,11 @@ class PetUser {
 	balls(): string[] {
 		if (!this.property) return [];
 		return Object.keys(this.property['items']).filter(itemname => !!PetBattle.balls[itemname]);
+	}
+
+	catch(ball: string): boolean {
+		const catchRate = parseInt(FS(`${DEPOSITPATH}/${this.id}.txt`).readIfExistsSync() || '0') * (PetBattle.balls[ball] || 1);
+		return prng.randomChance(catchRate, 255);
 	}
 
 	addExperience(foespecies: string, foelevel: number): boolean {
@@ -1251,12 +1257,12 @@ export const commands: Chat.ChatCommands = {
 					return this.popupReply(`您的宝可梦累了, 请稍后再来!`);
 				}
 				let wildPokemon: string;
-				if (parseInt(target) !== NaN) {
-					wildPokemon = PetBattle.gymConfig[`TEST${parseInt(target)}`] || 'Magikarp|||SwiftSwim|Splash|Hardy||M|0,0,0,0,0,0||5|';
-				} else {
+				/*if (parseInt(target) !== NaN) {
+					wildPokemon = PetBattle.gymConfig[`TEST${parseInt(target)}`] || 'Magikarp|||SwiftSwim|Splash|Hardy||M|0,0,0,0,0,0||15|';
+				} else {*/
 					wildPokemon = Pet.wild(room.roomid, petUser.maxLevel(), petUser.levelRistriction, wantLegend);
 					if (!wildPokemon) return this.popupReply('没有发现野生的宝可梦哦');
-				}
+				// }
 				petUser.property['time']['search'] = Date.now();
 				petUser.battleInfo = wildPokemon + (wantLegend ? `<=${room.roomid}` : '');
 				petUser.save();
@@ -1306,7 +1312,8 @@ export const commands: Chat.ChatCommands = {
 					const roomOfLegend = parsed[1];
 					const foeLevel = parseInt(features[10]) || 100;
 					const foeSpecies = features[1] || features[0];
-					if (PetBattle.catch(room.battle.turn, foeLevel, user.id, target, foeSpecies, roomOfLegend)) {
+					this.sendReply(`捕获率: ${parseInt(FS(`${DEPOSITPATH}/${user.id}.txt`).readIfExistsSync() || '0') * (PetBattle.balls[target] || 1) / 256}`);
+					if (petUser.catch(target)) {
 						if (petUser.addPet(parsed[0])) {
 							petUser.battleInfo = undefined;
 							this.popupReply(`捕获成功! 快进入盒子查看吧!`);

@@ -3242,7 +3242,7 @@ export const Formats: FormatList = [
 
 		mod: 'pet',
 		team: 'randomPetMode',
-		ruleset: ['PS China Pet Mode', '!! Adjust Level = 50'],
+		ruleset: ['PS China Pet Mode'],
 	},
 	{
 		name: "[Gen 8] Multi OU",

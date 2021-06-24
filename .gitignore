@@ -77,3 +77,4 @@ pip-log.txt
 !/config/pet-mode
 /config/pet-mode/user-properties
 /config/pet-mode/user-gifts
+/config/pet-mode/deposit
