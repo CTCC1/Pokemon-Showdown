@@ -22,7 +22,7 @@ function argmax(s: StatsTable): 'hp' | 'atk' | 'def' | 'spa' | 'spd' | 'spe' {
 
 function addExperience(userid: string, foespecies: string, foelevel: number): boolean {
 	let levelUp = false;
-	let userProperty= JSON.parse(FS(`${USERPATH}/${userid}.json`).readIfExistsSync());
+	let userProperty = JSON.parse(FS(`${USERPATH}/${userid}.json`).readIfExistsSync());
 	const len = userProperty['bag'].length;
 	for (let index in userProperty['bag']) {
 		const ownPoke = userProperty['bag'][index];
@@ -33,20 +33,21 @@ function addExperience(userid: string, foespecies: string, foelevel: number): bo
 			// level + 1 所需经验 = level * bst * 1.5
 			const foespec = Dex.species.get(foespecies);
 			const foebst = foespec.bst;
-			let experience = Math.sqrt(100 * foelevel) * foebst / (Math.log(len + 2) / Math.log(3));
-			const bst = Dex.species.get(features[1] || features[0]).bst;
-			const needExp = (l: number) => Math.floor(l) * bst * 1.5;
-			let need = needExp(level);
-			let newLevel = level + experience / need;
-			while (Math.floor(newLevel) > Math.floor(level)) {
-				experience = experience - need;
-				level += 1;
-				levelUp = true;
-				need = needExp(level);
-				newLevel = level + experience / need;
+			if (level < userProperty['badges'].length * 10 + 10) {
+				let experience = Math.sqrt(100 * foelevel) * foebst / (Math.log(len + 2) / Math.log(3));
+				const bst = Dex.species.get(features[1] || features[0]).bst;
+				const needExp = (l: number) => Math.floor(l) * bst * 1.5;
+				let need = needExp(level);
+				let newLevel = level + experience / need;
+				while (Math.floor(newLevel) > Math.floor(level)) {
+					experience = experience - need;
+					level += 1;
+					levelUp = true;
+					need = needExp(level);
+					newLevel = level + experience / need;
+				}
+				features[10] = newLevel >= 100 ? '' : newLevel.toString();
 			}
-			newLevel = Math.min(newLevel, userProperty['badges'].length * 10 + 30);
-			features[10] = newLevel >= 100 ? '' : newLevel.toString();
 			const evs = (features[6] || ',,,,,').split(',').map((x: string) => parseInt(x) || 0);
 			const maxEvsIndex = argmax(foespec.baseStats);
 			const f = Object.keys(foespec.baseStats).indexOf(maxEvsIndex);
@@ -66,10 +67,25 @@ function writeCatchRate(userid: string, speciesid: string, hp: number, maxhp: nu
 	FS(`${DEPOSITPATH}/${userid}.txt`).safeWriteSync(Math.floor(R).toString());
 }
 
+function addBadge(userid: string, badgename: string): boolean {
+	let userProperty = JSON.parse(FS(`${USERPATH}/${userid}.json`).readIfExistsSync());
+	if (userProperty['badges'].indexOf(badgename) < 0) {
+		userProperty['badges'].push(badgename);
+		FS(`${USERPATH}/${userid}.json`).writeSync(JSON.stringify(userProperty));
+		return true;
+	}
+	return false;
+}
+
 export const Rulesets: {[k: string]: FormatData} = {
+
 	pschinapetmode: {
 		name: 'PS China Pet Mode',
 		ruleset: ['Dynamax Clause'],
+	},
+
+	pschinapetmodewild: {
+		name: 'PS China Pet Mode Wild',
 		timer: {
 			starting: 120,
 			addPerTurn: 0,
@@ -80,36 +96,25 @@ export const Rulesets: {[k: string]: FormatData} = {
 			dcTimerBank: false,
 		},
 		onBegin() {
-			this.sides.forEach(side => {
-				if (Dex.toID(side.name) === BOTID) {
-					this.add('html', `<div class="broadcast-green"><strong>野生的${side.team[0].name}出现了!</strong></div>`);
-				}
-			})
+			this.add('html', `<div class="broadcast-green"><strong>野生的${this.sides[1].team[0].name}出现了!</strong></div>`);
 		},
 		onBattleStart() {
-			this.sides.forEach(side => {
-				if (Dex.toID(side.name) === BOTID) {
-					this.add('html', `<button class="button" name="send" value="/pet lawn ball">捕捉!</button>`);
-					const userid = Dex.toID(this.sides[2 - parseInt(side.id[1])].name);
-					writeCatchRate(userid, side.pokemon[0].species.id, 1, 1, '');
-				}
-			})
+			this.add('html', `<button class="button" name="send" value="/pet lawn ball">捕捉!</button>`);
+			const userid = Dex.toID(this.sides[0].name);
+			writeCatchRate(userid, this.sides[1].pokemon[0].species.id, 1, 1, '');
 		},
 		onBeforeTurn(pokemon) {
-			if (Dex.toID(pokemon.side.name) === BOTID) {
+			if (pokemon.side.id === 'p2') {
 				this.add('html', `<button class="button" name="send" value="/pet lawn ball">捕捉!</button>`);
 				const userid = Dex.toID(this.sides[2 - parseInt(pokemon.side.id[1])].name);
 				writeCatchRate(userid, pokemon.species.id, pokemon.hp, pokemon.maxhp, pokemon.status);
 			}
 		},
 		onFaint(pokemon) {
-			if (Dex.toID(pokemon.side.name) === BOTID) {
+			if (pokemon.side.id === 'p2') {
 				this.add('html', `<div class="broadcast-green"><strong>野生的${pokemon.name}倒下了!</strong></div>`);
 				let levelUp = false;
-				this.sides.forEach(side => {
-					const userid = Dex.toID(side.name);
-					if (userid !== BOTID) levelUp = levelUp || addExperience(userid, pokemon.species.name, pokemon.level);
-				});
+				levelUp = levelUp || addExperience(Dex.toID(this.sides[0].name), pokemon.species.name, pokemon.level);
 				if (levelUp) {
 					this.add('html', `<div class="broadcast-green"><strong>您的宝可梦升级了! 快去盒子查看吧!</strong></div>`);
 				}
@@ -118,12 +123,13 @@ export const Rulesets: {[k: string]: FormatData} = {
 			}
 		},
 	},
+
 	pschinapetmodegym1: {
-		name: 'PS China Pet Mode',
-		ruleset: ['Dynamax Clause'],
+		name: 'PS China Pet Mode Gym1',
+		ruleset: ['Evasion Moves Clause'],
 		timer: {
 			starting: 600,
-			addPerTurn: 0,
+			addPerTurn: 30,
 			maxPerTurn: 60,
 			maxFirstTurn: 60,
 			grace: 0,
@@ -132,19 +138,77 @@ export const Rulesets: {[k: string]: FormatData} = {
 		},
 		onBegin() {
 			this.sides.forEach(side => {
-				if (Dex.toID(side.name) !== BOTID) {
-					for (const pokemon of side.pokemon) {
-						pokemon.level = Math.min(pokemon.level, 10);
-					}
-					this.add('html', `<div class="broadcast-green"><strong>训练家${side.name}开始挑战一号道馆!</strong></div>`);
+				if (Dex.toID(side.name) === BOTID) {
+					this.add('html', `<div class="broadcast-green"><strong>训练家${side.name}开始挑战苍蓝道馆!</strong></div>`);
 				}
 			})
 		},
-		// onFaint(pokemon) {
-		// 	if (pokemon.side.name === BOTID) {
-		// 		if pokemon.hp
-				
-		// 	}
-		// }
+		onFaint(pokemon) {
+			if (pokemon.side.id === 'p2' && pokemon.side.pokemon.filter(pokemon => !pokemon.fainted).length <= 1) {
+				if (addBadge(Dex.toID(this.sides[0].name), '苍蓝')) {
+					this.add('html', `<div class="broadcast-green"><strong>恭喜您获得了 苍蓝徽章 !</strong></div>`);
+				}
+			}
+		}
+	},
+
+	pschinapetmodegym2: {
+		name: 'PS China Pet Mode Gym2',
+		ruleset: ['Evasion Moves Clause', 'Sleep Clause Mod'],
+		timer: {
+			starting: 600,
+			addPerTurn: 30,
+			maxPerTurn: 60,
+			maxFirstTurn: 60,
+			grace: 0,
+			timeoutAutoChoose: true,
+			dcTimerBank: false,
+		},
+		onBegin() {
+			this.sides.forEach(side => {
+				if (Dex.toID(side.name) === BOTID) {
+					this.add('html', `<div class="broadcast-green"><strong>训练家${side.name}开始挑战湛蓝道馆!</strong></div>`);
+				}
+			})
+		},
+		onFaint(pokemon) {
+			if (pokemon.side.id === 'p2' && pokemon.side.pokemon.filter(pokemon => !pokemon.fainted).length <= 1) {
+				if (addBadge(Dex.toID(this.sides[0].name), '湛蓝')) {
+					this.add('html', `<div class="broadcast-green"><strong>恭喜您获得了 湛蓝徽章 !</strong></div>`);
+				}
+			}
+		}
+	},
+
+	pschinapetmodegym3: {
+		name: 'PS China Pet Mode Gym3',
+		ruleset: ['Evasion Moves Clause', 'Sleep Clause Mod'],
+		timer: {
+			starting: 600,
+			addPerTurn: 30,
+			maxPerTurn: 60,
+			maxFirstTurn: 60,
+			grace: 0,
+			timeoutAutoChoose: true,
+			dcTimerBank: false,
+		},
+		onBegin() {
+			this.sides.forEach(side => {
+				if (Dex.toID(side.name) === BOTID) {
+					this.add('html', `<div class="broadcast-green"><strong>训练家${side.name}开始挑战冰蓝道馆!</strong></div>`);
+				}
+			})
+		},
+		onBeforeTurn() {
+			this.field.setWeather('hail');
+		},
+		onFaint(pokemon) {
+			if (pokemon.side.id === 'p2' && pokemon.side.pokemon.filter(pokemon => !pokemon.fainted).length <= 1) {
+				if (addBadge(Dex.toID(this.sides[0].name), '冰蓝')) {
+					this.add('html', `<div class="broadcast-green"><strong>恭喜您获得了 冰蓝徽章 !</strong></div>`);
+				}
+			}
+		}
 	}
+
 };
