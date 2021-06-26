@@ -23,7 +23,7 @@ import { PokemonIconIndexes } from "../../config/pet-mode/poke-num";
 import { PetModeRoomConfig } from "../../config/pet-mode/room-config";
 import { PetModeShopConfig } from "../../config/pet-mode/shop-config";
 import { PetModeGymConfig } from "../../config/pet-mode/gym-config"
-// console.log(Teams.pack(Teams.import(FS('config/pet-mode/tmp.txt').readSync())));
+console.log(Teams.pack(Teams.import(FS('config/pet-mode/tmp.txt').readSync())));
 
 type userProperty = {
 	'bag': string[],
@@ -226,7 +226,7 @@ class Pet {
 			const features = PetBattle.legends[roomid].split('|');
 			return this.gen(features[0], parseInt(features[1]), true, 0, parseInt(features[2]));
 		}
-		if (maxLevel < PetBattle.roomConfig[roomid]['minlevel']) return '';
+		if (restrictLevel <= PetBattle.roomConfig[roomid]['minlevel']) return '';
 		if (PetBattle.roomConfig[roomid] && PetBattle.roomConfig[roomid]['lawn'][lawnid]) {
 			return this.gen(
 				Utils.sample(PetBattle.roomConfig[roomid]['lawn'][lawnid]),
@@ -1485,7 +1485,6 @@ export const commands: Chat.ChatCommands = {
 				const targets = target.split('=>');
 				const goodtype = targets[0];
 				if (!Shop.types[goodtype]) return this.popupReply(`没有名为 ${goodtype} 的商品种类`);
-				// if (!(await addScore(user.name, 0))[0]) this.popupReply("您没有国服积分, 不能购买商品哦");
 				const goods = Shop.shopConfig[goodtype];
 				let goodname = targets[1];
 				const goodnames = goodname.split('!');
@@ -1572,6 +1571,17 @@ export const commands: Chat.ChatCommands = {
 				`修改盒子: /pet edit {"bag":["宝可梦1",...],"box":["宝可梦2",...],"items":{"道具1":数量1,...}}<br/>` +
 				Utils.button('/pet edit !', '删除用户数据')
 			);
+		},
+
+		editgym(target, room, user) {
+			const targets = target.split('=>');
+			if (targets.length !== 2) return this.sendReply('/pet editgym 道馆名=>队伍');
+			if (!PetBattle.gymConfig[targets[0]]) return this.popupReply(`没有名为 ${targets[0]} 的道馆!`)
+			PetBattle.gymConfig[targets[0]]['botteam'] = targets[1];
+			FS('config/pet-mode/gym-config.js').writeSync(
+				'exports.PetModeGymConfig = ' + JSON.stringify(PetBattle.gymConfig, null, 4)
+			);
+			this.popupReply('修改成功!');
 		},
 
 		receive(target, room, user) {
