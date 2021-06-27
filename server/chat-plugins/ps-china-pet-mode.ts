@@ -40,6 +40,7 @@ const BALLCD = 600000;
 
 if (!FS(USERPATH).existsSync()) FS(USERPATH).mkdir();
 if (!FS(GIFTPATH).existsSync()) FS(GIFTPATH).mkdir();
+if (!FS(DEPOSITPATH).existsSync()) FS(GIFTPATH).mkdir();
 
 class Utils {
 
