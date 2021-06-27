@@ -126,6 +126,7 @@ export const Rulesets: {[k: string]: FormatData} = {
 
 	pschinapetmodegym1: {
 		name: 'PS China Pet Mode Gym1',
+		ruleset: ['Evasion Moves Clause'],
 		timer: {
 			starting: 600,
 			addPerTurn: 30,
@@ -142,18 +143,30 @@ export const Rulesets: {[k: string]: FormatData} = {
 				}
 			})
 		},
+		onBattleStart() {
+			this.add('message', '欢迎来到，新人训练家都要经过的第一站——苍蓝道馆。来吧，让我们一起在苍蓝的天空起舞吧。');
+		},
+		onSwitchIn(pokemon) {
+			if (pokemon.side.id === 'p2' && pokemon.name === 'Oricorio-Sensu' && pokemon.hp === pokemon.maxhp) {
+				this.add('message', '要进入高潮咯，希望你能跟上我的步伐');
+			}
+		},
 		onFaint(pokemon) {
 			if (pokemon.side.id === 'p2' && pokemon.side.pokemon.filter(pokemon => !pokemon.fainted).length <= 1) {
 				if (addBadge(Dex.toID(this.sides[0].name), '苍蓝')) {
 					this.add('html', `<div class="broadcast-green"><strong>恭喜您获得了 苍蓝徽章 !</strong></div>`);
 				}
+				this.add('message', '真是一场美妙的舞会，没想到你作为新人训练家竟如此出色。这枚苍蓝徽章是你应得的，收下他吧。');
+			}
+			if (pokemon.side.id === 'p1' && pokemon.side.pokemon.filter(pokemon => !pokemon.fainted).length <= 1) {
+				this.add('message', '学会飞行最难的就是第一次振翅的勇气，请再接再厉，这片天空属于未来的你们');
 			}
 		}
 	},
 
 	pschinapetmodegym2: {
 		name: 'PS China Pet Mode Gym2',
-		ruleset: ['Sleep Clause Mod'],
+		ruleset: ['Evasion Moves Clause', 'Sleep Clause Mod'],
 		timer: {
 			starting: 600,
 			addPerTurn: 30,
@@ -170,18 +183,30 @@ export const Rulesets: {[k: string]: FormatData} = {
 				}
 			})
 		},
+		onSwitchIn(pokemon) {
+			if (pokemon.side.id === 'p2' && pokemon.name === 'Keldeo-Resolute' && pokemon.hp === pokemon.maxhp) {
+				this.add('message', '决心。。。你的决心又是什么呢？');
+			}
+		},
+		onBattleStart() {
+			this.add('message', '经历过天空洗礼的你，能否经得住波涛的汹涌呢？');
+		},
 		onFaint(pokemon) {
 			if (pokemon.side.id === 'p2' && pokemon.side.pokemon.filter(pokemon => !pokemon.fainted).length <= 1) {
 				if (addBadge(Dex.toID(this.sides[0].name), '湛蓝')) {
 					this.add('html', `<div class="broadcast-green"><strong>恭喜您获得了 湛蓝徽章 !</strong></div>`);
 				}
+				this.add('message', '天空，海洋，下一个就是冰雪。。。。没什么，自言自语罢了。收下吧，这是湛蓝徽章，曾经我也是这么一步步走来的，希望有一天你也能看到山顶的风景');
+			}
+			if (pokemon.side.id === 'p1' && pokemon.side.pokemon.filter(pokemon => !pokemon.fainted).length <= 1) {
+				this.add('message', '海洋固然广阔，但只要你愿意扬帆，不畏波涛，就一定能驶向远方，请再接再厉。');
 			}
 		}
 	},
 
 	pschinapetmodegym3: {
 		name: 'PS China Pet Mode Gym3',
-		ruleset: ['Sleep Clause Mod'],
+		ruleset: ['Evasion Moves Clause', 'Sleep Clause Mod'],
 		timer: {
 			starting: 600,
 			addPerTurn: 30,
@@ -190,6 +215,14 @@ export const Rulesets: {[k: string]: FormatData} = {
 			grace: 0,
 			timeoutAutoChoose: true,
 			dcTimerBank: false,
+		},
+		onBattleStart() {
+			this.add('message', '这里是蓝色三馆的最后一站。在雪山当中最致命就是无尽的暴风雪与冰雹，但愿你能冲破这重重的险阻。');
+		},
+		onSwitchIn(pokemon) {
+			if (pokemon.side.id === 'p2' && pokemon.name === 'Articuno' && pokemon.hp === pokemon.maxhp) {
+				this.add('message', '曾经我也是为他所救的一人，也是在这次建立起了我们的羁绊。');
+			}
 		},
 		onBegin() {
 			this.sides.forEach(side => {
@@ -206,6 +239,10 @@ export const Rulesets: {[k: string]: FormatData} = {
 				if (addBadge(Dex.toID(this.sides[0].name), '冰蓝')) {
 					this.add('html', `<div class="broadcast-green"><strong>恭喜您获得了 冰蓝徽章 !</strong></div>`);
 				}
+				this.add('message', '飞跃苍穹，不畏浩瀚，勇登高峰，这样的你已经完全是一个合格的训练师了。加油，更广阔的的天地在等待着你。');
+			}
+			if (pokemon.side.id === 'p1' && pokemon.side.pokemon.filter(pokemon => !pokemon.fainted).length <= 1) {
+				this.add('message', '暴风雪是最容易让人迷失方向的地方，但我相信只要你心中有着指引你的方向就一定不会迷茫，希望下次能让我看到更加强大的你。');
 			}
 		}
 	}

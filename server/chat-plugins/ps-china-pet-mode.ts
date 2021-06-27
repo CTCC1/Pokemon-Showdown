@@ -1,8 +1,5 @@
 /*
 	Pokemon Showdown China Pet Mode Version 1.0 Author: Starmind
-	1. 新Learnset
-	2. 合法性检查
-	3. 道馆对话
 */
 
 import { FS } from "../../lib";
@@ -13,14 +10,13 @@ import { PokemonIconIndexes } from "../../config/pet-mode/poke-num";
 import { PetModeRoomConfig } from "../../config/pet-mode/room-config";
 import { PetModeShopConfig } from "../../config/pet-mode/shop-config";
 import { PetModeGymConfig } from "../../config/pet-mode/gym-config"
-// console.log(Teams.pack(Teams.import(FS('config/pet-mode/tmp.txt').readSync())));
 
 type userProperty = {
 	'bag': string[],
 	'box': string[],
 	'items': {[itemName: string]: number},
 	'badges': string[],
-	'time': {'ball': number, 'draw': number, 'search': number}
+	'time': {'ball': number, 'draw': number, 'search': number, 'gym': number},
 };
 type petPosition = {'type': 'bag' | 'box', 'index': number};
 type statPosition = {'type': 'ivs' | 'evs', 'index': 'hp' | 'atk' | 'def' | 'spa' | 'spd' | 'spe'};
@@ -38,7 +34,8 @@ const ITEMSHEET = 'https://play.pokemonshowdown.com/sprites/itemicons-sheet.png'
 const TYPEICONS = 'https://play.pokemonshowdown.com/sprites/types';
 const CATICONS = 'https://play.pokemonshowdown.com/sprites/categories';
 
-const LAWNCD = 60;
+const LAWNCD = 60000;
+const GYMCD = 600000;
 const BALLCD = 600000;
 
 if (!FS(USERPATH).existsSync()) FS(USERPATH).mkdir();
@@ -363,6 +360,34 @@ class PetBattle {
 		return prng.randomChance(Math.pow((20 + Math.sqrt(T)) / (20 + L), 2) / S * B * U / R * 1000, 1000);
 	}
 
+	static validate(rule: string, userSets: string[]): string {
+		rule = toID(rule);
+		const userTeam = Teams.unpack(userSets.join(']'));
+		if (!userTeam) return '您的队伍格式合法';
+		for (let set of userTeam) {
+			const legalMoves = Pet.validMoves(toID(set.species), set.level);
+			for (let moveid of set.moves) {
+				if (legalMoves.indexOf(toID(moveid)) < 0) {
+					return `您的 ${set.name} 不能携带非法招式 ${moveid} `;
+				}
+			}
+		}
+		if (rule.indexOf('norepeat') >= 0) {
+			const setLength = [...new Set(userTeam.map(set => set.species))].length;
+			if (setLength < userSets.length) return '您不能携带重复的宝可梦';
+		}
+		if (rule.indexOf('noevasion') >= 0) {
+			for (let set of userTeam) {
+				for (let moveid of set.moves) {
+					if (toID(moveid) == 'doubleteam' || toID(moveid) == 'minimize') {
+						return `您的 ${set.name} 不能携带提升回避率的招式 ${moveid} `;
+					}
+				}
+			}
+		}
+		return '';
+	}
+
 	static createBattle(
 		user: User, bot: User, userTeam: string, botTeam: string, format: string, hidden: boolean
 	): GameRoom | undefined {
@@ -472,7 +497,7 @@ class PetUser {
 			'box': new Array(30).fill(''),
 			'items': {'Poke Ball': 5},
 			'badges': [],
-			'time': {'ball': 0, 'draw': 0, 'search': 0}
+			'time': {'ball': 0, 'draw': 0, 'search': 0, 'gym': 0}
 		}
 	}
 
@@ -1317,15 +1342,13 @@ export const commands: Chat.ChatCommands = {
 				}
 				let battleRoom: GameRoom | undefined;
 				if (room.roomid === 'gym') {
+					if (Date.now() - petUser.property['time']['gym'] < GYMCD) {
+						return this.popupReply(`您在${Math.floor(GYMCD / 60000)}分钟内已挑战过道馆, 请稍后再来!`);
+					}
 					if (!PetBattle.gymConfig[target]) return this.parse('/pet help lawn');
 					const userSets = petUser.property['bag'].filter((x: string) => x);
-					if (PetBattle.gymConfig[target]['userteam'].indexOf('norepeat') >= 0) {
-						const setLength = [...new Set(userSets.map(set => {
-							const features = set.split('|');
-							return features[1] || features[0];
-						}))].length;
-						if (setLength < userSets.length) return this.popupReply(`${target}要求您不能携带重复的宝可梦!`);
-					}
+					const validateRes = PetBattle.validate(PetBattle.gymConfig[target]['userteam'], userSets);
+					if (validateRes) return this.popupReply(`${target}要求${validateRes}!`);
 					const rule = `gen8petmode @@@${PetBattle.gymConfig[target]['rule']}`;
 					const maxLevel = PetBattle.gymConfig[target]['maxlevel'];
 					const userTeam = userSets.map(set => {
@@ -1336,6 +1359,7 @@ export const commands: Chat.ChatCommands = {
 					const botTeam = PetBattle.gymConfig[target]['botteam'];
 					petUser.battleInfo = 'gym';
 					battleRoom = PetBattle.createBattle(user, bot, userTeam, botTeam, rule, false);
+					petUser.property['time']['gym'] = Date.now();
 				} else {
 					const wildPokemon = Pet.wild(room.roomid, target, petUser.maxLevel(), petUser.levelRistriction(), wantLegend);
 					if (!wildPokemon) return this.popupReply('这片草丛太危险了!');
@@ -1625,6 +1649,7 @@ export const commands: Chat.ChatCommands = {
 					Utils.button('/pet init', '领取最初的伙伴!'),
 					Utils.button('/pet box', '盒子'),
 					Utils.button('/pet shop', '商店'),
+					`<button class="button"><a href="/gym">道馆</a></button>`,
 				]);
 				if (PetBattle.legends[room.roomid]) {
 					buttons[0].push(Utils.button('/pet lawn search !', `挑战房间里的 ${
