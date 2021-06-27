@@ -785,13 +785,13 @@ export function dropUser(userid: string) {
 
 function petBox(petUser: PetUser, target: string): string {
 	if (!petUser.property) return '';
-	const st = (x: string) => `<strong>${x}</strong>`;
+	const st = (x: string) => `<b>${x}</b>`;
 
 	let pokeDiv = ``;
 	const set = petUser.checkPet(Utils.parsePosition(target));
 	if (set) {
 		let setTitle = set.level >= petUser.levelRistriction() ?
-			`<strong>达到${petUser.badgeNum()}个徽章的等级上限</strong>` : '<br/>';
+			`<b>达到${petUser.badgeNum()}个徽章的等级上限</b>` : '<br/>';
 		if (petUser.operation === 'move') {
 			setTitle = st('请选择位置');
 		} else if (petUser.operation === 'drop' + target) {
@@ -1136,7 +1136,7 @@ export const commands: Chat.ChatCommands = {
 				).join('<br/>');
 				const buttons = Utils.boolButtons(`/pet box setmoves ${target}!`, `/pet box setmoves ${target}`);
 				user.sendTo(room.roomid, `|uhtml${targets.length === 1 ? '' : 'change'}|pet-moves-show|` +
-					`<strong>请选择招式:</strong><br/>${div(valid)}${div(`${selected}<br/>${buttons}`)}`);
+					`<b>请选择招式:</b><br/>${div(valid)}${div(`${selected}<br/>${buttons}`)}`);
 			},
 
 			addmove(target, room, user) {
@@ -1405,9 +1405,9 @@ export const commands: Chat.ChatCommands = {
 							if (roomOfLegend) {
 								Rooms.get(roomOfLegend)?.add(`|uhtmlchange|pet-legend|`);
 								Rooms.get(roomOfLegend)?.add(
-									`|uhtml|pet-legend|<div class='broadcast-green' style="text-align: center;"><strong>${
+									`|uhtml|pet-legend|<div class='broadcast-green' style="text-align: center;"><b>${
 										user.name
-									} 成功捕获了野生的 ${foeSpecies}!</strong></div>`
+									} 成功捕获了野生的 ${foeSpecies}!</b></div>`
 								).update();
 								delete PetBattle.legends[roomOfLegend];
 							}
@@ -1447,7 +1447,7 @@ export const commands: Chat.ChatCommands = {
 				room.add(`|uhtmlchange|pet-legend|`);
 				room.add(
 					`|uhtml|pet-legend|<div class='broadcast-green' style="${legendStyle}">` +
-					`<strong>野生的 ${species.name} 出现了!</strong><br/>` +
+					`<b>野生的 ${species.name} 出现了!</b><br/>` +
 					`${Utils.image(
 						`background: url(${POKESPRITES}/${Pet.spriteId(target)}.gif) no-repeat center;` +
 						`width: 100%; height: 120px`
@@ -1462,9 +1462,9 @@ export const commands: Chat.ChatCommands = {
 				if (!room) return this.popupReply("请在房间里使用宠物系统");
 				if (PetBattle.legends[room.roomid]) {
 					room.add(`|uhtmlchange|pet-legend|`);
-					room.add(`|uhtml|pet-legend|<div class='broadcast-green' style="text-align: center;"><strong>野生的 ${
+					room.add(`|uhtml|pet-legend|<div class='broadcast-green' style="text-align: center;"><b>野生的 ${
 						PetBattle.legends[room.roomid].split('|')[0]
-					} 离开了。</strong></div>`);
+					} 离开了。</b></div>`);
 					delete PetBattle.legends[room.roomid];
 					this.popupReply(`已删除 ${room.title} 房间里的宝可梦`);
 				}
@@ -1505,8 +1505,8 @@ export const commands: Chat.ChatCommands = {
 				} else {
 					title = `请选择商品:<br/>${title}<br/>`
 				}
-				title = `<div><strong>${Utils.button('/pet shop buy ball=>Poke Ball!', '领取5个精灵球!')}` +
-					`${Utils.button('/pet shop draw', '领取随机道具!')}<br/>${title}</strong></div>`;
+				title = `<div><b>${Utils.button('/pet shop buy ball=>Poke Ball!', '领取5个精灵球!')}` +
+					`${Utils.button('/pet shop draw', '领取随机道具!')}<br/>${title}</b></div>`;
 				user.sendTo(room.roomid, `|uhtml${target === 'new' ? '' : 'change'}|pet-shop-show|` +
 					`${title}<div style="border: ridge;">${Shop.goodButtons[goodtype]}</div>` +
 					`${Utils.button(`/score pop`, '查看积分')}${Utils.button(`/pet box`, '返回')}`);
@@ -1645,7 +1645,7 @@ export const commands: Chat.ChatCommands = {
 			user.sendTo(room.roomid, `|uhtmlchange|pet-welcome|`);
 			let buttons = [];
 			if (target !== 'lawn') {
-				buttons.push(['<strong>欢迎来到Pokemon Showdown China宠物系统!</strong>']);
+				buttons.push(['<b>欢迎来到Pokemon Showdown China宠物系统!</b>']);
 				buttons.push([
 					Utils.button('/pet init', '领取最初的伙伴!'),
 					Utils.button('/pet box', '盒子'),
@@ -1663,7 +1663,7 @@ export const commands: Chat.ChatCommands = {
 			}
 			if (PetBattle.roomConfig[room.roomid]) {
 				buttons.push([
-					'<strong>去邂逅野生的宝可梦吧!</strong>',
+					'<b>去邂逅野生的宝可梦吧!</b>',
 					`<a href="/${PetBattle.previousRoom[room.roomid] || 'skypillar'}">上一个房间</a>`,
 					`<a href="/${PetBattle.nextRoom[room.roomid] || 'skypillar'}">下一个房间</a>`,
 				]);
@@ -1671,12 +1671,12 @@ export const commands: Chat.ChatCommands = {
 					lawnid => Utils.button(`/pet lawn search ${lawnid}`, lawnid)
 				));
 			} else if (room.roomid === 'gym') {
-				buttons.push(['<strong>去道馆证明自己的实力吧!</strong>']);
+				buttons.push(['<b>去道馆证明自己的实力吧!</b>']);
 				buttons.push(Object.keys(PetBattle.gymConfig).map(
 					gymid => Utils.button(`/pet lawn search ${gymid}`, gymid)
 				));
 			} else {
-				buttons.push(['<strong>这个房间没有野生的宝可梦哦</strong>']);
+				buttons.push(['<b>这个房间没有野生的宝可梦哦</b>']);
 			}
 			user.sendTo(room.roomid, `|uhtml|pet-welcome|${buttons.map(line => line.join(' ')).join('<br/>')}`);
 		}
