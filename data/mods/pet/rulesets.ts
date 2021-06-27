@@ -126,7 +126,6 @@ export const Rulesets: {[k: string]: FormatData} = {
 
 	pschinapetmodegym1: {
 		name: 'PS China Pet Mode Gym1',
-		ruleset: ['Evasion Moves Clause'],
 		timer: {
 			starting: 600,
 			addPerTurn: 30,
@@ -154,7 +153,7 @@ export const Rulesets: {[k: string]: FormatData} = {
 
 	pschinapetmodegym2: {
 		name: 'PS China Pet Mode Gym2',
-		ruleset: ['Evasion Moves Clause', 'Sleep Clause Mod'],
+		ruleset: ['Sleep Clause Mod'],
 		timer: {
 			starting: 600,
 			addPerTurn: 30,
@@ -182,7 +181,7 @@ export const Rulesets: {[k: string]: FormatData} = {
 
 	pschinapetmodegym3: {
 		name: 'PS China Pet Mode Gym3',
-		ruleset: ['Evasion Moves Clause', 'Sleep Clause Mod'],
+		ruleset: ['Sleep Clause Mod'],
 		timer: {
 			starting: 600,
 			addPerTurn: 30,

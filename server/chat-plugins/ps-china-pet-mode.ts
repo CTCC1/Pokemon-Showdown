@@ -1,18 +1,8 @@
 /*
 	Pokemon Showdown China Pet Mode Version 1.0 Author: Starmind
-	1. 机器人重连后继续战斗
-	2. 不对称Timer
-X	3. 改名
-X	4. Box UI: title, 昵称, 移动, 交换, 进化, 招式, 放生, 返回
-	5. 徽章
-X	6. 道具分类 (挖石头)
-X	7. 清努力个体
-	8. 道馆
-	9. 机器人定时开tour
-	10. Bottle Cap & Gold Bottle Cap
-X	11. 领取随机道具
-X	12. 领取礼物
-X	13. 交换 (国服积分)
+	1. 新Learnset
+	2. 合法性检查
+	3. 道馆对话
 */
 
 import { FS } from "../../lib";
@@ -23,7 +13,7 @@ import { PokemonIconIndexes } from "../../config/pet-mode/poke-num";
 import { PetModeRoomConfig } from "../../config/pet-mode/room-config";
 import { PetModeShopConfig } from "../../config/pet-mode/shop-config";
 import { PetModeGymConfig } from "../../config/pet-mode/gym-config"
-console.log(Teams.pack(Teams.import(FS('config/pet-mode/tmp.txt').readSync())));
+// console.log(Teams.pack(Teams.import(FS('config/pet-mode/tmp.txt').readSync())));
 
 type userProperty = {
 	'bag': string[],
@@ -200,7 +190,15 @@ class Pet {
 			spa: prng.sample(intArray), spd: prng.sample(intArray), spe: prng.sample(intArray)};
 	}
 
-	static gen(speciesid: string, level: number, fullivs: boolean = false, happy: number = 0, shiny: number = 1 / 2048): string {
+	static randomAbility(species: Species, hidden: number): string {
+		if (species.abilities['H'] && prng.randomChance(hidden * 1000, 1000)) return species.abilities['H'];
+		return species.abilities["1"] ? prng.sample([species.abilities["0"], species.abilities["1"]]) : species.abilities["0"];
+	}
+
+	static gen(
+		speciesid: string, level: number, fullivs: boolean = false,
+		happy: number = 0, shiny: number = 1 / 2048, hidden: number = 1 / 100
+	): string {
 		level = Utils.restrict(level, 1, 100);
 		const species = Dex.species.get(speciesid);
 		if (species.num <= 0) return '';
@@ -208,7 +206,7 @@ class Pet {
 			name: species.name,
 			species: species.name,
 			item: "",
-			ability: species.abilities["1"] ? prng.sample([species.abilities["0"], species.abilities["1"]]) : species.abilities["0"],
+			ability: this.randomAbility(species, hidden),
 			moves: this.sampleMoves(species.id, level),
 			nature: prng.sample(Dex.natures.all()).name,
 			gender: species.genderRatio ? (prng.randomChance(Math.floor(species.genderRatio.M * 1000), 1000) ? 'M' : 'F') : 'N',
@@ -326,6 +324,10 @@ class PetBattle {
 
 	static legends: {[roomid: string]: string} = {};
 
+	static nextRoom: {[roomid: string]: string} = {};
+
+	static previousRoom: {[roomid: string]: string} = {};
+
 	static roomConfig: {[roomid: string]: {
 		'lawn': {[lawnid: string]: {[species: string]: number}},
 		'minlevel': number,
@@ -389,6 +391,7 @@ class PetBattle {
 	}
 
 }
+let previousRoomId = '';
 for (let roomid in PetBattle.roomConfig) {
 	for (let lawnid in PetBattle.roomConfig[roomid]['lawn']) {
 		const sumRate = eval(Object.values(PetBattle.roomConfig[roomid]['lawn'][lawnid]).join('+'));
@@ -396,6 +399,11 @@ for (let roomid in PetBattle.roomConfig) {
 			PetBattle.roomConfig[roomid]['lawn'][lawnid][speciesid] /= sumRate;
 		}
 	}
+	if (previousRoomId) {
+		PetBattle.nextRoom[previousRoomId] = roomid;
+		PetBattle.previousRoom[roomid] = previousRoomId;
+	}
+	previousRoomId = roomid;
 }
 
 class Shop {
@@ -813,9 +821,10 @@ function petBox(petUser: PetUser, target: string): string {
 		const statsTable = `<table style="border-spacing: 0px;"><tr>${[
 			th('') + ['HP', '攻击', '防御', '特攻', '特防', '速度'].map(x => th(x)).join(''),
 			th('种族&ensp;') + Object.values(bst).map(x => td(x)).join(''),
-			th('个体&ensp;') + Object.keys(set.ivs).map((x, i) => {
-				return td(Utils.button(`/pet box resetstat ivs,${x}`, Object.values(set.ivs)[i].toString()));
-			}).join(''),
+			th('个体&ensp;') + Object.values(set.ivs).map(x => td(x)).join(''),
+			// th('个体&ensp;') + Object.keys(set.ivs).map((x, i) => {
+			// 	return td(Utils.button(`/pet box resetstat ivs,${x}`, Object.values(set.ivs)[i].toString()));
+			// }).join(''),
 			th('努力&ensp;') + Object.keys(set.evs).map((x, i) => {
 				return td(Utils.button(`/pet box resetstat evs,${x}`, Object.values(set.evs)[i].toString()));
 			}).join('')
@@ -1315,7 +1324,7 @@ export const commands: Chat.ChatCommands = {
 							const features = set.split('|');
 							return features[1] || features[0];
 						}))].length;
-						if (setLength < userSets.length) return this.popupReply(`${target}要求您不能携带重复的宝可梦!`)
+						if (setLength < userSets.length) return this.popupReply(`${target}要求您不能携带重复的宝可梦!`);
 					}
 					const rule = `gen8petmode @@@${PetBattle.gymConfig[target]['rule']}`;
 					const maxLevel = PetBattle.gymConfig[target]['maxlevel'];
@@ -1579,7 +1588,7 @@ export const commands: Chat.ChatCommands = {
 			if (!PetBattle.gymConfig[targets[0]]) return this.popupReply(`没有名为 ${targets[0]} 的道馆!`)
 			PetBattle.gymConfig[targets[0]]['botteam'] = targets[1];
 			FS('config/pet-mode/gym-config.js').writeSync(
-				'exports.PetModeGymConfig = ' + JSON.stringify(PetBattle.gymConfig, null, 4)
+				'exports.PetModeGymConfig = ' + JSON.stringify(PetBattle.gymConfig, null, '\t')
 			);
 			this.popupReply('修改成功!');
 		},
@@ -1627,7 +1636,11 @@ export const commands: Chat.ChatCommands = {
 				}
 			}
 			if (PetBattle.roomConfig[room.roomid]) {
-				buttons.push(['<strong>去邂逅野生的宝可梦吧!</strong>']);
+				buttons.push([
+					'<strong>去邂逅野生的宝可梦吧!</strong>',
+					`<a href="/${PetBattle.previousRoom[room.roomid] || 'skypillar'}">上一个房间</a>`,
+					`<a href="/${PetBattle.nextRoom[room.roomid] || 'skypillar'}">下一个房间</a>`,
+				]);
 				buttons.push(Object.keys(PetBattle.roomConfig[room.roomid]['lawn']).map(
 					lawnid => Utils.button(`/pet lawn search ${lawnid}`, lawnid)
 				));
@@ -1636,6 +1649,8 @@ export const commands: Chat.ChatCommands = {
 				buttons.push(Object.keys(PetBattle.gymConfig).map(
 					gymid => Utils.button(`/pet lawn search ${gymid}`, gymid)
 				));
+			} else {
+				buttons.push(['<strong>这个房间没有野生的宝可梦哦</strong>']);
 			}
 			user.sendTo(room.roomid, `|uhtml|pet-welcome|${buttons.map(line => line.join(' ')).join('<br/>')}`);
 		}
