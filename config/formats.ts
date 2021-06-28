@@ -3352,6 +3352,12 @@ export const Formats: FormatList = [
 		],
 	},
 	{
+		name: "[Gen 8] BSS Series 8",
+		mod: 'gen8',
+		ruleset: ['[Gen 8] Battle Stadium Singles'],
+		unbanlist: ['Mythical', 'Restricted Legendary'],
+	},
+	{
 		name: "[Gen 8] VGC without Restriction",
 		mod: 'gen8',
 		gameType: 'doubles',

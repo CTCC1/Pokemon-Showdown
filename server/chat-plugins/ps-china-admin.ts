@@ -55,6 +55,10 @@ export const commands: Chat.ChatCommands = {
 		const changeScore = await addScore(userid, parsedScore);
 		if (changeScore.length !== 2) return this.errorReply("错误：将造成负分。");
 
+		const CNUser = Users.get(userid);
+		if (CNUser?.connected) {
+			CNUser.popup(`您因为 ${reason} ${parsedScore > 0 ? '获得': '失去'}了 ${Math.abs(parsedScore)} 国服积分`);
+		}
 		const message = `用户ID: ${userid}, PS国服积分: ` +
 			`${changeScore[0]} ${parsedScore < 0 ? "-" : "+"} ${Math.abs(parsedScore)} -> ${changeScore[1]}, ` +
 			`原因:${reason}, 操作人:${user.name}.`;

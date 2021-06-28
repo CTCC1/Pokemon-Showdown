@@ -88203,9 +88203,7 @@ exports.PetModeLearnSets = {
 		"wildcharge": 40,
 		"endeavor": 1,
 		"metalsound": 1,
-		"poweruppunch": 1,
-		"shiftgear": 52,
-		"venoshock": 20
+		"poweruppunch": 1
 	},
 	"toxtricitygmax": {
 		"acid": 1,

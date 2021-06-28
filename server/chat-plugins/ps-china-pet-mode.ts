@@ -1,5 +1,6 @@
 /*
 	Pokemon Showdown China Pet Mode Version 1.0 Author: Starmind
+	1. 天梯合法性检测
 */
 
 import { FS } from "../../lib";
@@ -364,15 +365,7 @@ class PetBattle {
 	static validate(rule: string, userSets: string[]): string {
 		rule = toID(rule);
 		const userTeam = Teams.unpack(userSets.join(']'));
-		if (!userTeam) return '您的队伍格式合法';
-		for (let set of userTeam) {
-			const legalMoves = Pet.validMoves(toID(set.species), set.level);
-			for (let moveid of set.moves) {
-				if (legalMoves.indexOf(toID(moveid)) < 0) {
-					return `您的 ${set.name} 不能携带非法招式 ${moveid} `;
-				}
-			}
-		}
+		if (!userTeam) return '您不能使用非法格式的队伍';
 		if (rule.indexOf('norepeat') >= 0) {
 			const setLength = [...new Set(userTeam.map(set => set.species))].length;
 			if (setLength < userSets.length) return '您不能携带重复的宝可梦';
@@ -510,7 +503,6 @@ class PetUser {
 		const cachedProperty = JSON.parse(JSON.stringify(this.property));
 		try {
 			const parsed = JSON.parse(propertyString);
-			this.init();
 			let items: {[itemName: string]: number} = {};
 			for (let item in parsed['items']) {
 				const parsedNum = parseInt(parsed['items'][item]);
@@ -648,6 +640,24 @@ class PetUser {
 		}
 		this.property[position['type']][position['index']] = Teams.pack([set]);
 		return true;
+	}
+
+	checkMoves(): string {
+		if (!this.property) return '您的队伍格式不合法';
+		for (let pet of this.property['bag']) {
+			const team = Teams.unpack(pet);
+			if (team) {
+				const set: PokemonSet = team[0];
+				for (let move of set.moves) {
+					const moveid = Dex.toID(move);
+					if (moveid === 'vcreate') continue;
+					const minLevel = Pet.learnSets[Dex.toID(set.species)][moveid];
+					if (minLevel && set.level >= minLevel) continue;
+					return `您的 ${set.name} 携带了非法招式 ${move}`
+				}
+			}
+		}
+		return '';
 	}
 
 	changeMoves(position: petPosition): boolean {
@@ -819,7 +829,7 @@ function petBox(petUser: PetUser, target: string): string {
 				return Utils.button(`/pet box evo ${target}=>${x[0]}`, '&emsp;', Utils.iconStyle(x[0]));
 			}).join('') + ' ' + Utils.button(`/pet box evo ${target}`, '取消');
 		} else if (petUser.operation?.indexOf('evo') === 0) {
-			setTitle = st(`确认进化 ${set.name} ? `) + Utils.boolButtons(
+			setTitle = st(`确认将 ${set.name} 进化为 ${petUser.operation?.slice(3)}? `) + Utils.boolButtons(
 				`/pet box evo ${target}=>${petUser.operation?.slice(3)}`,
 				`/pet box evo ${target}`
 			);
@@ -891,10 +901,12 @@ function petBox(petUser: PetUser, target: string): string {
 		items += `${itemButton(itemName)}x${itemNum(petUser.property['items'][itemName])}<br/>`;
 	}
 	const shopButton = Utils.button('/pet shop', '商店');
+	const checkButton = Utils.button('/pet check', '检查队伍');
+	const exportButton = Utils.button('/pet export', '导出队伍');
 	let boxDiv = `<div style="width: 310px; vertical-align: top; display: inline-block;">` +
 		`<div style="width: 250px; vertical-align: top; display: inline-block">` +
-		`<div style="line-height: 35px">${boxTitle}</div>` +
-		`<div>${st(`背包`)}<br/>${bagMons}${st(`盒子`)}<br/>${boxMons}</div></div>` +
+		`<div style="line-height: 25px">${boxTitle}</div>` +
+		`<div>${st(`背包`)} ${checkButton} ${exportButton}<br/>${bagMons}${st(`盒子`)}<br/>${boxMons}</div></div>` +
 		`<div style="width: 60px; vertical-align: top; display: inline-block;">` +
 		`<div style="line-height: 35px">${shopButton}</div><div>${st(`道具`)}</div>` +
 		`<div style="height: 210px; overflow: auto;">${items}</div></div></div>`;
@@ -1349,7 +1361,7 @@ export const commands: Chat.ChatCommands = {
 					if (!PetBattle.gymConfig[target]) return this.parse('/pet help lawn');
 					const userSets = petUser.property['bag'].filter((x: string) => x);
 					const validateRes = PetBattle.validate(PetBattle.gymConfig[target]['userteam'], userSets);
-					if (validateRes) return this.popupReply(`${target}要求${validateRes}!`);
+					if (validateRes) return this.popupReply(`根据${target}的要求, ${validateRes}!`);
 					const rule = `gen8petmode @@@${PetBattle.gymConfig[target]['rule']}`;
 					const maxLevel = PetBattle.gymConfig[target]['maxlevel'];
 					const userTeam = userSets.map(set => {
@@ -1637,6 +1649,21 @@ export const commands: Chat.ChatCommands = {
 			}
 			petUser.save();
 			this.popupReply(replies.join('\n'));
+		},
+
+		check(target, room, user) {
+			const petUser = getUser(user.id);
+			if (!petUser.property) return this.popupReply("您还未领取最初的伙伴!");
+			const userTeam = Teams.unpack(petUser.property['bag'].join(']'));
+			this.popupReply(petUser.checkMoves() || "您的队伍是合法的!");
+		},
+
+		export(target, room, user) {
+			const petUser = getUser(user.id);
+			if (!petUser.property) return this.popupReply("您还未领取最初的伙伴!");
+			const userTeam = Teams.unpack(petUser.property['bag'].join(']'));
+			if (!userTeam) return this.popupReply("您的背包有格式错误!");
+			this.popupReply(Teams.export(userTeam));
 		},
 
 		'': 'help',
