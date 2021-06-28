@@ -40,7 +40,7 @@ const BALLCD = 600000;
 
 if (!FS(USERPATH).existsSync()) FS(USERPATH).mkdir();
 if (!FS(GIFTPATH).existsSync()) FS(GIFTPATH).mkdir();
-if (!FS(DEPOSITPATH).existsSync()) FS(GIFTPATH).mkdir();
+if (!FS(DEPOSITPATH).existsSync()) FS(DEPOSITPATH).mkdir();
 
 class Utils {
 
@@ -157,7 +157,7 @@ class Pet {
 
 	static moveIcons: {[movename: string]: string} = {};
 
-	static initButtons = [0, 1, 2].map(x => this.initMons.slice(x * 8, x * 8 + 8).map(
+	static initButtons = [0, 1, 2].map(x => Pet.initMons.slice(x * 8, x * 8 + 8).map(
 		x => Utils.button(`/pet init set ${x}`, '', Utils.iconStyle(x))
 	).join('')).join('<br/>');
 
