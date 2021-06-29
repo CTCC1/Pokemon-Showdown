@@ -19,7 +19,7 @@ function getUserTeam(userid: string): PokemonSet[] | null {
 					const moveid = Dex.toID(move);
 					if (moveid === 'vcreate') return true;
 					const minLevel = LEARNSETS[Dex.toID(set.species)][moveid];
-					return minLevel && set.level >= minLevel;
+					return minLevel !== undefined && set.level >= minLevel;
 				});
 				if (set.moves.length > 0) parsedTeam.push(set);
 			}

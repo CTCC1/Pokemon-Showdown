@@ -652,7 +652,7 @@ class PetUser {
 					const moveid = Dex.toID(move);
 					if (moveid === 'vcreate') continue;
 					const minLevel = Pet.learnSets[Dex.toID(set.species)][moveid];
-					if (minLevel && set.level >= minLevel) continue;
+					if (minLevel !== undefined && set.level >= minLevel) continue;
 					return `您的 ${set.name} 携带了非法招式 ${move}`
 				}
 			}
