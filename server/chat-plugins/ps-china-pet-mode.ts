@@ -1143,8 +1143,12 @@ export const commands: Chat.ChatCommands = {
 					Utils.button(`/pet box addmove ${target}=>${move}`, move, `${Pet.moveIcons[move]} width: 180px;`)
 				).join('<br/>');
 				const buttons = Utils.boolButtons(`/pet box setmoves ${target}!`, `/pet box setmoves ${target}`);
-				user.sendTo(room.roomid, `|uhtml${targets.length === 1 ? '' : 'change'}|pet-moves-show|` +
-					`<b>请选择招式:</b><br/>${div(valid)}${div(`${selected}<br/>${buttons}`)}`);
+				if (targets.length === 1) {
+					user.sendTo(room.roomid, `|uhtml|pet-moves-show|<b>请选择招式:</b><br/>${div(valid)}`);
+					user.sendTo(room.roomid, `|uhtml|pet-moves-select|${div(`${selected}<br/>${buttons}`)}`);
+				} else {
+					user.sendTo(room.roomid, `|uhtmlchange|pet-moves-select|${div(`${selected}<br/>${buttons}`)}`);
+				}
 			},
 
 			addmove(target, room, user) {
@@ -1311,6 +1315,7 @@ export const commands: Chat.ChatCommands = {
 				petUser.onChangeMoves = undefined;
 				if (target === 'new') {
 					user.sendTo(room.roomid, `|uhtmlchange|pet-moves-show|`);
+					user.sendTo(room.roomid, `|uhtmlchange|pet-moves-select|`);
 					user.sendTo(room.roomid, `|uhtmlchange|pet-box-show|`);
 				}
 			},
