@@ -11,15 +11,6 @@ import { PetModeRoomConfig } from "../../config/pet-mode/room-config";
 import { PetModeShopConfig } from "../../config/pet-mode/shop-config";
 import { PetModeGymConfig } from "../../config/pet-mode/gym-config";
 
-// const catchRate: {[speciesid: string]: number} = JSON.parse(FS('config/pet-mode/catch-rate-bak.json').readIfExistsSync());
-// for (let species of Dex.species.all()) {
-// 	const baseSpecies = species.baseSpecies;
-// 	if (baseSpecies !== species.name && catchRate[toID(baseSpecies)] && !catchRate[species.id]) {
-// 		catchRate[species.id] = catchRate[toID(baseSpecies)];
-// 	}
-// }
-// FS('config/pet-mode/catch-rate.json').writeSync(JSON.stringify(catchRate, null, '\t'));
-
 type userProperty = {
 	'bag': string[],
 	'box': string[],
@@ -227,10 +218,7 @@ class Pet {
 	}
 
 	static wild(roomid: string, lawnid: string, maxLevel: number, restrictLevel: number, legend: boolean = false): string {
-		if (legend && PetBattle.legends[roomid]) {
-			const features = PetBattle.legends[roomid].split('|');
-			return this.gen(features[0], parseInt(features[1]), true, 0, parseInt(features[2]));
-		}
+		if (legend && PetBattle.legends[roomid]) return PetBattle.legends[roomid];
 		if (restrictLevel <= PetBattle.roomConfig[roomid]['minlevel']) return '';
 		if (PetBattle.roomConfig[roomid] && PetBattle.roomConfig[roomid]['lawn'][lawnid]) {
 			return this.gen(
@@ -1393,9 +1381,8 @@ export const commands: Chat.ChatCommands = {
 				petUser.save();
 
 				if (wantLegend && battleRoom) {
-					room.add(`|html|<div style="text-align: center;"><a href='${
-						battleRoom.roomid}'>${user.name} 开始了与 ${PetBattle.legends[room.roomid].split('|')[0]
-					} 的战斗!</a></div>`).update();
+					room.add(`|html|<div style="text-align: center;"><a href='${battleRoom.roomid}'>` +
+						`${user.name} 开始了与 ${PetBattle.legends[room.roomid].split('|')[0]} 的战斗!</a></div>`).update();
 				}
 			},
 
@@ -1455,18 +1442,20 @@ export const commands: Chat.ChatCommands = {
 				const targets = target.split(',');
 				target = targets[0];
 				const species = Dex.species.get(target);
-				if (!species.exists) return this.popupReply(`Usage: /add 宝可梦, 等级, 闪光率`);
+				if (!species.exists) return this.popupReply(`Usage: /add 宝可梦, 等级, 闪光率, 梦特率`);
 				const level = parseInt(targets[1]) || 70;
 				const shiny = parseInt(targets[2]) || 0;
-				PetBattle.legends[room.roomid] = `${species.name}|${level}|${shiny}`;
+				const hidden = parseInt(targets[3]) || 0;
+				const set = Pet.gen(species.id, level, true, 70, shiny, hidden);
+				PetBattle.legends[room.roomid] = set;
 				const legendStyle = 'font-size: 12pt; text-align: center; height: 170px';
 				room.add(`|uhtmlchange|pet-legend|`);
 				room.add(
 					`|uhtml|pet-legend|<div class='broadcast-green' style="${legendStyle}">` +
 					`<b>野生的 ${species.name} 出现了!</b><br/>` +
 					`${Utils.image(
-						`background: url(${POKESPRITES}/${Pet.spriteId(target)}.gif) no-repeat center;` +
-						`width: 100%; height: 120px`
+						`background: url(${set.split('|')[9] ? POKESPRITESSHINY : POKESPRITES}/${Pet.spriteId(target)}.gif) ` +
+						`no-repeat center; width: 100%; height: 120px`
 					)}<br/>` +
 					`${Utils.button('/pet lawn search !', '挑战!')}</div>`
 				)
@@ -1478,9 +1467,8 @@ export const commands: Chat.ChatCommands = {
 				if (!room) return this.popupReply("请在房间里使用宠物系统");
 				if (PetBattle.legends[room.roomid]) {
 					room.add(`|uhtmlchange|pet-legend|`);
-					room.add(`|uhtml|pet-legend|<div class='broadcast-green' style="text-align: center;"><b>野生的 ${
-						PetBattle.legends[room.roomid].split('|')[0]
-					} 离开了。</b></div>`);
+					room.add(`|uhtml|pet-legend|<div class='broadcast-green' style="text-align: center;">` +
+						`<b>野生的 ${PetBattle.legends[room.roomid].split('|')[0]} 离开了。</b></div>`);
 					delete PetBattle.legends[room.roomid];
 					this.popupReply(`已删除 ${room.title} 房间里的宝可梦`);
 				}
