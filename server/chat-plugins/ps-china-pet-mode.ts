@@ -1,6 +1,5 @@
 /*
 	Pokemon Showdown China Pet Mode Version 1.0 Author: Starmind
-	1. 天梯合法性检测
 */
 
 import { FS } from "../../lib";
@@ -10,7 +9,16 @@ import { PetModeLearnSets } from "../../config/pet-mode/learnsets";
 import { PokemonIconIndexes } from "../../config/pet-mode/poke-num";
 import { PetModeRoomConfig } from "../../config/pet-mode/room-config";
 import { PetModeShopConfig } from "../../config/pet-mode/shop-config";
-import { PetModeGymConfig } from "../../config/pet-mode/gym-config"
+import { PetModeGymConfig } from "../../config/pet-mode/gym-config";
+
+// const catchRate: {[speciesid: string]: number} = JSON.parse(FS('config/pet-mode/catch-rate-bak.json').readIfExistsSync());
+// for (let species of Dex.species.all()) {
+// 	const baseSpecies = species.baseSpecies;
+// 	if (baseSpecies !== species.name && catchRate[toID(baseSpecies)] && !catchRate[species.id]) {
+// 		catchRate[species.id] = catchRate[toID(baseSpecies)];
+// 	}
+// }
+// FS('config/pet-mode/catch-rate.json').writeSync(JSON.stringify(catchRate, null, '\t'));
 
 type userProperty = {
 	'bag': string[],
@@ -1408,31 +1416,27 @@ export const commands: Chat.ChatCommands = {
 					const roomOfLegend = parsed[1];
 					const foeLevel = parseInt(features[10]) || 100;
 					const foeSpecies = features[1] || features[0];
-					if (petUser.catch(target)) {
-						if (petUser.addPet(parsed[0])) {
-							petUser.battleInfo = undefined;
-							this.popupReply(`捕获成功! 快进入盒子查看吧!`);
-							this.parse('/forfeit');
-							petUser.addExperience(foeSpecies, foeLevel);
-							if (roomOfLegend) {
-								Rooms.get(roomOfLegend)?.add(`|uhtmlchange|pet-legend|`);
-								Rooms.get(roomOfLegend)?.add(
-									`|uhtml|pet-legend|<div class='broadcast-green' style="text-align: center;"><b>${
-										user.name
-									} 成功捕获了野生的 ${foeSpecies}!</b></div>`
-								).update();
-								delete PetBattle.legends[roomOfLegend];
-							}
-						} else {
-							this.popupReply(`您的盒子里没有空位了!`);
-							petUser.addItem(target, 1);
-						}
+					if (roomOfLegend && !PetBattle.legends[roomOfLegend]) {
+						this.popupReply(`很遗憾, ${roomOfLegend} 房间里的 ${foeSpecies} 已经离开了。`);
+						petUser.addItem(target, 1);
+					} else if (!petUser.catch(target)) {
+						this.popupReply(`捕获失败!`);
+					} else if (!petUser.addPet(parsed[0])) {
+						this.popupReply(`您的盒子里没有空位了!`);
+						petUser.addItem(target, 1);
 					} else {
-						if (roomOfLegend && !PetBattle.legends[roomOfLegend]) {
-							this.popupReply(`很遗憾, ${roomOfLegend} 房间里的 ${foeSpecies} 已经离开了。`);
-							petUser.addItem(target, 1);
-						} else {
-							this.popupReply(`捕获失败!`);
+						this.popupReply(`捕获成功! 快进入盒子查看吧!`);
+						petUser.battleInfo = undefined;
+						this.parse('/forfeit');
+						petUser.addExperience(foeSpecies, foeLevel);
+						if (roomOfLegend) {
+							Rooms.get(roomOfLegend)?.add(`|uhtmlchange|pet-legend|`);
+							Rooms.get(roomOfLegend)?.add(
+								`|uhtml|pet-legend|<div class='broadcast-green' style="text-align: center;"><b>${
+									user.name
+								} 成功捕获了野生的 ${foeSpecies}!</b></div>`
+							).update();
+							delete PetBattle.legends[roomOfLegend];
 						}
 					}
 					petUser.save();
