@@ -27,8 +27,8 @@ export const Moves: {[k: string]: ModdedMoveData} = {
 					}
 					this.add('-message', 'The battlefield was covered in Steel!');
 			},
-			onSourceModifyDamage(damage, source, target, move) {
-				if (target.getMoveHitData(move).typeMod > 0) {
+			onDamage(damage, source, target, move) {
+				if (source.getMoveHitData(move as ActiveMove).typeMod > 0) {
 					this.debug('Filter neutralize');
 					return this.chainModify(0.75);
 				}
