@@ -263,6 +263,7 @@ class Pet {
 				}
 				return [];
 			}
+			if (species.id === 'alcremie') return set.item.indexOf('Sweet') >= 0 ? [x, set.item] : [];
 			if (species.evoCondition) {
 				const hours = new Date().getHours();
 				switch (species.evoCondition) {

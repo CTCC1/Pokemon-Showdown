@@ -6,13 +6,13 @@ exports.PetModeShopConfig = {
 		"Master Ball": 200
 	},
 	"draw": {
-		"Clover Sweet": 50,
+		"Strawberry Sweet": 50,
+		// "Clover Sweet": 50,
 		// "Berry Sweet": 50,
 		// "Flower Sweet": 50,
 		// "Love Sweet": 50,
 		// "Ribbon Sweet": 50,
 		// "Star Sweet": 50,
-		// "Strawberry Sweet": 50,
 		// "Chipped Pot": 50,
 		"Cracked Pot": 50,
 		"Deep Sea Scale": 50,
