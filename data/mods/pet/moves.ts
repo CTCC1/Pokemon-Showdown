@@ -27,9 +27,9 @@ export const Moves: {[k: string]: ModdedMoveData} = {
 					}
 					this.add('-message', 'The battlefield was covered in Steel!');
 			},
-			onEffectiveness(typeMod, target, type, move) {
-				if (target && target.getMoveHitData(move).typeMod > 0) {
-					this.debug('Prism Armor neutralize');
+			onSourceModifyDamage(damage, source, target, move) {
+				if (target.getMoveHitData(move).typeMod > 0) {
+					this.debug('Filter neutralize');
 					return this.chainModify(0.75);
 				}
 			},
