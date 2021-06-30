@@ -6,7 +6,7 @@ export async function addScore(userid: string, score: number): Promise<number[]>
 	let ladder = await Ladders("gen8ps").getLadder();
 	let userIndex = ladder.length;
 	for (let [i, entry] of ladder.entries()) {
-		if (userid ? (toID(entry[2]) === toID(userid)) : (entry[2] === userid)) {
+		if (toID(userid) ? (toID(entry[2]) === toID(userid)) : (entry[2] === userid)) {
 			userIndex = i;
 			break;
 		}
