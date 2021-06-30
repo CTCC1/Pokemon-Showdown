@@ -1658,7 +1658,7 @@ export const commands: Chat.ChatCommands = {
 		export(target, room, user) {
 			const petUser = getUser(user.id);
 			if (!petUser.property) return this.popupReply("您还未领取最初的伙伴!");
-			const userTeam = Teams.unpack(petUser.property['bag'].join(']'));
+			const userTeam = Teams.unpack(petUser.property['bag'].filter(x => x).join(']'));
 			if (!userTeam) return this.popupReply("您的背包有格式错误!");
 			this.popupReply(Teams.export(userTeam));
 		},
