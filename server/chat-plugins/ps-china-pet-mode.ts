@@ -1,5 +1,6 @@
 /*
 	Pokemon Showdown China Pet Mode Version 1.0 Author: Starmind
+	1. Shop Config: Itme Name => ID
 */
 
 import { FS } from "../../lib";
@@ -350,7 +351,7 @@ class PetBattle {
 		let R = 1;
 		if (roomOfLegend) {
 			if (!this.legends[roomOfLegend]) return false;
-			R = 10;
+			R = 50;
 		}
 		const U = 1;
 		const B = this.balls[ball] || 1;
@@ -446,6 +447,15 @@ class Shop {
 			return Utils.button(`/pet shop show special=>${goodname}`, '', Utils.itemStyle(goodname));
 		}).join(''),
 	};
+
+	static getPrice(goodname: string): number {
+		for (let goodtype in this.shopConfig) {
+			if (this.shopConfig[goodtype][goodname]) {
+				return this.shopConfig[goodtype][goodname];
+			}
+		}
+		return 50;
+	}
 
 }
 
@@ -731,6 +741,16 @@ class PetUser {
 			}
 		}
 		return levelUp;
+	}
+
+	checkExchange(): string {
+		const team = Teams.unpack(this.getPet());
+		if (!team) return '宝可梦数据格式错误!';
+		const set = team[0];
+		if (set.item && Shop.getPrice(set.item) > 50) return '贵重物品不能交换!';
+		if (Dex.species.get(set.species).bst >= 570) return '重要的宝可梦不能交换!';
+		if (set.moves.filter(x => toID(x) === 'vcreate').length > 0) return '有纪念意义的宝可梦不能交换!';
+		return '';
 	}
 
 	linkExchange(friend: PetUser): {'sent': string, 'received': string} | undefined {
@@ -1217,6 +1237,8 @@ export const commands: Chat.ChatCommands = {
 				const petUser = getUser(user.id);
 				if (!petUser.property) return this.popupReply("您还未领取最初的伙伴!");
 				if (!petUser.onPosition) return this.popupReply("请先选中想要交换的宝可梦!");
+				const checkRes = petUser.checkExchange();
+				if (checkRes) return this.popupReply(checkRes);
 				// 1. A按下[交换]: (A)/pet box ex  弹出交换提示
 				// 2. A根据提示: (A)/pet box ex B  A.operation='readyexB'  A.title=请等待B回应,重新发送,取消
 				//               B弹窗  B.operation='preexA'  B.title=接受与A交换,取消
@@ -1385,10 +1407,10 @@ export const commands: Chat.ChatCommands = {
 				petUser.property['time']['search'] = Date.now();
 				petUser.save();
 
-				if (wantLegend && battleRoom) {
-					room.add(`|html|<div style="text-align: center;"><a href='${battleRoom.roomid}'>` +
-						`${user.name} 开始了与 ${PetBattle.legends[room.roomid].split('|')[0]} 的战斗!</a></div>`).update();
-				}
+				// if (wantLegend && battleRoom) {
+				// 	room.add(`|html|<div style="text-align: center;"><a href='${battleRoom.roomid}'>` +
+				// 		`${user.name} 开始了与 ${PetBattle.legends[room.roomid].split('|')[0]} 的战斗!</a></div>`).update();
+				// }
 			},
 
 			ball(target, room, user) {
@@ -1564,7 +1586,7 @@ export const commands: Chat.ChatCommands = {
 				petUser.load();
 				const day = Math.floor(Date.now() / 24 / 60 / 60 / 1000);
 				if (day <= petUser.property['time']['draw']) return this.popupReply("您今日已领取随机道具!");
-				const randomItem = prng.sample(Object.keys(PetModeShopConfig['draw']));
+				const randomItem = prng.sample(Object.keys(Shop.shopConfig['draw']));
 				petUser.property['time']['draw'] = day;
 				petUser.addItem(randomItem, 1);
 				petUser.save();
