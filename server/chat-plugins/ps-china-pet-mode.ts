@@ -377,6 +377,15 @@ class PetBattle {
 				}
 			}
 		}
+		if (rule.indexOf('nobatonpass') >= 0) {
+			for (let set of userTeam) {
+				for (let moveid of set.moves) {
+					if (toID(moveid) == 'batonpass') {
+						return `您的 ${set.name} 不能使用接力棒`;
+					}
+				}
+			}
+		}
 		return '';
 	}
 
