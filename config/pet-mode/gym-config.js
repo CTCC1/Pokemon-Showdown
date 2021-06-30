@@ -16,5 +16,11 @@ exports.PetModeGymConfig = {
         "maxlevel": 30,
         "userteam": "No Evasion Moves, No Repeat Pokemon",
         "botteam": "Vanilluxe||LightClay|SnowWarning|Blizzard,Freeze-Dry,AuroraVeil|Timid|0,0,0,252,0,252|M|||30|]Mamoswine||Choice Band|Thick Fat|Icicle Spear|Jolly|252,252,252,,252,252|M|||30|250]Arctozolt|||SlushRush|BoltBeak,Icicle Crash|Adamant|,252,,,,252|F|||30|]Abomasnow||Abomasite|Soundproof|Blizzard,GigaDrain,JungleHealing|Modest|252,252,252,252,252,|F|||30|]Articuno||Metronome|MagicGuard|Blizzard,BraveBird,Roost|Jolly|252,252,252,252,252,252|F|||30|"
+    },
+    "钢系道馆": {
+        "rule": "pschinapetmodegym4",
+        "maxlevel": 40,
+        "userteam": "No Evasion Moves, No Repeat Pokemon",
+        "botteam": "Duraludon||LifeOrb|MagicGuard|SteelBeam,MindBlown|Timid|252,,252,252,252,252||,0,,,,||40|]Kartana||AssaultVest|WaterBubble|LeafBlade,SunsteelStrike,SpectralThief|Jolly|252,252,252,,252,252||||40|]Heatran||AirBalloon|FlashFire|LavaPlume,FlashCannon,Eruption|Timid|252,,252,252,252,252||,0,,,,||40|]Celesteela||AssaultVest|ThickFat|HeavySlam,Aeroblast,Flamethrower,EnergyBall|Relaxed|252,252,252,252,252,252||||40|]Metagross-Mega||Metagrossite|ToughClaws|SunsteelStrike,PsychicFangs|Jolly|252,252,252,,252,252||||40|]Melmetal||AssaultVest|Unaware|DoubleIronBash,BodyPress|Adamant|252,252,252,,252,252||||40|"
     }
 }

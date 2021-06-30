@@ -245,6 +245,49 @@ export const Rulesets: {[k: string]: FormatData} = {
 				this.add('message', '暴风雪是最容易让人迷失方向的地方，但我相信只要你心中有着指引你的方向就一定不会迷茫，希望下次能让我看到更加强大的你。');
 			}
 		}
+	},
+
+	pschinapetmodegym4: {
+		name: 'PS China Pet Mode Gym4',
+		ruleset: ['Evasion Moves Clause', 'Sleep Clause Mod'],
+		timer: {
+			starting: 600,
+			addPerTurn: 30,
+			maxPerTurn: 60,
+			maxFirstTurn: 60,
+			grace: 0,
+			timeoutAutoChoose: true,
+			dcTimerBank: false,
+		},
+		onBattleStart() {
+			// this.add('message', '这里是蓝色三馆的最后一站。在雪山当中最致命就是无尽的暴风雪与冰雹，但愿你能冲破这重重的险阻。');
+		},
+		onSwitchIn(pokemon) {
+			// if (pokemon.side.id === 'p2' && pokemon.name === 'Articuno' && pokemon.hp === pokemon.maxhp) {
+			// 	this.add('message', '曾经我也是为他所救的一人，也是在这次建立起了我们的羁绊。');
+			// }
+		},
+		onBegin() {
+			// this.sides.forEach(side => {
+			// 	if (Dex.toID(side.name) === BOTID) {
+			// 		this.add('html', `<div class="broadcast-green"><strong>训练家${side.name}开始挑战冰蓝道馆!</strong></div>`);
+			// 	}
+			// })
+		},
+		onBeforeTurn() {
+			this.field.setTerrain('steelterrain');
+		},
+		onFaint(pokemon) {
+			// if (pokemon.side.id === 'p2' && pokemon.side.pokemon.filter(pokemon => !pokemon.fainted).length <= 1) {
+			// 	if (addBadge(Dex.toID(this.sides[0].name), '冰蓝')) {
+			// 		this.add('html', `<div class="broadcast-green"><strong>恭喜您获得了 冰蓝徽章 !</strong></div>`);
+			// 	}
+			// 	this.add('message', '飞跃苍穹，不畏浩瀚，勇登高峰，这样的你已经完全是一个合格的训练师了。加油，更广阔的的天地在等待着你。');
+			// }
+			// if (pokemon.side.id === 'p1' && pokemon.side.pokemon.filter(pokemon => !pokemon.fainted).length <= 1) {
+			// 	this.add('message', '暴风雪是最容易让人迷失方向的地方，但我相信只要你心中有着指引你的方向就一定不会迷茫，希望下次能让我看到更加强大的你。');
+			// }
+		}
 	}
 
 };
