@@ -1,6 +1,7 @@
 /*
 	Pokemon Showdown China Pet Mode Version 1.0 Author: Starmind
 	1. Shop Config: Itme Name => ID
+	2. 劣质王冠: 2, 银色王冠: 25, 金色王冠: 100, 特性胶囊: 50, 特性膏药: 100, 性格薄荷: 50
 */
 
 import { FS } from "../../lib";
@@ -348,18 +349,6 @@ class PetBattle {
 		return [...user.inRooms].filter(x => x.indexOf('petmode') >= 0 && battleWithBot(x))[0];
 	}
 
-	static catch(T: number, L: number, userid: string, ball: string, species: string, roomOfLegend: string): boolean {
-		let R = 1;
-		if (roomOfLegend) {
-			if (!this.legends[roomOfLegend]) return false;
-			R = 50;
-		}
-		const U = 1;
-		const B = this.balls[ball] || 1;
-		const S = Math.pow(Dex.species.get(species).bst, 2) / 1e5 + 1;
-		return prng.randomChance(Math.pow((20 + Math.sqrt(T)) / (20 + L), 2) / S * B * U / R * 1000, 1000);
-	}
-
 	static validate(rule: string, userSets: string[]): string {
 		rule = toID(rule);
 		const userTeam = Teams.unpack(userSets.join(']'));
@@ -705,11 +694,11 @@ class PetUser {
 		return Object.keys(this.property['items']).filter(itemname => !!PetBattle.balls[itemname]);
 	}
 
-	catch(ball: string): boolean {
+	catch(ball: string, legend: boolean): boolean {
 		const statusCoef = parseInt(FS(`${DEPOSITPATH}/${this.id}.txt`).readIfExistsSync());
 		if (!statusCoef) return false;
 		const catchRate = statusCoef * (PetBattle.balls[ball] || 1);
-		return prng.randomChance(catchRate, 255);
+		return prng.randomChance(catchRate / (legend ? 20 : 1), 255);
 	}
 
 	addExperience(foespecies: string, foelevel: number): boolean {
@@ -1443,7 +1432,7 @@ export const commands: Chat.ChatCommands = {
 					if (roomOfLegend && !PetBattle.legends[roomOfLegend]) {
 						this.popupReply(`很遗憾, ${roomOfLegend} 房间里的 ${foeSpecies} 已经离开了。`);
 						petUser.addItem(target, 1);
-					} else if (!petUser.catch(target)) {
+					} else if (!petUser.catch(target, !!roomOfLegend)) {
 						this.popupReply(`捕获失败!`);
 					} else if (!petUser.addPet(parsed[0])) {
 						this.popupReply(`您的盒子里没有空位了!`);
