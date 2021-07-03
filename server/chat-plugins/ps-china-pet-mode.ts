@@ -354,8 +354,8 @@ class PetBattle {
 		if (rule.indexOf('noevasion') >= 0) {
 			for (let set of userTeam) {
 				for (let moveid of set.moves) {
-					if (toID(moveid) == 'doubleteam' || toID(moveid) == 'minimize') {
-						return `您的 ${set.name} 不能携带提升回避率的招式 ${moveid} `;
+					if (['doubleteam', 'minimize', 'flash', 'smokescreen', 'sandattack', 'kinesis'].indexOf(toID(moveid)) >= 0) {
+						return `您的 ${set.name} 不能携带提升回避率或降低对手命中率的招式 ${moveid} `;
 					}
 				}
 			}

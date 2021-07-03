@@ -267,35 +267,35 @@ export const Rulesets: {[k: string]: FormatData} = {
 			dcTimerBank: false,
 		},
 		onBattleStart() {
-			// this.add('message', '这里是蓝色三馆的最后一站。在雪山当中最致命就是无尽的暴风雪与冰雹，但愿你能冲破这重重的险阻。');
+			this.add('message', '这里是勇者修行的第一站，与之前相比，这里的修行恐怕会更加的令人绝望。穿上这件磁力服，在这里，坚定的意志将使属性克制不再那么重要，不过如果想要偷懒回复的话，可要做好被场地电击打断的准备。');
 		},
 		onSwitchIn(pokemon) {
-			// if (pokemon.side.id === 'p2' && pokemon.name === 'Articuno' && pokemon.hp === pokemon.maxhp) {
-			// 	this.add('message', '曾经我也是为他所救的一人，也是在这次建立起了我们的羁绊。');
-			// }
+			if (pokemon.side.id === 'p2' && pokemon.name === 'Metagross' && pokemon.hp === pokemon.maxhp) {
+				this.add('message', '这是最后的试炼。来吧！让我看看你修行的成果。');
+			}
 		},
 		onBegin() {
-			// this.sides.forEach(side => {
-			// 	if (Dex.toID(side.name) === BOTID) {
-			// 		this.add('html', `<div class="broadcast-green"><strong>训练家${side.name}开始挑战冰蓝道馆!</strong></div>`);
-			// 	}
-			// })
+			this.sides.forEach(side => {
+				if (Dex.toID(side.name) === BOTID) {
+					this.add('html', `<div class="broadcast-green"><strong>训练家${side.name}开始挑战坚毅道馆!</strong></div>`);
+				}
+			})
 		},
 		onBeforeTurn() {
 			this.field.setTerrain('steelterrain');
 		},
 		onFaint(pokemon) {
-			// if (pokemon.side.id === 'p2' && pokemon.side.pokemon.filter(pokemon => !pokemon.fainted).length <= 1) {
-			// 	if (addBadge(Dex.toID(this.sides[0].name), '冰蓝')) {
-			// 		this.add('html', `<div class="broadcast-green"><strong>恭喜您获得了 冰蓝徽章 !</strong></div>`);
-			// 		addBox(Dex.toID(this.sides[0].name));
-			// 		this.add('html', `<div class="broadcast-green"><strong>您获得了一个新的盒子! 快去查看吧!</strong></div>`)
-			// 	}
-			// 	this.add('message', '飞跃苍穹，不畏浩瀚，勇登高峰，这样的你已经完全是一个合格的训练师了。加油，更广阔的的天地在等待着你。');
-			// }
-			// if (pokemon.side.id === 'p1' && pokemon.side.pokemon.filter(pokemon => !pokemon.fainted).length <= 1) {
-			// 	this.add('message', '暴风雪是最容易让人迷失方向的地方，但我相信只要你心中有着指引你的方向就一定不会迷茫，希望下次能让我看到更加强大的你。');
-			// }
+			if (pokemon.side.id === 'p2' && pokemon.side.pokemon.filter(pokemon => !pokemon.fainted).length <= 1) {
+				if (addBadge(Dex.toID(this.sides[0].name), '坚毅')) {
+					this.add('html', `<div class="broadcast-green"><strong>恭喜您获得了 坚毅徽章 !</strong></div>`);
+					addBox(Dex.toID(this.sides[0].name));
+					this.add('html', `<div class="broadcast-green"><strong>您获得了一个新的盒子! 快去查看吧!</strong></div>`)
+				}
+				this.add('message', '这是坚毅的证明，希望你和你的宝可梦能记住这段时间修行的成果。顺便帮我向那个老太婆打个招呼，可别被她的小伎俩给蒙住了眼睛。');
+			}
+			if (pokemon.side.id === 'p1' && pokemon.side.pokemon.filter(pokemon => !pokemon.fainted).length <= 1) {
+				this.add('message', '小子，连这第一关都过不去，还想成为顶尖的训练师？');
+			}
 		}
 	}
 
