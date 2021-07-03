@@ -934,8 +934,8 @@ function petBox(petUser: PetUser, target: string): string {
 		items += `${itemButton(itemName)}x${itemNum(petUser.property['items'][itemName])}<br/>`;
 	}
 	const shopButton = Utils.button('/pet shop', '商店');
-	const checkButton = Utils.button('/pet check', '检查队伍');
-	const exportButton = Utils.button('/pet export', '导出队伍');
+	const checkButton = Utils.button('/pet box check', '检查队伍');
+	const exportButton = Utils.button('/pet box export', '导出队伍');
 	const pageNum = Math.ceil(petUser.property['box'].length / 30);
 	let lastPageButton = '';
 	let nextPageButton = '';
@@ -985,10 +985,21 @@ export const commands: Chat.ChatCommands = {
 		this.parse(`/pet lawn add ${target}`);
 	},
 
-
 	'rm': 'remove',
 	remove(target) {
 		this.parse(`/pet lawn remove ${target}`);
+	},
+
+	edit(target) {
+		this.parse(`/pet admin edit ${target}`);
+	},
+
+	restore(target) {
+		this.parse(`/pet admin restore ${target}`);
+	},
+
+	editgym(target) {
+		this.parse(`/pet admin editgym ${target}`);
 	},
 
 	'petmode': 'pet',
@@ -1048,14 +1059,6 @@ export const commands: Chat.ChatCommands = {
 
 		},
 
-		name(target) {
-			this.parse(`/pet box name ${target}`);
-		},
-
-		ex(target) {
-			this.parse(`/pet box ex ${target}`);
-		},
-
 		box: {
 
 			'': 'shownew',
@@ -1082,6 +1085,21 @@ export const commands: Chat.ChatCommands = {
 				if (!petUser.property) return this.popupReply("您还未领取最初的伙伴!");
 				petUser.onPage = (parseInt(target) || 0) % (Math.ceil(petUser.property['box'].length / 30));
 				this.parse(`/pet box show ${petUser.onPosition ? Object.values(petUser.onPosition).join(',') : ''}`);
+			},
+
+			check(target, room, user) {
+				const petUser = getUser(user.id);
+				if (!petUser.property) return this.popupReply("您还未领取最初的伙伴!");
+				const userTeam = Teams.unpack(petUser.property['bag'].join(']'));
+				this.popupReply(petUser.checkMoves() || "您的队伍是合法的!");
+			},
+
+			export(target, room, user) {
+				const petUser = getUser(user.id);
+				if (!petUser.property) return this.popupReply("您还未领取最初的伙伴!");
+				const userTeam = Teams.unpack(petUser.property['bag'].filter(x => x).join(']'));
+				if (!userTeam) return this.popupReply("您的背包有格式错误!");
+				this.popupReply(Teams.export(userTeam));
 			},
 
 			onmove(target, room, user) {
@@ -1365,6 +1383,27 @@ export const commands: Chat.ChatCommands = {
 				this.parse(`/pet box show ${target}`);
 			},
 
+			receive(target, room, user) {
+				const petUser = getUser(user.id);
+				if (!petUser.property) return this.popupReply("您还未领取最初的伙伴!");
+				const gift = new PetUser(user.id, GIFTPATH);
+				if (!gift.property) return this.popupReply('没有可以领取的礼物!');
+
+				petUser.load();
+				const received = petUser.merge(gift);
+				let replies = [];
+				for (let itemname in received['items']) replies.push(`您获得了${received['items'][itemname]}个 ${itemname} !`);
+				for (let petspecies of received['bag']) replies.push(`您获得了 ${petspecies} !`);
+				if (gift.property['bag'].length > 0) {
+					replies.push(`您的盒子没有空位了!`);
+					gift.save();
+				} else {
+					gift.destroy();
+				}
+				petUser.save();
+				this.popupReply(replies.join('\n'));
+			},
+
 			clear(target, room, user) {
 				if (!room) return this.popupReply("请在房间里使用宠物系统");
 				const petUser = getUser(user.id);
@@ -1377,16 +1416,6 @@ export const commands: Chat.ChatCommands = {
 				}
 			},
 
-		},
-
-		'gen': 'add',
-		add(target) {
-			this.parse(`/pet lawn add ${target}`);
-		},
-
-		'rm': 'remove',
-		remove(target) {
-			this.parse(`/pet lawn remove ${target}`);
 		},
 
 		lawn: {
@@ -1639,110 +1668,80 @@ export const commands: Chat.ChatCommands = {
 
 		},
 
-		edit(target, room, user) {
-			this.checkCan('bypassall');
-			if (!room) return this.popupReply("请在房间里使用宠物系统");
-			const targets = target.split('=>');
-			target = targets.slice(1).join('=>');
-			const petUser = getUser(Users.get(targets[0])?.id || user.id);
-			if (!petUser.property) return this.popupReply(`${petUser.id}还未领取最初的伙伴!`);
-			petUser.load();
-			user.sendTo(room.roomid, `|uhtmlchange|pet-edit|`);
-			if (target) {
-				switch (target.split('!').length) {
-					case 2:
-						return user.sendTo(
-							room.roomid,
-							`|uhtml|pet-edit|确认删除?&emsp;` +
-							`${Utils.boolButtons(`/pet edit ${petUser.id}=>!!`, `/pet edit ${petUser.id}`)}`
-						);
-					case 3:
-						dropUser(user.id);
-						petUser.destroy();
-						return this.popupReply(`用户数据已删除`);
-					default:
-						if (petUser.editProperty(target)) {
-							petUser.save();
-							const userChatRoom = Rooms.get(petUser.chatRoomId);
-							if (userChatRoom) {
-								Users.get(petUser.id)?.sendTo(userChatRoom, `|uhtmlchange|pet-box-show|${petBox(
-									petUser,
-									petUser.onPosition ? Object.values(petUser.onPosition).join(',') : ''
-								)}`);
+		admin: {
+
+			edit(target, room, user) {
+				this.checkCan('bypassall');
+				if (!room) return this.popupReply("请在房间里使用宠物系统");
+				const targets = target.split('=>');
+				target = targets.slice(1).join('=>');
+				const petUser = getUser(Users.get(targets[0])?.id || user.id);
+				if (!petUser.property) return this.popupReply(`${petUser.id}还未领取最初的伙伴!`);
+				petUser.load();
+				user.sendTo(room.roomid, `|uhtmlchange|pet-edit|`);
+				if (target) {
+					switch (target.split('!').length) {
+						case 2:
+							return user.sendTo(
+								room.roomid,
+								`|uhtml|pet-edit|确认删除?&emsp;` +
+								`${Utils.boolButtons(`/pet admin edit ${petUser.id}=>!!`, `/pet admin edit ${petUser.id}`)}`
+							);
+						case 3:
+							dropUser(user.id);
+							petUser.destroy();
+							return this.popupReply(`用户数据已删除`);
+						default:
+							if (petUser.editProperty(target)) {
+								petUser.save();
+								const userChatRoom = Rooms.get(petUser.chatRoomId);
+								if (userChatRoom) {
+									Users.get(petUser.id)?.sendTo(userChatRoom, `|uhtmlchange|pet-box-show|${petBox(
+										petUser,
+										petUser.onPosition ? Object.values(petUser.onPosition).join(',') : ''
+									)}`);
+								}
+								return this.popupReply(`修改成功!`);
+							} else {
+								this.popupReply(`格式错误!`);
 							}
-							return this.popupReply(`修改成功!`);
-						} else {
-							this.popupReply(`格式错误!`);
-						}
+					}
 				}
-			}
-			user.sendTo(room.roomid, `|uhtml|pet-edit|${petUser.id}的盒子:<br/>` + 
-				`<input type="text" style="width: 100%" value='${JSON.stringify(petUser.property)}'/>` +
-				`修改盒子: /pet edit ${petUser.id}=>{"bag":["宝可梦1",...],"box":["宝可梦2",...],"items":{"道具1":数量1,...}}<br/>` +
-				Utils.button(`/pet edit ${petUser.id}=>!`, '删除用户数据')
-			);
-		},
+				user.sendTo(room.roomid, `|uhtml|pet-edit|${petUser.id}的盒子:<br/>` + 
+					`<input type="text" style="width: 100%" value='${JSON.stringify(petUser.property)}'/>` +
+					`修改盒子: /edit ${petUser.id}=>{"bag":["宝可梦1",...],"box":["宝可梦2",...],"items":{"道具1":数量1,...}}<br/>` +
+					Utils.button(`/pet admin edit ${petUser.id}=>!`, '删除用户数据')
+				);
+			},
 
-		restore(target, room, user) {
-			this.checkCan('bypassall');
-			if (!room) return this.popupReply("请在房间里使用宠物系统");
-			const targetUser = Users.get(target);
-			if (!targetUser) return this.popupReply(`没有找到用户${target}!`);
-			const petUser = getUser(targetUser.id);
-			if (!petUser.property) return this.popupReply(`${petUser.id}还未领取最初的伙伴!`);
-			if (!petUser.restoreProperty()) return this.popupReply(`没有找到用户${target}的备份数据!`);
-			petUser.save();
-			this.popupReply("用户数据恢复成功!");
-		},
+			restore(target, room, user) {
+				this.checkCan('bypassall');
+				if (!room) return this.popupReply("请在房间里使用宠物系统");
+				const targetUser = Users.get(target);
+				if (!targetUser) return this.popupReply(`没有找到用户${target}!`);
+				const petUser = getUser(targetUser.id);
+				if (!petUser.property) return this.popupReply(`${petUser.id}还未领取最初的伙伴!`);
+				if (!petUser.restoreProperty()) return this.popupReply(`没有找到用户${target}的备份数据!`);
+				petUser.save();
+				this.popupReply("用户数据恢复成功!");
+			},
 
-		editgym(target, room, user) {
-			const targets = target.split('=>');
-			if (targets.length !== 2) return this.sendReply('/pet editgym 道馆名=>队伍');
-			if (!PetBattle.gymConfig[targets[0]]) return this.popupReply(`没有名为 ${targets[0]} 的道馆!`)
-			PetBattle.gymConfig[targets[0]]['botteam'] = targets[1];
-			FS('config/pet-mode/gym-config.js').writeSync(
-				'exports.PetModeGymConfig = ' + JSON.stringify(PetBattle.gymConfig, null, '\t')
-			);
-			this.popupReply('修改成功!');
-		},
+			editgym(target, room, user) {
+				this.checkCan('bypassall');
+				const targets = target.split('=>');
+				if (targets.length !== 2) return this.sendReply('/editgym 道馆名=>队伍');
+				if (!PetBattle.gymConfig[targets[0]]) return this.popupReply(`没有名为 ${targets[0]} 的道馆!`)
+				PetBattle.gymConfig[targets[0]]['botteam'] = targets[1];
+				FS('config/pet-mode/gym-config.js').writeSync(
+					'exports.PetModeGymConfig = ' + JSON.stringify(PetBattle.gymConfig, null, '\t')
+				);
+				this.popupReply('修改成功!');
+			},
 
-		receive(target, room, user) {
-			const petUser = getUser(user.id);
-			if (!petUser.property) return this.popupReply("您还未领取最初的伙伴!");
-			const gift = new PetUser(user.id, GIFTPATH);
-			if (!gift.property) return this.popupReply('没有可以领取的礼物!');
-
-			petUser.load();
-			const received = petUser.merge(gift);
-			let replies = [];
-			for (let itemname in received['items']) replies.push(`您获得了${received['items'][itemname]}个 ${itemname} !`);
-			for (let petspecies of received['bag']) replies.push(`您获得了 ${petspecies} !`);
-			if (gift.property['bag'].length > 0) {
-				replies.push(`您的盒子没有空位了!`);
-				gift.save();
-			} else {
-				gift.destroy();
-			}
-			petUser.save();
-			this.popupReply(replies.join('\n'));
-		},
-
-		check(target, room, user) {
-			const petUser = getUser(user.id);
-			if (!petUser.property) return this.popupReply("您还未领取最初的伙伴!");
-			const userTeam = Teams.unpack(petUser.property['bag'].join(']'));
-			this.popupReply(petUser.checkMoves() || "您的队伍是合法的!");
-		},
-
-		export(target, room, user) {
-			const petUser = getUser(user.id);
-			if (!petUser.property) return this.popupReply("您还未领取最初的伙伴!");
-			const userTeam = Teams.unpack(petUser.property['bag'].filter(x => x).join(']'));
-			if (!userTeam) return this.popupReply("您的背包有格式错误!");
-			this.popupReply(Teams.export(userTeam));
 		},
 
 		'': 'help',
+		'guide': 'help',
 		help(target, room, user) {
 			if (!room) return this.popupReply("请在房间里使用宠物系统");
 			user.sendTo(room.roomid, `|uhtmlchange|pet-welcome|`);
@@ -1763,7 +1762,7 @@ export const commands: Chat.ChatCommands = {
 					} !`));
 				}
 				if (FS( `${GIFTPATH}/${user.id}.json`).existsSync()) {
-					buttons[0].push(Utils.button('/pet receive', '领取礼物!'));
+					buttons[0].push(Utils.button('/pet box receive', '领取礼物!'));
 				}
 			}
 			if (PetBattle.roomConfig[room.roomid]) {
