@@ -68,6 +68,7 @@ function writeCatchRate(userid: string, speciesid: string, hp: number, maxhp: nu
 }
 
 function addBadge(userid: string, badgename: string): boolean {
+	if (FS(`${DEPOSITPATH}/${userid}.txt`).readIfExistsSync() !== badgename) return false;
 	let userProperty = JSON.parse(FS(`${USERPATH}/${userid}.json`).readIfExistsSync());
 	if (userProperty['badges'].indexOf(badgename) < 0) {
 		userProperty['badges'].push(badgename);
@@ -75,6 +76,12 @@ function addBadge(userid: string, badgename: string): boolean {
 		return true;
 	}
 	return false;
+}
+
+function addBox(userid: string) {
+	let userProperty = JSON.parse(FS(`${USERPATH}/${userid}.json`).readIfExistsSync());
+	userProperty['box'] = userProperty['box'].concat(new Array(30).fill(''));
+	FS(`${USERPATH}/${userid}.json`).writeSync(JSON.stringify(userProperty));
 }
 
 export const Rulesets: {[k: string]: FormatData} = {
@@ -281,6 +288,8 @@ export const Rulesets: {[k: string]: FormatData} = {
 			// if (pokemon.side.id === 'p2' && pokemon.side.pokemon.filter(pokemon => !pokemon.fainted).length <= 1) {
 			// 	if (addBadge(Dex.toID(this.sides[0].name), '冰蓝')) {
 			// 		this.add('html', `<div class="broadcast-green"><strong>恭喜您获得了 冰蓝徽章 !</strong></div>`);
+			// 		addBox(Dex.toID(this.sides[0].name));
+			// 		this.add('html', `<div class="broadcast-green"><strong>您获得了一个新的盒子! 快去查看吧!</strong></div>`)
 			// 	}
 			// 	this.add('message', '飞跃苍穹，不畏浩瀚，勇登高峰，这样的你已经完全是一个合格的训练师了。加油，更广阔的的天地在等待着你。');
 			// }

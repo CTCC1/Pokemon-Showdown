@@ -1,7 +1,7 @@
 /*
 	Pokemon Showdown China Pet Mode Version 1.0 Author: Starmind
-	1. Shop Config: Itme Name => ID
-	2. 劣质王冠: 2, 银色王冠: 25, 金色王冠: 100, 特性胶囊: 50, 特性膏药: 100, 性格薄荷: 50
+	1. 劣质王冠: 2, 银色王冠: 25, 金色王冠: 100, 特性胶囊: 50, 特性膏药: 100, 性格薄荷: 50
+	2. bot定时/add /tour
 */
 
 import { FS } from "../../lib";
@@ -114,15 +114,6 @@ class Utils {
 
 	static boolButtons(yesMessage: string, noMessage: string) {
 		return this.button(yesMessage, '确认') + this.button(noMessage, '取消');
-	}
-
-	static parsePosition(target: string): petPosition | undefined {
-		if (!target) return;
-		const targets = target.split(',').map(x => x.trim());
-		if (targets.length !== 2 || (targets[0] !== 'bag' && targets[0] !== 'box')) return;
-		const index = parseInt(targets[1]);
-		if (index === NaN || index < 0 || index > (targets[0] === 'bag' ? 5 : 29)) return;
-		return {'type': targets[0], 'index': index};
 	}
 
 	static parseStatPosition(target: string): statPosition | undefined {
@@ -273,6 +264,9 @@ class Pet {
 						break;
 					case "during the day":
 						if (hours < 6 || hours > 17) return [];
+						break;
+					case "from a special Rockruff":
+						if (hours % 12 !== 5) return [];
 						break;
 				}
 			}
@@ -469,6 +463,8 @@ class PetUser {
 
 	operation: string | undefined;
 	property: userProperty | undefined;
+	cachedProperty: userProperty | undefined;
+	onPage: number;
 	onPosition: petPosition | undefined;
 	onChangeMoves: {'position': petPosition, 'selected': string[], 'valid': string[]} | undefined;
 
@@ -476,14 +472,12 @@ class PetUser {
 		this.id = userid;
 		this.path = `${dir}/${this.id}.json`;
 		this.load();
+		this.onPage = 0;
 	}
 
 	load() {
 		const userSaveData = FS(this.path).readIfExistsSync();
-		if (userSaveData) {
-			this.init();
-			Object.assign(this.property, JSON.parse(userSaveData));
-		}
+		if (userSaveData) this.property = JSON.parse(userSaveData);
 	}
 
 	save() {
@@ -494,7 +488,7 @@ class PetUser {
 		this.property = {
 			'bag': new Array(6).fill(''),
 			'box': new Array(30).fill(''),
-			'items': {'Poke Ball': 5},
+			'items': {},
 			'badges': [],
 			'time': {'ball': 0, 'draw': 0, 'search': 0, 'gym': 0}
 		}
@@ -515,13 +509,26 @@ class PetUser {
 			}
 			if (!this.property) throw Error();
 			Object.assign(this.property['items'], items);
-			Object.assign(this.property['bag'], parsed['bag'].map((x: string) => Teams.pack(Teams.unpack(x))));
-			if (parsed['box']) Object.assign(this.property['box'], parsed['box'].map((x: string) => Teams.pack(Teams.unpack(x))));
+			if (parsed['bag']) Object.assign(this.property['bag'], parsed['bag'].slice(0, this.property['bag'].length).map(
+				(x: string) => Teams.pack(Teams.unpack(x))
+			));
+			if (parsed['box']) Object.assign(this.property['box'], parsed['box'].slice(0, this.property['box'].length).map(
+				(x: string) => Teams.pack(Teams.unpack(x))
+			));
+			if (parsed['badges']) this.property['badges'] = parsed['badges'].filter((x: string) => !!PetBattle.gymConfig[x]);
 			if (this.property['bag'].filter(x => x).length === 0) throw Error();
 		} catch (err) {
 			this.property = cachedProperty;
 			return false;
 		}
+		this.cachedProperty = cachedProperty;
+		return true;
+	}
+
+	restoreProperty(): boolean {
+		if (!this.cachedProperty) return false;
+		this.property = this.cachedProperty;
+		this.cachedProperty = undefined;
 		return true;
 	}
 
@@ -531,6 +538,17 @@ class PetUser {
 
 	levelRistriction(): number {
 		return this.badgeNum() * 10 + 10;
+	}
+
+	parsePosition(target: string): petPosition | undefined {
+		if (!this.property) return;
+		if (!target) return;
+		const targets = target.split(',').map(x => x.trim());
+		if (targets.length !== 2) return;
+		const posType: 'bag' | 'box' = targets[0] === 'bag' ? 'bag' : 'box';
+		const index = parseInt(targets[1]);
+		if (index === NaN || index < 0 || index >= this.property[posType].length) return;
+		return {'type': posType, 'index': index};
 	}
 
 	getPet(): string {
@@ -813,7 +831,7 @@ function petBox(petUser: PetUser, target: string): string {
 	const st = (x: string) => `<b>${x}</b>`;
 
 	let pokeDiv = ``;
-	const set = petUser.checkPet(Utils.parsePosition(target));
+	const set = petUser.checkPet(petUser.parsePosition(target));
 	if (set) {
 		let setTitle = set.level >= petUser.levelRistriction() ?
 			`<b>达到${petUser.badgeNum()}个徽章的等级上限</b>` : '<br/>';
@@ -905,8 +923,8 @@ function petBox(petUser: PetUser, target: string): string {
 	};
 	const bagMons = petUser.property['bag'].map((x, i) =>
 		petButton(x.split('|')[1] || x.split('|')[0], `bag,${i}`)).join('') + '<br/>';
-	const boxMons = petUser.property['box'].map((x, i) =>
-		petButton(x.split('|')[1] || x.split('|')[0], `box,${i}`) + (i % 6 == 5 ? '<br/>' : '')).join('');
+	const boxMons = petUser.property['box'].slice(petUser.onPage * 30, (petUser.onPage + 1) * 30).map((x, i) =>
+		petButton(x.split('|')[1] || x.split('|')[0], `box,${i + petUser.onPage * 30}`) + (i % 6 == 5 ? '<br/>' : '')).join('');
 	let items = ``;
 	const itemButton = (item: string) => Utils.button(
 		petUser.onPosition ? `/pet box item ${target}=>${item}` : '', '', Utils.itemStyle(item)
@@ -918,10 +936,18 @@ function petBox(petUser: PetUser, target: string): string {
 	const shopButton = Utils.button('/pet shop', '商店');
 	const checkButton = Utils.button('/pet check', '检查队伍');
 	const exportButton = Utils.button('/pet export', '导出队伍');
+	const pageNum = Math.ceil(petUser.property['box'].length / 30);
+	let lastPageButton = '';
+	let nextPageButton = '';
+	if (pageNum > 1) {
+		lastPageButton = Utils.button(`/pet box goto ${(petUser.onPage + pageNum - 1) % pageNum}`, '上个盒子');
+		nextPageButton = Utils.button(`/pet box goto ${(petUser.onPage + 1) % pageNum}`, '下个盒子');
+	}
 	let boxDiv = `<div style="width: 310px; vertical-align: top; display: inline-block;">` +
 		`<div style="width: 250px; vertical-align: top; display: inline-block">` +
 		`<div style="line-height: 25px">${boxTitle}</div>` +
-		`<div>${st(`背包`)} ${checkButton} ${exportButton}<br/>${bagMons}${st(`盒子`)}<br/>${boxMons}</div></div>` +
+		`<div>${st(`背包`)} ${checkButton} ${exportButton}<br/>${bagMons}` +
+		`${st(`盒子 ${petUser.onPage + 1}`)} ${lastPageButton} ${nextPageButton}<br/>${boxMons}</div></div>` +
 		`<div style="width: 60px; vertical-align: top; display: inline-block;">` +
 		`<div style="line-height: 35px">${shopButton}</div><div>${st(`道具`)}</div>` +
 		`<div style="height: 210px; overflow: auto;">${items}</div></div></div>`;
@@ -1000,6 +1026,7 @@ export const commands: Chat.ChatCommands = {
 
 				petUser.init();
 				petUser.addPet(Pet.gen(target, 5, true, 70));
+				petUser.addItem('Poke Ball', 5);
 				petUser.save();
 
 				this.parse('/pet init guide');
@@ -1049,6 +1076,14 @@ export const commands: Chat.ChatCommands = {
 				user.sendTo(room.roomid, `|uhtml${target === 'new' ? '' : 'change'}|pet-box-show|${div}`);
 			},
 
+			goto(target, room, user) {
+				if (!room) return this.popupReply("请在房间里使用宠物系统");
+				const petUser = getUser(user.id);
+				if (!petUser.property) return this.popupReply("您还未领取最初的伙伴!");
+				petUser.onPage = (parseInt(target) || 0) % (Math.ceil(petUser.property['box'].length / 30));
+				this.parse(`/pet box show ${petUser.onPosition ? Object.values(petUser.onPosition).join(',') : ''}`);
+			},
+
 			onmove(target, room, user) {
 				if (!room) return this.popupReply("请在房间里使用宠物系统");
 				const petUser = getUser(user.id);
@@ -1064,8 +1099,8 @@ export const commands: Chat.ChatCommands = {
 				petUser.operation = undefined;
 				const targets = target.split('<=>').map(x => x.trim());
 				if (targets.length !== 2) return this.popupReply(`Usage: /pet box move [bag|box],position1<=>[bag|box],position2`);
-				const pos1 = Utils.parsePosition(targets[0]);
-				const pos2 = Utils.parsePosition(targets[1]);
+				const pos1 = petUser.parsePosition(targets[0]);
+				const pos2 = petUser.parsePosition(targets[1]);
 				if (!pos1 || !pos2) return this.popupReply(`位置不存在!`);
 				petUser.load();
 				if (petUser.movePet(pos1, pos2)) {
@@ -1087,7 +1122,7 @@ export const commands: Chat.ChatCommands = {
 				const targets = target.split('=>').map(x => x.trim());
 				target = targets[0];
 				const goal = targets[1];
-				const position = Utils.parsePosition(target);
+				const position = petUser.parsePosition(target);
 				if (!position) return this.popupReply('位置不存在!');
 				const availableEvos = petUser.checkEvo(position);
 				if (availableEvos.length === 0) {
@@ -1124,8 +1159,9 @@ export const commands: Chat.ChatCommands = {
 				if (!petUser.property) return this.popupReply("您还未领取最初的伙伴!");
 				const targets = target.split('=>').map(x => x.trim());
 				target = targets[0];
-				const position = Utils.parsePosition(target);
+				const position = petUser.parsePosition(target);
 				if (!position) return this.popupReply('位置不存在!');
+				if (petUser.operation) return this.popupReply('不能在进行其他操作的过程中更换道具!');
 
 				petUser.load();
 				if (petUser.setItem(position, targets[1])) petUser.save();
@@ -1140,7 +1176,7 @@ export const commands: Chat.ChatCommands = {
 				user.sendTo(room.roomid, `|uhtmlchange|pet-box-show|`);
 				const targets = target.split('=>').map(x => x.trim());
 				target = targets[0];
-				const position = Utils.parsePosition(target);
+				const position = petUser.parsePosition(target);
 				if (!position) return this.popupReply('位置不存在!');
 				petUser.load();
 				const set = petUser.checkPet(position);
@@ -1196,7 +1232,7 @@ export const commands: Chat.ChatCommands = {
 				petUser.load();
 				target = targets[0];
 				if (targets.length === 2 && petUser.onChangeMoves && petUser.onChangeMoves['selected'].length > 0) {
-					const position = Utils.parsePosition(target);
+					const position = petUser.parsePosition(target);
 					if (!position) return this.popupReply('位置不存在!');
 					if (petUser.changeMoves(position)) petUser.save();
 				}
@@ -1211,7 +1247,7 @@ export const commands: Chat.ChatCommands = {
 				const targets = target.split('!').map(x => x.trim());
 				target = targets[0];
 				petUser.load();
-				const position = Utils.parsePosition(target);
+				const position = petUser.parsePosition(target);
 				if (!position) return this.popupReply('位置不存在!');
 				const set = petUser.checkPet(position);
 				if (!set) return this.popupReply('位置是空的!');
@@ -1395,6 +1431,7 @@ export const commands: Chat.ChatCommands = {
 					petUser.battleInfo = 'gym';
 					battleRoom = PetBattle.createBattle(user, bot, userTeam, botTeam, rule, false);
 					petUser.property['time']['gym'] = Date.now();
+					FS(`${DEPOSITPATH}/${user.id}.txt`).safeWriteSync(target);
 				} else {
 					const wildPokemon = Pet.wild(room.roomid, target, petUser.maxLevel(), petUser.levelRistriction(), wantLegend);
 					if (!wildPokemon) return this.popupReply('这片草丛太危险了!');
@@ -1605,8 +1642,10 @@ export const commands: Chat.ChatCommands = {
 		edit(target, room, user) {
 			this.checkCan('bypassall');
 			if (!room) return this.popupReply("请在房间里使用宠物系统");
-			const petUser = getUser(user.id);
-			if (!petUser.property) return this.popupReply("您还未领取最初的伙伴!");
+			const targets = target.split('=>');
+			target = targets.slice(1).join('=>');
+			const petUser = getUser(Users.get(targets[0])?.id || user.id);
+			if (!petUser.property) return this.popupReply(`${petUser.id}还未领取最初的伙伴!`);
 			petUser.load();
 			user.sendTo(room.roomid, `|uhtmlchange|pet-edit|`);
 			if (target) {
@@ -1614,7 +1653,8 @@ export const commands: Chat.ChatCommands = {
 					case 2:
 						return user.sendTo(
 							room.roomid,
-							`|uhtml|pet-edit|确认删除?&emsp;${Utils.boolButtons('/pet edit !!', '/pet edit')}`
+							`|uhtml|pet-edit|确认删除?&emsp;` +
+							`${Utils.boolButtons(`/pet edit ${petUser.id}=>!!`, `/pet edit ${petUser.id}`)}`
 						);
 					case 3:
 						dropUser(user.id);
@@ -1623,18 +1663,36 @@ export const commands: Chat.ChatCommands = {
 					default:
 						if (petUser.editProperty(target)) {
 							petUser.save();
-							this.parse('/pet box');
+							const userChatRoom = Rooms.get(petUser.chatRoomId);
+							if (userChatRoom) {
+								Users.get(petUser.id)?.sendTo(userChatRoom, `|uhtmlchange|pet-box-show|${petBox(
+									petUser,
+									petUser.onPosition ? Object.values(petUser.onPosition).join(',') : ''
+								)}`);
+							}
 							return this.popupReply(`修改成功!`);
 						} else {
 							this.popupReply(`格式错误!`);
 						}
 				}
 			}
-			user.sendTo(room.roomid, `|uhtml|pet-edit|您的盒子:<br/>` + 
+			user.sendTo(room.roomid, `|uhtml|pet-edit|${petUser.id}的盒子:<br/>` + 
 				`<input type="text" style="width: 100%" value='${JSON.stringify(petUser.property)}'/>` +
-				`修改盒子: /pet edit {"bag":["宝可梦1",...],"box":["宝可梦2",...],"items":{"道具1":数量1,...}}<br/>` +
-				Utils.button('/pet edit !', '删除用户数据')
+				`修改盒子: /pet edit ${petUser.id}=>{"bag":["宝可梦1",...],"box":["宝可梦2",...],"items":{"道具1":数量1,...}}<br/>` +
+				Utils.button(`/pet edit ${petUser.id}=>!`, '删除用户数据')
 			);
+		},
+
+		restore(target, room, user) {
+			this.checkCan('bypassall');
+			if (!room) return this.popupReply("请在房间里使用宠物系统");
+			const targetUser = Users.get(target);
+			if (!targetUser) return this.popupReply(`没有找到用户${target}!`);
+			const petUser = getUser(targetUser.id);
+			if (!petUser.property) return this.popupReply(`${petUser.id}还未领取最初的伙伴!`);
+			if (!petUser.restoreProperty()) return this.popupReply(`没有找到用户${target}的备份数据!`);
+			petUser.save();
+			this.popupReply("用户数据恢复成功!");
 		},
 
 		editgym(target, room, user) {
@@ -1691,8 +1749,10 @@ export const commands: Chat.ChatCommands = {
 			let buttons = [];
 			if (target !== 'lawn') {
 				buttons.push(['<b>欢迎来到Pokemon Showdown China宠物系统!</b>']);
+				if (!getUser(user.id).property) {
+					buttons[0].push(Utils.button('/pet init', '领取最初的伙伴!'));
+				}
 				buttons.push([
-					Utils.button('/pet init', '领取最初的伙伴!'),
 					Utils.button('/pet box', '盒子'),
 					Utils.button('/pet shop', '商店'),
 					`<button class="button"><a href="/gym">道馆</a></button>`,
@@ -1718,7 +1778,7 @@ export const commands: Chat.ChatCommands = {
 			} else if (room.roomid === 'gym') {
 				buttons.push(['<b>去道馆证明自己的实力吧!</b>']);
 				buttons.push(Object.keys(PetBattle.gymConfig).map(
-					gymid => Utils.button(`/pet lawn search ${gymid}`, gymid)
+					gymid => Utils.button(`/pet lawn search ${gymid}`, `${gymid}道馆`)
 				));
 			} else {
 				buttons.push(['<b>这个房间没有野生的宝可梦哦</b>']);
