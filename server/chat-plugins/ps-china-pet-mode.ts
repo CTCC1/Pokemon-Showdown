@@ -1717,7 +1717,7 @@ export const commands: Chat.ChatCommands = {
 								`${Utils.boolButtons(`/pet admin edit ${petUser.id}=>!!`, `/pet admin edit ${petUser.id}`)}`
 							);
 						case 3:
-							dropUser(user.id);
+							dropUser(petUser.id);
 							petUser.destroy();
 							return this.popupReply(`用户数据已删除`);
 						default:
