@@ -2,6 +2,7 @@
 	Pokemon Showdown China Pet Mode Version 1.0 Author: Starmind
 	1. 劣质王冠: 2, 银色王冠: 25, 金色王冠: 100, 特性胶囊: 50, 特性膏药: 100, 性格薄荷: 50
 	2. bot定时/add /tour
+	3. /add 选项 能不能大师球
 */
 
 import { FS } from "../../lib";
@@ -144,6 +145,25 @@ class Pet {
 		'Bulbasaur', 'Chikorita', 'Treecko', 'Turtwig', 'Snivy', 'Chespin', 'Rowlet', 'Grookey',
 		'Charmander', 'Cyndaquil', 'Torchic', 'Chimchar', 'Tepig', 'Fennekin', 'Litten', 'Scorbunny',
 		'Squirtle', 'Totodile', 'Mudkip', 'Piplup', 'Oshawott', 'Froakie', 'Popplio', 'Sobble',
+	];
+
+	static legendMons = [
+		'Articuno', 'Zapdos', 'Moltres', 'Raikou', 'Entei', 'Suicune', 'Regirock', 'Regice', 'Registeel', 'Latias', 'Latios',
+		'Uxie', 'Mesprit', 'Azelf', 'Heatran', 'Regigigas', 'Cresselia', 'Cobalion', 'Terrakion', 'Virizion',
+		'Tornadus', 'Thundurus', 'Landorus', 'Kubfu', 'Urshifu', 'Regieleki', 'Regidrago', 'Glastrier', 'Spectrier',
+		'Type: Null', 'Silvally', 'Tapu Koko', 'Tapu Lele', 'Tapu Bulu', 'Tapu Fini', 'Nihilego', 'Buzzwole', 'Pheromosa',
+		'Xurkitree', 'Celesteela', 'Kartana', 'Guzzlord', 'Poipole', 'Naganadel', 'Stakataka', 'Blacephalon',
+		'Mewtwo', 'Lugia', 'Ho-Oh', 'Kyogre', 'Groudon', 'Rayquaza', 'Dialga', 'Palkia', 'Giratina', 'Reshiram', 'Zekrom', 'Kyurem',
+		'Xerneas', 'Yveltal', 'Zygarde', 'Cosmog', 'Cosmoem', 'Solgaleo', 'Lunala', 'Necrozma', 'Zacian', 'Zamazenta', 'Eternatus',
+		'Calyrex', 'Mew', 'Celebi', 'Jirachi', 'Deoxys', 'Phione', 'Manaphy', 'Darkrai', 'Shaymin', 'Arceus', 'Victini',
+		'Keldeo', 'Meloetta', 'Genesect', 'Diancie', 'Hoopa', 'Volcanion', 'Magearna', 'Marshadow', 'Poipole', 'Zeraora',
+		'Meltan', 'Melmetal', 'Zarude'
+	];
+
+	static subLegendMons = [
+		'Dratini', 'Dragonair', 'Dragonite', 'Larvitar', 'Pupitar', 'Tyranitar', 'Bagon', 'Shelgon', 'Salamence',
+		'Beldum', 'Metang', 'Metagross', 'Gible', 'Gabite', 'Garchomp', 'Deino', 'Zweilous', 'Hydreigon',
+		'Goomy', 'Sliggoo', 'Goodra', 'Jangmo-o', 'Hakamo-o', 'Kommo-o', 'Dreepy', 'Drakloak', 'Dragapult'
 	];
 
 	static typeIcons: {[speciesname: string]: string} = {};
@@ -764,8 +784,10 @@ class PetUser {
 		const team = Teams.unpack(this.getPet());
 		if (!team) return '宝可梦数据格式错误!';
 		const set = team[0];
-		if (set.item && Shop.getPrice(set.item) > 50) return '贵重物品不能交换!';
-		if (Dex.species.get(set.species).bst >= 570) return '重要的宝可梦不能交换!';
+		if (set.item && Shop.getPrice(set.item) >= 50) return '贵重物品不能交换!';
+		if (Pet.legendMons.concat(Pet.subLegendMons).indexOf(Dex.species.get(set.species).baseSpecies) >= 0) {
+			return '重要的宝可梦不能交换!';
+		}
 		if (set.moves.filter(x => toID(x) === 'vcreate').length > 0) return '有纪念意义的宝可梦不能交换!';
 		return '';
 	}
@@ -1000,6 +1022,10 @@ export const commands: Chat.ChatCommands = {
 
 	editgym(target) {
 		this.parse(`/pet admin editgym ${target}`);
+	},
+
+	genpoke(target) {
+		this.parse(`/pet admin genpoke ${target}`);
 	},
 
 	'petmode': 'pet',
@@ -1710,6 +1736,7 @@ export const commands: Chat.ChatCommands = {
 				user.sendTo(room.roomid, `|uhtml|pet-edit|${petUser.id}的盒子:<br/>` + 
 					`<input type="text" style="width: 100%" value='${JSON.stringify(petUser.property)}'/>` +
 					`修改盒子: /edit ${petUser.id}=>{"bag":["宝可梦1",...],"box":["宝可梦2",...],"items":{"道具1":数量1,...}}<br/>` +
+					`生成宠物: /genpoke 种类, 等级(, fullivs, shiny, hidden)<br/>` +
 					Utils.button(`/pet admin edit ${petUser.id}=>!`, '删除用户数据')
 				);
 			},
@@ -1736,6 +1763,20 @@ export const commands: Chat.ChatCommands = {
 					'exports.PetModeGymConfig = ' + JSON.stringify(PetBattle.gymConfig, null, '\t')
 				);
 				this.popupReply('修改成功!');
+			},
+
+			genpoke(target, room, user) {
+				const targets = target.split(',').map(x => x.trim());
+				if (targets.length < 2) return this.errorReply("Usage: /genpoke 种类, 等级(, fullivs, shiny, hidden)");
+				const speciesid = targets[0];
+				const level = parseInt(targets[1]);
+				if (!Dex.species.get(speciesid).exists) return this.errorReply(`没有找到名为 ${targets[0]} 的宝可梦!`);
+				if (!level) return this.errorReply("请输入正整数等级!");
+				const fullivs = target.indexOf("fullivs") >= 0;
+				const shiny = target.indexOf("shiny") >= 0;
+				const hidden = target.indexOf("hidden") >= 0;
+				const set = Pet.gen(speciesid, level, fullivs, 70, shiny ? 1 : 0, hidden ? 1 : 0);
+				this.sendReply(set);
 			},
 
 		},
