@@ -374,7 +374,10 @@ class PetBattle {
 		if (rule.indexOf('noevasion') >= 0) {
 			for (let set of userTeam) {
 				for (let moveid of set.moves) {
-					if (['doubleteam', 'minimize', 'flash', 'smokescreen', 'sandattack', 'kinesis'].indexOf(toID(moveid)) >= 0) {
+					if ([
+						'doubleteam', 'minimize', 'flash', 'smokescreen', 'sandattack', 'kinesis', 'mudslap',
+						'nightdaze', 'mudbomb', 'muddywater', 'octazooka', 'mirrorshot', 'leaftornado'
+					].indexOf(toID(moveid)) >= 0) {
 						return `您的 ${set.name} 不能携带提升回避率或降低对手命中率的招式 ${moveid} `;
 					}
 				}
@@ -1474,7 +1477,7 @@ export const commands: Chat.ChatCommands = {
 					if (!PetBattle.gymConfig[target]) return this.parse('/pet help lawn');
 					const userSets = petUser.property['bag'].filter((x: string) => x);
 					const validateRes = PetBattle.validate(PetBattle.gymConfig[target]['userteam'], userSets);
-					if (validateRes) return this.popupReply(`根据${target}的要求, ${validateRes}!`);
+					if (validateRes) return this.popupReply(`根据${target}道馆的要求, ${validateRes}!`);
 					const rule = `gen8petmode @@@${PetBattle.gymConfig[target]['rule']}`;
 					const maxLevel = PetBattle.gymConfig[target]['maxlevel'];
 					const userTeam = userSets.map(set => {
