@@ -170,8 +170,10 @@ export const Rulesets: {[k: string]: FormatData} = {
 							botSide.chooseSwitch('Oricorio-Sensu');
 							this.add('message', '要进入高潮咯，希望你能跟上我的步伐');
 						}
-						this.commitDecisions();
-						if (this.allChoicesDone()) this.sendUpdates();
+						if (this.allChoicesDone()) {
+							this.commitDecisions();
+							this.sendUpdates();
+						}
 					} else {
 						for (let i = 0; i < 20; i++) {
 							botSide.chooseMove(this.sample(botSide.active[0].moves));
@@ -230,8 +232,10 @@ export const Rulesets: {[k: string]: FormatData} = {
 							botSide.chooseSwitch('Keldeo-Resolute');
 							this.add('message', '决心。。。你的决心又是什么呢？');
 						}
-						this.commitDecisions();
-						if (this.allChoicesDone()) this.sendUpdates();
+						if (this.allChoicesDone()) {
+							this.commitDecisions();
+							this.sendUpdates();
+						}
 					} else {
 						for (let i = 0; i < 20; i++) {
 							botSide.chooseMove(this.sample(botSide.active[0].moves));
@@ -290,8 +294,10 @@ export const Rulesets: {[k: string]: FormatData} = {
 							botSide.chooseSwitch('Articuno');
 							this.add('message', '曾经我也是为他所救的一人，也是在这次建立起了我们的羁绊。');
 						}
-						this.commitDecisions();
-						if (this.allChoicesDone()) this.sendUpdates();
+						if (this.allChoicesDone()) {
+							this.commitDecisions();
+							this.sendUpdates();
+						}
 					} else {
 						const mega = botSide.active[0].canMegaEvo ? 'mega' : '';
 						for (let i = 0; i < 20; i++) {
@@ -354,8 +360,10 @@ export const Rulesets: {[k: string]: FormatData} = {
 							botSide.chooseSwitch('Metagross');
 							this.add('message', '这是最后的试炼。来吧！让我看看你修行的成果。');
 						}
-						this.commitDecisions();
-						if (this.allChoicesDone()) this.sendUpdates();
+						if (this.allChoicesDone()) {
+							this.commitDecisions();
+							this.sendUpdates();
+						}
 					} else {
 						const mega = botSide.active[0].canMegaEvo ? 'mega' : '';
 						for (let i = 0; i < 20; i++) {
