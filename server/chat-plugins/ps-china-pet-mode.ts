@@ -268,6 +268,7 @@ class Pet {
 	static validEvos(set: PokemonSet, traded: boolean = false): (string)[][] {
 		return Dex.species.get(set.species).evos.map(x => {
 			const species = Dex.species.get(x);
+			if (species.gender && species.gender !== set.gender) return [];
 			if (traded) {
 				if (species.evoType === 'trade') {
 					if (!species.evoItem) return [x, ''];
@@ -321,6 +322,22 @@ class Pet {
 		else set.ability = postAbilities['0'];
 		set.species = targetSpecies;
 		return set;
+	}
+
+	static validSets(sets: string[]): string[] {
+		return sets.map((x: string) => {
+			const team = Teams.unpack(x);
+			if (!team) return '';
+			if (!Dex.species.get(team[0].species).exists) return '';
+			if (!Dex.natures.get(team[0].nature).exists) return '';
+			if (!Dex.abilities.get(team[0].ability).exists) return '';
+			if (team[0].item && !Dex.items.get(team[0].item).exists) return '';
+			if (team[0].moves.length < 1) return '';
+			for (let move of team[0].moves) {
+				if (!Dex.moves.get(move)) return '';
+			}
+			return Teams.pack(team);
+		}).filter((x: string) => x);
 	}
 }
 Dex.moves.all().forEach(move => {
@@ -532,12 +549,8 @@ class PetUser {
 			}
 			if (!this.property) throw Error();
 			Object.assign(this.property['items'], items);
-			if (parsed['bag']) Object.assign(this.property['bag'], parsed['bag'].slice(0, this.property['bag'].length).map(
-				(x: string) => Teams.pack(Teams.unpack(x))
-			));
-			if (parsed['box']) Object.assign(this.property['box'], parsed['box'].slice(0, this.property['box'].length).map(
-				(x: string) => Teams.pack(Teams.unpack(x))
-			));
+			if (parsed['bag']) Object.assign(this.property['bag'], Pet.validSets(parsed['bag']).slice(0, this.property['bag'].length));
+			if (parsed['box']) Object.assign(this.property['box'], Pet.validSets(parsed['box']).slice(0, this.property['box'].length));
 			if (parsed['badges']) this.property['badges'] = parsed['badges'].filter((x: string) => !!PetBattle.gymConfig[x]);
 			if (this.property['bag'].filter(x => x).length === 0) throw Error();
 		} catch (err) {
