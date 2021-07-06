@@ -9,7 +9,7 @@ exports.PetModeGymConfig = {
         "rule": "pschinapetmodegym2",
         "maxlevel": 20,
         "userteam": "No Evasion Moves, No Repeat Pokemon",
-        "botteam": "Keldeo-Resolute||Expert Belt|Justified|Surf,SecretSword,Air Slash|Timid|,,,252,,252||||20|]Lanturn||Rindo Berry|VoltAbsorb|Scald,Thunderbolt,VoltSwitch,IceBeam|Calm|252,0,4,0,252,0|M|||20|]Qwilfish||BlackSludge|Intimidate|Waterfall,Poison Jab|Impish|236,0,196,0,76,0|M|||20|]Kingler||LifeOrb|SheerForce|Liquidation,X-Scissor,RockSlide|Adamant|236,176,0,0,76,0|M|||20|250"
+        "botteam": "Lanturn||Rindo Berry|VoltAbsorb|Scald,Thunderbolt,VoltSwitch,IceBeam|Calm|252,0,4,0,252,0|M|||20|]Keldeo-Resolute||Expert Belt|Justified|Surf,SecretSword,Air Slash|Timid|,,,252,,252||||20|]Qwilfish||BlackSludge|Intimidate|Waterfall,Poison Jab|Impish|236,0,196,0,76,0|M|||20|]Kingler||LifeOrb|SheerForce|Liquidation,X-Scissor,RockSlide|Adamant|236,176,0,0,76,0|M|||20|250"
     },
     "冰蓝": {
         "rule": "pschinapetmodegym3",

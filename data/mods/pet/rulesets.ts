@@ -103,6 +103,17 @@ export const Rulesets: {[k: string]: FormatData} = {
 			dcTimerBank: false,
 		},
 		onBegin() {
+			const botSide = this.sides[1];
+			botSide.emitRequest = (update: AnyObject) => {
+				this.send('sideupdate', `${botSide.id}\n|request|${JSON.stringify(update)}`);
+				botSide.activeRequest = update;
+				setTimeout(() => {
+					for (let i = 0; i < 20; i++) {
+						botSide.chooseMove(this.sample(botSide.active[0].moves));
+						if (botSide.isChoiceDone()) break;
+					}
+				}, 10);
+			}
 			this.add('html', `<div class="broadcast-green"><strong>野生的${this.sides[1].team[0].name}出现了!</strong></div>`);
 		},
 		onBattleStart() {
@@ -144,6 +155,31 @@ export const Rulesets: {[k: string]: FormatData} = {
 			dcTimerBank: false,
 		},
 		onBegin() {
+			const botSide = this.sides[1];
+			botSide.emitRequest = (update: AnyObject) => {
+				this.send('sideupdate', `${botSide.id}\n|request|${JSON.stringify(update)}`);
+				botSide.activeRequest = update;
+				setTimeout(() => {
+					if (update.forceSwitch) {
+						const alive = botSide.pokemon.filter(
+							x => !x.isActive && !x.fainted && x.name !== 'Oricorio'
+						).map(x => x.name);
+						if (alive.length > 0) {
+							botSide.chooseSwitch(this.prng.sample(alive));
+						} else {
+							botSide.chooseSwitch('Oricorio-Sensu');
+							this.add('message', '要进入高潮咯，希望你能跟上我的步伐');
+						}
+						this.commitDecisions();
+						this.sendUpdates();
+					} else {
+						for (let i = 0; i < 20; i++) {
+							botSide.chooseMove(this.sample(botSide.active[0].moves));
+							if (botSide.isChoiceDone()) break;
+						}
+					}
+				}, 10);
+			};
 			this.sides.forEach(side => {
 				if (Dex.toID(side.name) === BOTID) {
 					this.add('html', `<div class="broadcast-green"><strong>训练家${side.name}开始挑战苍蓝道馆!</strong></div>`);
@@ -152,11 +188,6 @@ export const Rulesets: {[k: string]: FormatData} = {
 		},
 		onBattleStart() {
 			this.add('message', '欢迎来到，新人训练家都要经过的第一站——苍蓝道馆。来吧，让我们一起在苍蓝的天空起舞吧。');
-		},
-		onSwitchIn(pokemon) {
-			if (pokemon.side.id === 'p2' && pokemon.name === 'Oricorio-Sensu' && pokemon.hp === pokemon.maxhp) {
-				this.add('message', '要进入高潮咯，希望你能跟上我的步伐');
-			}
 		},
 		onFaint(pokemon) {
 			if (pokemon.side.id === 'p2' && pokemon.side.pokemon.filter(pokemon => !pokemon.fainted).length <= 1) {
@@ -184,16 +215,36 @@ export const Rulesets: {[k: string]: FormatData} = {
 			dcTimerBank: false,
 		},
 		onBegin() {
+			const botSide = this.sides[1];
+			botSide.emitRequest = (update: AnyObject) => {
+				this.send('sideupdate', `${botSide.id}\n|request|${JSON.stringify(update)}`);
+				botSide.activeRequest = update;
+				setTimeout(() => {
+					if (update.forceSwitch) {
+						const alive = botSide.pokemon.filter(
+							x => !x.isActive && !x.fainted && x.name !== 'Keldeo'
+						).map(x => x.name);
+						if (alive.length > 0) {
+							botSide.chooseSwitch(this.prng.sample(alive));
+						} else {
+							botSide.chooseSwitch('Keldeo-Resolute');
+							this.add('message', '决心。。。你的决心又是什么呢？');
+						}
+						this.commitDecisions();
+						this.sendUpdates();
+					} else {
+						for (let i = 0; i < 20; i++) {
+							botSide.chooseMove(this.sample(botSide.active[0].moves));
+							if (botSide.isChoiceDone()) break;
+						}
+					}
+				}, 10);
+			};
 			this.sides.forEach(side => {
 				if (Dex.toID(side.name) === BOTID) {
 					this.add('html', `<div class="broadcast-green"><strong>训练家${side.name}开始挑战湛蓝道馆!</strong></div>`);
 				}
 			})
-		},
-		onSwitchIn(pokemon) {
-			if (pokemon.side.id === 'p2' && pokemon.name === 'Keldeo-Resolute' && pokemon.hp === pokemon.maxhp) {
-				this.add('message', '决心。。。你的决心又是什么呢？');
-			}
 		},
 		onBattleStart() {
 			this.add('message', '经历过天空洗礼的你，能否经得住波涛的汹涌呢？');
@@ -223,20 +274,41 @@ export const Rulesets: {[k: string]: FormatData} = {
 			timeoutAutoChoose: true,
 			dcTimerBank: false,
 		},
-		onBattleStart() {
-			this.add('message', '这里是蓝色三馆的最后一站。在雪山当中最致命就是无尽的暴风雪与冰雹，但愿你能冲破这重重的险阻。');
-		},
-		onSwitchIn(pokemon) {
-			if (pokemon.side.id === 'p2' && pokemon.name === 'Articuno' && pokemon.hp === pokemon.maxhp) {
-				this.add('message', '曾经我也是为他所救的一人，也是在这次建立起了我们的羁绊。');
-			}
-		},
 		onBegin() {
+			const botSide = this.sides[1];
+			botSide.emitRequest = (update: AnyObject) => {
+				this.send('sideupdate', `${botSide.id}\n|request|${JSON.stringify(update)}`);
+				botSide.activeRequest = update;
+				setTimeout(() => {
+					if (update.forceSwitch) {
+						const alive = botSide.pokemon.filter(
+							x => !x.isActive && !x.fainted && x.name !== 'Articuno'
+						).map(x => x.name);
+						if (alive.length > 0) {
+							botSide.chooseSwitch(this.prng.sample(alive));
+						} else {
+							botSide.chooseSwitch('Articuno');
+							this.add('message', '曾经我也是为他所救的一人，也是在这次建立起了我们的羁绊。');
+						}
+						this.commitDecisions();
+						this.sendUpdates();
+					} else {
+						const mega = botSide.active[0].canMegaEvo ? 'mega' : '';
+						for (let i = 0; i < 20; i++) {
+							botSide.chooseMove(this.sample(botSide.active[0].moves), 0, mega);
+							if (botSide.isChoiceDone()) break;
+						}
+					}
+				}, 10);
+			};
 			this.sides.forEach(side => {
 				if (Dex.toID(side.name) === BOTID) {
 					this.add('html', `<div class="broadcast-green"><strong>训练家${side.name}开始挑战冰蓝道馆!</strong></div>`);
 				}
 			})
+		},
+		onBattleStart() {
+			this.add('message', '这里是蓝色三馆的最后一站。在雪山当中最致命就是无尽的暴风雪与冰雹，但愿你能冲破这重重的险阻。');
 		},
 		onBeforeTurn() {
 			this.field.setWeather('hail');
@@ -266,20 +338,41 @@ export const Rulesets: {[k: string]: FormatData} = {
 			timeoutAutoChoose: true,
 			dcTimerBank: false,
 		},
-		onBattleStart() {
-			this.add('message', '这里是勇者修行的第一站，与之前相比，这里的修行恐怕会更加的令人绝望。穿上这件磁力服，在这里，坚定的意志将使属性克制不再那么重要，不过如果想要偷懒回复的话，可要做好被场地电击打断的准备。');
-		},
-		onSwitchIn(pokemon) {
-			if (pokemon.side.id === 'p2' && pokemon.name === 'Metagross' && pokemon.hp === pokemon.maxhp) {
-				this.add('message', '这是最后的试炼。来吧！让我看看你修行的成果。');
-			}
-		},
 		onBegin() {
+			const botSide = this.sides[1];
+			botSide.emitRequest = (update: AnyObject) => {
+				this.send('sideupdate', `${botSide.id}\n|request|${JSON.stringify(update)}`);
+				botSide.activeRequest = update;
+				setTimeout(() => {
+					if (update.forceSwitch) {
+						const alive = botSide.pokemon.filter(
+							x => !x.isActive && !x.fainted && x.name !== 'Metagross'
+						).map(x => x.name);
+						if (alive.length > 0) {
+							botSide.chooseSwitch(this.prng.sample(alive));
+						} else {
+							botSide.chooseSwitch('Metagross');
+							this.add('message', '这是最后的试炼。来吧！让我看看你修行的成果。');
+						}
+						this.commitDecisions();
+						this.sendUpdates();
+					} else {
+						const mega = botSide.active[0].canMegaEvo ? 'mega' : '';
+						for (let i = 0; i < 20; i++) {
+							botSide.chooseMove(this.sample(botSide.active[0].moves), 0, mega);
+							if (botSide.isChoiceDone()) break;
+						}
+					}
+				}, 10);
+			};
 			this.sides.forEach(side => {
 				if (Dex.toID(side.name) === BOTID) {
 					this.add('html', `<div class="broadcast-green"><strong>训练家${side.name}开始挑战坚毅道馆!</strong></div>`);
 				}
 			})
+		},
+		onBattleStart() {
+			this.add('message', '这里是勇者修行的第一站，与之前相比，这里的修行恐怕会更加的令人绝望。穿上这件磁力服，在这里，坚定的意志将使属性克制不再那么重要，不过如果想要偷懒回复的话，可要做好被场地电击打断的准备。');
 		},
 		onBeforeTurn() {
 			this.field.setTerrain('steelterrain');
