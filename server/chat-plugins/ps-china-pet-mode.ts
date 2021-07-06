@@ -1332,8 +1332,6 @@ export const commands: Chat.ChatCommands = {
 				const petUser = getUser(user.id);
 				if (!petUser.property) return this.popupReply("您还未领取最初的伙伴!");
 				if (!petUser.onPosition) return this.popupReply("请先选中想要交换的宝可梦!");
-				const checkRes = petUser.checkExchange();
-				if (checkRes) return this.popupReply(checkRes);
 				// 1. A按下[交换]: (A)/pet box ex  弹出交换提示
 				// 2. A根据提示: (A)/pet box ex B  A.operation='readyexB'  A.title=请等待B回应,重新发送,取消
 				//               B弹窗  B.operation='preexA'  B.title=接受与A交换,取消
@@ -1348,6 +1346,10 @@ export const commands: Chat.ChatCommands = {
 					if (!petFriend.onPosition) return this.popupReply(`${friend.name}还未选中想要交换的宝可梦!`);
 					petUser.load();
 					petFriend.load();
+					let userCheckRes = petUser.checkExchange();
+					if (userCheckRes) return this.popupReply(userCheckRes);
+					let friendCheckRes = petFriend.checkExchange();
+					if (friendCheckRes) return friend.popup(friendCheckRes);
 					const exResult = petUser.linkExchange(petFriend);
 					if (exResult) {
 						this.popupReply(`您用 ${exResult['sent']} 与${friend.name}交换了 ${exResult['received']} !`)
