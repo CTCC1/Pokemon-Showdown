@@ -37,8 +37,8 @@ const ITEMSHEET = 'https://play.pokemonshowdown.com/sprites/itemicons-sheet.png'
 const TYPEICONS = 'https://play.pokemonshowdown.com/sprites/types';
 const CATICONS = 'https://play.pokemonshowdown.com/sprites/categories';
 
-const LAWNCD = 60000;
-const GYMCD = 600000;
+const LAWNCD = 1000;
+const GYMCD = 60000;
 const BALLCD = 600000;
 
 if (!FS(USERPATH).existsSync()) FS(USERPATH).mkdir();
