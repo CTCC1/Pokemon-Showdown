@@ -182,11 +182,9 @@ export const Rulesets: {[k: string]: FormatData} = {
 					}
 				}, 10);
 			};
-			this.sides.forEach(side => {
-				if (Dex.toID(side.name) === BOTID) {
-					this.add('html', `<div class="broadcast-green"><strong>训练家${side.name}开始挑战苍蓝道馆!</strong></div>`);
-				}
-			})
+			if (Dex.toID(this.sides[1].name) === BOTID) {
+				this.add('html', `<div class="broadcast-green"><strong>训练家${this.sides[0].name}开始挑战苍蓝道馆!</strong></div>`);
+			}
 		},
 		onBattleStart() {
 			this.add('message', '欢迎来到，新人训练家都要经过的第一站——苍蓝道馆。来吧，让我们一起在苍蓝的天空起舞吧。');
@@ -244,11 +242,9 @@ export const Rulesets: {[k: string]: FormatData} = {
 					}
 				}, 10);
 			};
-			this.sides.forEach(side => {
-				if (Dex.toID(side.name) === BOTID) {
-					this.add('html', `<div class="broadcast-green"><strong>训练家${side.name}开始挑战湛蓝道馆!</strong></div>`);
-				}
-			})
+			if (Dex.toID(this.sides[1].name) === BOTID) {
+				this.add('html', `<div class="broadcast-green"><strong>训练家${this.sides[0].name}开始挑战湛蓝道馆!</strong></div>`);
+			}
 		},
 		onBattleStart() {
 			this.add('message', '经历过天空洗礼的你，能否经得住波涛的汹涌呢？');
@@ -307,11 +303,9 @@ export const Rulesets: {[k: string]: FormatData} = {
 					}
 				}, 10);
 			};
-			this.sides.forEach(side => {
-				if (Dex.toID(side.name) === BOTID) {
-					this.add('html', `<div class="broadcast-green"><strong>训练家${side.name}开始挑战冰蓝道馆!</strong></div>`);
-				}
-			})
+			if (Dex.toID(this.sides[1].name) === BOTID) {
+				this.add('html', `<div class="broadcast-green"><strong>训练家${this.sides[0].name}开始挑战冰蓝道馆!</strong></div>`);
+			}
 		},
 		onBattleStart() {
 			this.add('message', '这里是蓝色三馆的最后一站。在雪山当中最致命就是无尽的暴风雪与冰雹，但愿你能冲破这重重的险阻。');
@@ -373,11 +367,9 @@ export const Rulesets: {[k: string]: FormatData} = {
 					}
 				}, 10);
 			};
-			this.sides.forEach(side => {
-				if (Dex.toID(side.name) === BOTID) {
-					this.add('html', `<div class="broadcast-green"><strong>训练家${side.name}开始挑战坚毅道馆!</strong></div>`);
-				}
-			})
+			if (Dex.toID(this.sides[1].name) === BOTID) {
+				this.add('html', `<div class="broadcast-green"><strong>训练家${this.sides[0].name}开始挑战坚毅道馆!</strong></div>`);
+			}
 		},
 		onBattleStart() {
 			this.add('message', '这里是勇者修行的第一站，与之前相比，这里的修行恐怕会更加的令人绝望。穿上这件磁力服，在这里，坚定的意志将使属性克制不再那么重要，不过如果想要偷懒回复的话，可要做好被场地电击打断的准备。');

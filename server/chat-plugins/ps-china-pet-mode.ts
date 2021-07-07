@@ -5,7 +5,7 @@
 	3. 交易记录
 	4. 防沉迷
 	5. 更新草丛
-	6. Acid Rain
+	6. Acid Rain 特效
 	7. git stash
 
 	a. bot定时/add
@@ -812,7 +812,7 @@ class PetUser {
 		return levelUp;
 	}
 
-	checkExchange(): string {
+	checkExchange(friend: PetUser): string {
 		const team = Teams.unpack(this.getPet());
 		if (!team) return '宝可梦数据格式错误!';
 		const set = team[0];
@@ -821,6 +821,7 @@ class PetUser {
 			return '重要的宝可梦不能交换!';
 		}
 		if (set.moves.filter(x => toID(x) === 'vcreate').length > 0) return '有纪念意义的宝可梦不能交换!';
+		if (friend.levelRistriction() < Math.floor(set.level)) return '朋友的徽章数不足以驾驭这只宝可梦!';
 		return '';
 	}
 
@@ -1365,9 +1366,9 @@ export const commands: Chat.ChatCommands = {
 					if (!petFriend.onPosition) return this.popupReply(`${friend.name}还未选中想要交换的宝可梦!`);
 					petUser.load();
 					petFriend.load();
-					let userCheckRes = petUser.checkExchange();
+					let userCheckRes = petUser.checkExchange(petFriend);
 					if (userCheckRes) return this.popupReply(userCheckRes);
-					let friendCheckRes = petFriend.checkExchange();
+					let friendCheckRes = petFriend.checkExchange(petUser);
 					if (friendCheckRes) return friend.popup(friendCheckRes);
 					const exResult = petUser.linkExchange(petFriend);
 					if (exResult) {
