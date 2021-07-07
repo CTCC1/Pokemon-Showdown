@@ -23,10 +23,4 @@ exports.PetModeGymConfig = {
         "userteam": "No Evasion Moves, No Repeat Pokemon, No Baton Pass",
         "botteam": "Duraludon||Chople Berry|Teravolt|FlashCannon,Dragon Pulse|Timid|252,,252,252,252,252||,0,,,,||43|]Kartana||assaultvest|waterbubble|leafblade,sunsteelstrike,spectralthief|Jolly|252,252,252,,252,252||||43|]Bisharp||LifeOrb|Defiant|IronHead,KnockOff,SuckerPunch|Jolly|252,252,252,252,252,252||,0,,,,||43|]Celesteela||assaultvest|thickfat|heavyslam,aeroblast,flamethrower|Relaxed|252,252,252,252,252,252||||43|]Metagross||metagrossite|ClearBody|sunsteelstrike,psychicfangs|Jolly|252,252,252,,252,252||||43|]Melmetal||assaultvest|unaware|DoubleIronBash,Sunsteel Strike,Spectral Thief|Brave|252,252,252,,252,||||43|"
     },
-    "权谋": {
-        "rule": "pschinapetmodegym5",
-        "maxlevel": 50,
-        "userteam": "No Evasion Moves, No Repeat Pokemon, No Baton Pass",
-        "botteam": "Gengar||LumBerry|Levitate|ShadowBall,SludgeWave,Venoshock,Hex|Timid|252,,252,252,252,252||,0,,,,||60|]Muk-Alola||AirBalloon|Merciless|PoisonJab,GunkShot,SpectralThief,ShoreUp|Adamant|252,252,252,,252,252||,,,,,0||60|]Crobat||BlackSludge|Infiltrator|CrossPoison,SuperFang,GastroAcid,Roost|Jolly|252,252,252,,252,252||||60|]Weezing-Galar||BlackSludge|NeutralizingGas|Venoshock,ClearSmog,Aromatherapy,PainSplit|Bold|252,,252,252,252,252||,0,,,,||60|]Dragalge||ToxicPlate|Adaptability|Venoshock,CoreEnforcer,ClearSmog,StrengthSap|Sassy|252,,252,252,252,||,0,,,,||60|]Venusaur||Venusaurite|Overgrow|Venoshock,SappySeed,Aromatherapy,Synthesis|Relaxed|252,252,252,252,252,252||||60|"
-    }
 }

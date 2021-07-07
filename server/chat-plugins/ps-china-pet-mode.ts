@@ -4,7 +4,6 @@
 	2. /add 选项 nv 能不能大师球
 	3. 交易记录
 	4. 防沉迷
-	5. 更新草丛
 	6. Acid Rain 特效
 	7. git stash
 
@@ -39,6 +38,7 @@ const BOTID = 'pschinabot';
 const USERPATH = 'config/pet-mode/user-properties';
 const GIFTPATH = 'config/pet-mode/user-gifts';
 const DEPOSITPATH = 'config/pet-mode/deposit';
+const TRADELOGPATH = 'config/pet-mode/trade-log';
 const POKESHEET = 'https://play.pokemonshowdown.com/sprites/pokemonicons-sheet.png';
 const POKESPRITES = 'https://play.pokemonshowdown.com/sprites/ani';
 const POKESPRITESSHINY = 'https://play.pokemonshowdown.com/sprites/ani-shiny';
@@ -47,12 +47,13 @@ const TYPEICONS = 'https://play.pokemonshowdown.com/sprites/types';
 const CATICONS = 'https://play.pokemonshowdown.com/sprites/categories';
 
 const LAWNCD = 2000;
-const GYMCD = 3000;
+const GYMCD = 300000;
 const BALLCD = 600000;
 
 if (!FS(USERPATH).existsSync()) FS(USERPATH).mkdir();
 if (!FS(GIFTPATH).existsSync()) FS(GIFTPATH).mkdir();
 if (!FS(DEPOSITPATH).existsSync()) FS(DEPOSITPATH).mkdir();
+if (!FS(TRADELOGPATH).existsSync()) FS(TRADELOGPATH).mkdir();
 
 class Utils {
 
@@ -92,6 +93,12 @@ class Utils {
 			hash |= 0;
 		}
 		return hash;
+	}
+
+	static getDate(): string {
+		let date = new Date();
+		let zfill = (x: number) => { return ("0" + x).slice(-2); };
+		return `${date.getFullYear()}-${zfill(date.getMonth() + 1)}-${zfill((date.getDate()))}`;
 	}
 
 	static image(style: string) {
@@ -814,28 +821,32 @@ class PetUser {
 
 	checkExchange(friend: PetUser): string {
 		const team = Teams.unpack(this.getPet());
-		if (!team) return '宝可梦数据格式错误!';
+		if (!team) return '{1}的宝可梦数据格式错误!';
 		const set = team[0];
-		if (set.item && Shop.getPrice(set.item) >= 50) return '贵重物品不能交换!';
+		if (set.item && Shop.getPrice(set.item) >= 50) return '{1}的宝可梦携带了贵重物品, 不能交换!';
 		if (Pet.legendMons.concat(Pet.subLegendMons).indexOf(Dex.species.get(set.species).baseSpecies) >= 0) {
-			return '重要的宝可梦不能交换!';
+			return '{1}的宝可梦是重要的宝可梦, 不能交换!';
 		}
-		if (set.moves.filter(x => toID(x) === 'vcreate').length > 0) return '有纪念意义的宝可梦不能交换!';
-		if (friend.levelRistriction() < Math.floor(set.level)) return '朋友的徽章数不足以驾驭这只宝可梦!';
+		if (set.moves.filter(x => toID(x) === 'vcreate').length > 0) return '{1}的宝可梦有纪念意义, 不能交换!';
+		if (friend.levelRistriction() < Math.floor(set.level)) return '{2}的徽章数不足以驾驭{1}的宝可梦!';
 		return '';
 	}
 
-	linkExchange(friend: PetUser): {'sent': string, 'received': string} | undefined {
-		if (!this.property) return;
-		if (!this.onPosition) return;
-		if (!friend.property) return;
-		if (!friend.onPosition) return;
+	linkExchange(friend: PetUser): {'sent': string, 'received': string} | string {
+		if (!this.property) return '您还没有领取最初的伙伴!';
+		if (!this.onPosition) return '您想要交换的位置是空的!';
+		if (!friend.property) return '朋友还没有领取最初的伙伴!';
+		if (!friend.onPosition) return '朋友想要交换的位置是空的!';
+		let userCheckRes = this.checkExchange(friend);
+		if (userCheckRes) return userCheckRes.replace('{1}', '您').replace('{2}', '朋友');
+		let friendCheckRes = friend.checkExchange(this);
+		if (friendCheckRes) return friendCheckRes.replace('{1}', '朋友').replace('{2}', '您');
 		let myPet = this.getPet();
 		let mySet = Pet.parseSet(myPet);
-		if (!mySet) return;
+		if (!mySet) return '您想要交换的宝可梦格式错误!';
 		let friendPet = friend.getPet();
 		let friendSet = Pet.parseSet(friendPet);
-		if (!friendSet) return;
+		if (!friendSet) return '朋友想要交换的宝可梦格式错误!';
 		const myValidEvos = Pet.validEvos(mySet, true);
 		if (myValidEvos.length > 0) mySet = Pet.evo(mySet, myValidEvos[0][0], !!myValidEvos[0][1]);
 		const friendValidEvos = Pet.validEvos(friendSet, true);
@@ -1366,19 +1377,22 @@ export const commands: Chat.ChatCommands = {
 					if (!petFriend.onPosition) return this.popupReply(`${friend.name}还未选中想要交换的宝可梦!`);
 					petUser.load();
 					petFriend.load();
-					let userCheckRes = petUser.checkExchange(petFriend);
-					if (userCheckRes) return this.popupReply(userCheckRes);
-					let friendCheckRes = petFriend.checkExchange(petUser);
-					if (friendCheckRes) return friend.popup(friendCheckRes);
+					const toSend = petUser.getPet();
+					const toReceive = petFriend.getPet();
 					const exResult = petUser.linkExchange(petFriend);
-					if (exResult) {
+					if (typeof exResult === 'string') {
+						this.popupReply(exResult);
+					} else {
 						this.popupReply(`您用 ${exResult['sent']} 与${friend.name}交换了 ${exResult['received']} !`)
 						friend.popup(`您用 ${exResult['received']} 与${user.name}交换了 ${exResult['sent']} !`)
+						FS(`${TRADELOGPATH}/${Utils.getDate()}.txt`).append(
+							`${petUser.id}, ${petFriend.id}: ${toSend} <=> ${toReceive}\n`
+						);
+						petUser.save();
+						petFriend.save();
 					}
 					petUser.operation = undefined;
 					petFriend.operation = undefined;
-					petUser.save();
-					petFriend.save();
 					const friendRoom = Rooms.get(petFriend.chatRoomId);
 					if (friendRoom) {
 						friend.sendTo(friendRoom.roomid, `|uhtmlchange|pet-box-show|${petBox(

@@ -11,32 +11,16 @@ export const Conditions: {[k: string]: ConditionData} = {
 			}
 		},
 		onWeatherModifyDamage(relayVar: number, source: Pokemon, target: Pokemon, move) {
-			if (move.type === 'Poison' || (source.species.name === 'Crobat' && move.name === 'Super Fang')) {
-				if(target.status === ''){
-					target.setStatus('tox', source, move, true);
-				}
-				this.debug('Sunny Day fire boost');
+			if (move.type === 'Poison') {
+				if (!target.status) target.setStatus('tox', source, move, true)
+				this.debug('Acid Rain Day poison boost');
 				return this.chainModify(1.5);
 			}
 			if (move.type === 'Psychic') {
-				this.debug('Sunny Day water suppress');
+				this.debug('Acid Rain psychic suppress');
 				return this.chainModify(0.5);
 			}
 		},
-		
-		// onWeatherModifyDamage(damage, attacker, defender, move, pokemon, source) {
-		// 	if (move.type === 'Poison') {
-		// 		if(defender.status === ''){
-		// 			defender.setStatus('tox', source, move, true);
-		// 		}
-		// 		this.debug('Sunny Day fire boost');
-		// 		return this.chainModify(1.5);
-		// 	}
-		// 	if (move.type === 'Psychic') {
-		// 		this.debug('Sunny Day water suppress');
-		// 		return this.chainModify(0.5);
-		// 	}
-		// },
 		onFieldStart(battle, source, effect) {
 			if (effect?.effectType === 'Ability') {
 				this.add('-weather', 'AcidRain', '[from] ability: ' + effect, '[of] ' + source);
