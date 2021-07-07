@@ -2,9 +2,9 @@
 	Pokemon Showdown China Pet Mode Version 1.0 Author: Starmind
 	1. 劣质王冠: 2, 银色王冠: 25, 金色王冠: 100, 特性胶囊: 50, 特性膏药: 100, 性格薄荷: 50
 	2. /add 选项 nv 能不能大师球
-	3. 盒子显示性别差异
-	4. 交易记录
-	5. 防沉迷
+	3. 交易记录
+	4. 防沉迷
+	5. 更新草丛
 
 	6. bot定时/add
 	7. bot host tour
@@ -16,6 +16,7 @@ import { PRNG } from "../../sim";
 import { addScore } from "./ps-china-admin";
 import { PetModeLearnSets } from "../../config/pet-mode/learnsets";
 import { PokemonIconIndexes } from "../../config/pet-mode/poke-num";
+import { PokemonSprites } from "../../config/pet-mode/poke-sprites";
 import { PetModeRoomConfig } from "../../config/pet-mode/room-config";
 import { PetModeShopConfig } from "../../config/pet-mode/shop-config";
 import { PetModeGymConfig } from "../../config/pet-mode/gym-config";
@@ -43,8 +44,8 @@ const ITEMSHEET = 'https://play.pokemonshowdown.com/sprites/itemicons-sheet.png'
 const TYPEICONS = 'https://play.pokemonshowdown.com/sprites/types';
 const CATICONS = 'https://play.pokemonshowdown.com/sprites/categories';
 
-const LAWNCD = 1000;
-const GYMCD = 60000;
+const LAWNCD = 10000;
+const GYMCD = 300000;
 const BALLCD = 600000;
 
 if (!FS(USERPATH).existsSync()) FS(USERPATH).mkdir();
@@ -102,9 +103,10 @@ class Utils {
 		return `background:transparent url(${ITEMSHEET}?g8) no-repeat scroll -${left}px -${top}px; height: 24px; width: 24px;`
 	}
 
-	static iconStyle(name: string) {
+	static iconStyle(name: string, gender: string = 'N') {
 		const pokemon = Dex.species.get(name);
-		const num = Pet.iconIndex[pokemon.id] || pokemon.num;
+		const iconid = gender === 'F' && Pet.iconIndex[`${pokemon.id}f`] ? `${pokemon.id}f` : pokemon.id;
+		const num = Pet.iconIndex[iconid] || pokemon.num;
 		if (num <= 0) {
 			// return `background:transparent url(${POKESHEET}) no-repeat scroll -0px 4px;height: 32px;width: 40px;`
 			return `height: 32px; width: 40px;`
@@ -135,6 +137,8 @@ class Utils {
 }
 
 class Pet {
+
+	static sprites = new Set(PokemonSprites);
 
 	static iconIndex: {[speciesid: string]: number} = PokemonIconIndexes;
 
@@ -180,12 +184,14 @@ class Pet {
 		x => Utils.button(`/pet init set ${x}`, '', Utils.iconStyle(x))
 	).join('')).join('<br/>');
 
-	static spriteId(speciesid: string) {
+	static spriteId(speciesid: string, gender: string = 'N'): string {
 		speciesid = toID(speciesid);
 		let species = Dex.species.get(speciesid);
 		const baseid = toID(species.baseSpecies);
 		speciesid = speciesid.substring(baseid.length);
-		return baseid + (speciesid ? '-' + speciesid : '')
+		const sprite = baseid + (speciesid ? '-' + speciesid : '');
+		if (gender === 'F' && Pet.sprites.has(`${sprite}-f`)) return `${sprite}-f`;
+		return sprite;
 	}
 
 	static validMoves(speciesid: string, level: number): string[] {
@@ -904,7 +910,7 @@ function petBox(petUser: PetUser, target: string): string {
 			}
 		} else if (petUser.operation === 'evo') {
 			setTitle = st('请选择进化型: ') + Pet.validEvos(set).map(x => {
-				return Utils.button(`/pet box evo ${target}=>${x[0]}`, '&emsp;', Utils.iconStyle(x[0]));
+				return Utils.button(`/pet box evo ${target}=>${x[0]}`, '&emsp;', Utils.iconStyle(x[0], set.gender));
 			}).join('') + ' ' + Utils.button(`/pet box evo ${target}`, '取消');
 		} else if (petUser.operation?.indexOf('evo') === 0) {
 			setTitle = st(`确认将 ${set.name} 进化为 ${petUser.operation?.slice(3)}? `) + Utils.boolButtons(
@@ -950,7 +956,7 @@ function petBox(petUser: PetUser, target: string): string {
 			`${st('道具')} ${set.item ? Utils.button(`/pet box item ${target}`, '', Utils.itemStyle(set.item)) : '无'}`,
 			`${st('性格')} ${set.nature}&emsp;${st('特性')} ${set.ability}`
 		]
-		const spriteURL = `${set.shiny ? POKESPRITESSHINY : POKESPRITES}/${Pet.spriteId(set.species)}.gif`;
+		const spriteURL = `${set.shiny ? POKESPRITESSHINY : POKESPRITES}/${Pet.spriteId(set.species, set.gender)}.gif`;
 		const sprite = `background: transparent url(${spriteURL}) no-repeat 90% 10% relative;`
 		pokeDiv = `<div style="width: 350px; ` +
 			`position: relative; display: inline-block;"><div style="line-height: 35px">${setTitle}</div>` +
@@ -961,15 +967,18 @@ function petBox(petUser: PetUser, target: string): string {
 	}
 
 	const boxTitle = `${st('用户ID')} ${petUser.id}&emsp;${st('徽章数')} ${petUser.badgeNum()}`;
-	const petButton = (species: string, pos: string) => {
-		const style = Utils.iconStyle(species);
+	const petButton = (species: string, pos: string, gender: string) => {
+		const style = Utils.iconStyle(species, gender);
 		if (petUser.operation === 'move') return Utils.button(`/pet box move ${target}<=>${pos}`, '', style);
 		return Utils.button(`/pet box show ${pos}`, '', style, target === pos.split(' ').join(''));
 	};
-	const bagMons = petUser.property['bag'].map((x, i) =>
-		petButton(x.split('|')[1] || x.split('|')[0], `bag,${i}`)).join('') + '<br/>';
-	const boxMons = petUser.property['box'].slice(petUser.onPage * 30, (petUser.onPage + 1) * 30).map((x, i) =>
-		petButton(x.split('|')[1] || x.split('|')[0], `box,${i + petUser.onPage * 30}`) + (i % 6 == 5 ? '<br/>' : '')).join('');
+	const bagMons = petUser.property['bag'].map((x, i) => {
+		return petButton(x.split('|')[1] || x.split('|')[0], `bag,${i}`, x.split('|')[7]);
+	}).join('') + '<br/>';
+	const boxMons = petUser.property['box'].slice(petUser.onPage * 30, (petUser.onPage + 1) * 30).map((x, i) => {
+		return petButton(x.split('|')[1] || x.split('|')[0], `box,${i + petUser.onPage * 30}`, x.split('|')[7]) +
+			(i % 6 === 5 ? '<br/>' : '');
+	}).join('');
 	let items = ``;
 	const itemButton = (item: string) => Utils.button(
 		petUser.onPosition ? `/pet box item ${target}=>${item}` : '', '', Utils.itemStyle(item)
@@ -1590,6 +1599,7 @@ export const commands: Chat.ChatCommands = {
 				const shiny = parseInt(targets[2]) || 0;
 				const hidden = parseInt(targets[3]) || 0;
 				const set = Pet.gen(species.id, level, true, 70, shiny, hidden);
+				const gender = set.split('|')[7];
 				PetBattle.legends[room.roomid] = set;
 				const legendStyle = 'font-size: 12pt; text-align: center; height: 170px';
 				room.add(`|uhtmlchange|pet-legend|`);
@@ -1597,7 +1607,7 @@ export const commands: Chat.ChatCommands = {
 					`|uhtml|pet-legend|<div class='broadcast-green' style="${legendStyle}">` +
 					`<b>野生的 ${species.name} 出现了!</b><br/>` +
 					`${Utils.image(
-						`background: url(${set.split('|')[9] ? POKESPRITESSHINY : POKESPRITES}/${Pet.spriteId(target)}.gif) ` +
+						`background: url(${set.split('|')[9] ? POKESPRITESSHINY : POKESPRITES}/${Pet.spriteId(target, gender)}.gif) ` +
 						`no-repeat center; width: 100%; height: 120px`
 					)}<br/>` +
 					`${Utils.button('/pet lawn search !', '挑战!')}</div>`
