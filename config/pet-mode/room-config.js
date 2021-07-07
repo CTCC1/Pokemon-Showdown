@@ -27,11 +27,11 @@ exports.PetModeRoomConfig = {
 				"Patrat": 0.17,
 			},
 			"4号草丛": {				
-				"Fletchling": 0.15,
-				"Rookidee": 0.15,
-				"Rattata": 0.4,
-				"Zigzagoon": 0.15,
-				"Bunnelby": 0.15
+				"Fletchling": 0.05,
+				"Rookidee": 0.05,
+				"Rattata": 0.8,
+				"Zigzagoon": 0.05,
+				"Bunnelby": 0.05
 			},
 			"5号草丛": {
 				"Ledyba": 0.2,
@@ -41,11 +41,11 @@ exports.PetModeRoomConfig = {
 				"Pikipek": 0.2
 			},
 			"6号草丛": {
-				"Weedle": 0.3,
-				"Purrloin": 0.12,
-				"Pidgey": 0.4,
-				"Taillow": 0.06,
-				"Starly": 0.12
+				"Weedle": 0.35,
+				"Purrloin": 0.02,
+				"Pidgey": 0.6,
+				"Taillow": 0.01,
+				"Starly": 0.02
 			}
 		}
 	},
@@ -54,20 +54,20 @@ exports.PetModeRoomConfig = {
 		"maxlevel": 10,
 		"lawn": {
 			"1号草丛": {
-				"Pichu": 0.1,
-				"Nidoran-F": 0.07,
-				"Azurill": 0.1,
-				"Sunkern": 0.2,
-				"Dunsparce": 0.4,
-				"Shroomish": 0.03,
-				"Slakoth": 0.1,
+				"Pichu": 0.11,
+				"Nidoran-F": 0.007,
+				"Azurill": 0.05,
+				"Sunkern": 0.25,
+				"Dunsparce": 0.5,
+				"Shroomish": 0.003,
+				"Slakoth": 0.08,
 			},
 			"2号草丛": {
 				"Paras": 0.3,
 				"Mankey": 0.3,
-				"Nidoran-M": 0.07,
+				"Nidoran-M": 0.007,
 				"Mudbray": 0.13,
-				"Fomantis": 0.2
+				"Fomantis": 0.263
 			},
 			"3号草丛": {
 				"Seedot": 0.2,
@@ -77,8 +77,8 @@ exports.PetModeRoomConfig = {
 				"Wooloo": 0.3
 			},
 			"4号草丛": {
-				"Oddish": 0.35,
-				"Ralts": 0.05,
+				"Oddish": 0.39,
+				"Ralts": 0.01,
 				"Cherubi": 0.15,
 				"Whismur": 0.15,
 				"Skiddo": 0.15,
@@ -127,12 +127,12 @@ exports.PetModeRoomConfig = {
 				"Crabrawler": 0.05
 			},
 			"3号草丛": {
-				"Sandshrew": 0.2,
+				"Sandshrew": 0.3,
 				"Sandshrew-Alola": 0.1,
-				"Geodude": 0.4,
-				"Onix": 0.2,
-				"Shuckle": 0.05,
-				"Nosepass": 0.05,
+				"Geodude": 0.49,
+				"Onix": 0.1,
+				"Shuckle": 0.005,
+				"Nosepass": 0.005,
 			},
 			"4号草丛": {
 				"Mareep": 0.2,
@@ -143,21 +143,21 @@ exports.PetModeRoomConfig = {
 				"Chewtle": 0.2
 			},
 			"5号草丛": {
-				"Cleffa": 0.05,
-				"Budew": 0.05,
-				"Spoink": 0.3,				
+				"Cleffa": 0.005,
+				"Budew": 0.005,
+				"Spoink": 0.39,				
 				"Burmy": 0.2,
 				"Sandygast": 0.2,
 				"Rolycoly": 0.2
 			},
 			"6号草丛": {
 				"Spearow": 0.4,
-				"Zubat": 0.49,
+				"Zubat": 0.5,
 				"Murkrow": 0.02,
 				"Delibird": 0.01,
-				"Combee": 0.05,
+				"Combee": 0.03,
 				"Pachirisu": 0.01,
-				"Finneon": 0.02,
+				"Finneon": 0.03,
 			}
 		}
 	},
@@ -166,11 +166,11 @@ exports.PetModeRoomConfig = {
 		"maxlevel": 20,
 		"lawn": {
 			"1号草丛": {
-				"Bounsweet": 0.1,
-				"Yamper": 0.1,
+				"Bounsweet": 0.5,
+				"Yamper": 0.05,
 				"Venonat": 0.2,
-				"Slowpoke": 0.2,
-				"Wooper": 0.2,
+				"Slowpoke": 0.025,
+				"Wooper": 0.025,
 				"Skitty": 0.2,
 			},
 			"2号草丛": {
@@ -182,12 +182,12 @@ exports.PetModeRoomConfig = {
 				"Karrablast": 0.125,
 			},
 			"3号草丛": {
-				"Aron": 0.05,
-				"Corsola": 0.19,
-				"Dwebble": 0.19,
-				"Shelmet": 0.19,
-				"Silicobra": 0.19,
-				"Stunky": 0.19,
+				"Aron": 0.005,
+				"Corsola": 0.199,
+				"Dwebble": 0.199,
+				"Shelmet": 0.199,
+				"Silicobra": 0.199,
+				"Stunky": 0.199,
 			},
 			"4号草丛": {
 				"Psyduck": 0.2,
@@ -277,25 +277,25 @@ exports.PetModeRoomConfig = {
 			"1号草丛": {
 				"Sizzlipede": 0.2,
 				"Meowth-Galar": 0.1,
-				"Pincurchin": 0.1,
+				"Pincurchin": 0.15,
 				"Cufant": 0.1,
-				"Lickitung": 0.2,
-				"Swinub": 0.1,
-				"Shellos": 0.2,
+				"Lickitung": 0.25,
+				"Swinub": 0.05,
+				"Shellos": 0.15,
 			},
 			"2号草丛": {
-				"Timburr": 0.1,
-				"Scraggy": 0.1,
+				"Timburr": 0.05,
+				"Scraggy": 0.05,
 				"Inkay": 0.2,
 				"Skrelp": 0.2,
 				"Phantump": 0.2,
-				"Passimian": 0.2,
+				"Passimian": 0.3,
 			},
 			"3号草丛": {
-				"Skorupi": 0.2,
-				"Roggenrola": 0.2,
-				"Horsea": 0.05,
-				"Hippopotas": 0.35,
+				"Skorupi": 0.23,
+				"Roggenrola": 0.15,
+				"Horsea": 0.02,
+				"Hippopotas": 0.4,
 				"Binacle": 0.1,
 				"Stonjourner": 0.1,
 			},
@@ -310,20 +310,20 @@ exports.PetModeRoomConfig = {
 				"Oricorio-Sensu": 0.1,
 			},
 			"5号草丛": {
-				"Baltoy": 0.1,
-				"Mantyke": 0.45,
-				"Swablu": 0.01,
+				"Baltoy": 0.075,
+				"Mantyke": 0.6,
+				"Swablu": 0.001,
 				"Kecleon": 0.2,
-				"Cryogonal": 0.2,
-				"Hatenna": 0.04,
+				"Cryogonal": 0.12,
+				"Hatenna": 0.004,
 			},
 			"6号草丛": {
-				"Yanma": 0.1,
-				"Luvdisc": 0.1,
-				"Woobat": 0.1,
-				"Salandit": 0.1,
-				"Ponyta-Galar": 0.1,
-				"Ponyta": 0.5,
+				"Yanma": 0.05,
+				"Luvdisc": 0.05,
+				"Woobat": 0.05,
+				"Salandit": 0.05,
+				"Ponyta-Galar": 0.05,
+				"Ponyta": 0.75,
 			}
 		}
 	},
@@ -355,10 +355,10 @@ exports.PetModeRoomConfig = {
 				"Eiscue": 0.1,
 				"Solrock": 0.1,
 				"Corphish": 0.1,
-				"Absol": 0.04,
+				"Absol": 0.02,
 				"Exeggcute": 0.2,
-				"Koffing": 0.18,
-				"Tangela": 0.18,
+				"Koffing": 0.19,
+				"Tangela": 0.19,
 				"Torkoal": 0.1,
 			},
 			"4号草丛": {
@@ -387,9 +387,9 @@ exports.PetModeRoomConfig = {
 				"Tauros": 0.1,
 				"Deerling": 0.1,
 				"Furfrou": 0.1,
-				"Cutiefly": 0.2,
+				"Cutiefly": 0.28,
 				"Morpeko": 0.1,
-				"Gastly": 0.1,
+				"Gastly": 0.02,
 			}
 		}
 	},
@@ -398,8 +398,7 @@ exports.PetModeRoomConfig = {
 		"maxlevel": 50,
 		"lawn": {
 			"1号草丛": {
-				"Stunfisk": 0.2,
-				"Amaura": 0.1,
+				"Stunfisk": 0.3,
 				"Grimer": 0.6,
 				"Muk": 0.1,
 			},
@@ -410,28 +409,27 @@ exports.PetModeRoomConfig = {
 				"Sawk": 0.3,
 			},
 			"3号草丛": {
-				"Bronzor": 0.05,
-				"Klink": 0.75,
+				"Bronzor": 0.02,
+				"Klink": 0.88,
 				"Durant": 0.1,
-				"Tirtouga": 0.1,
 			},
 			"4号草丛": {
-				"Heatmor": 0.2,
-				"Solosis": 0.4,
+				"Heatmor": 0.05,
+				"Solosis": 0.75,
 				"Duosion": 0.1,
-				"Drampa": 0.3,
+				"Drampa": 0.1,
 			},
 			"5号草丛": {
-				"Frillish": 0.3,
-				"Ferroseed": 0.3,
-				"Klefki": 0.1,
-				"Bergmite": 0.3,
+				"Frillish": 0.33,
+				"Ferroseed": 0.33,
+				"Klefki": 0.01,
+				"Bergmite": 0.33,
 			},
 			"6号草丛": {
-				"Sneasel": 0.1,
-				"Meditite": 0.4,
-				"Basculin": 0.4,
-				"Minccino": 0.1,
+				"Sneasel": 0.04,
+				"Meditite": 0.46,
+				"Basculin": 0.46,
+				"Minccino": 0.04,
 			}
 		}
 	},
@@ -440,10 +438,10 @@ exports.PetModeRoomConfig = {
 		"maxlevel": 60,
 		"lawn": {
 			"1号草丛": {
-				"Audino": 0.1,
-				"Foongus": 0.7,
-				"Wishiwashi": 0.1,
-				"Alomomola": 0.1,
+				"Audino": 0.03,
+				"Foongus": 0.91,
+				"Wishiwashi": 0.03,
+				"Alomomola": 0.03,
 			},
 			"2号草丛": {
 				"Darumaka": 0.1,
@@ -488,34 +486,33 @@ exports.PetModeRoomConfig = {
 				"Rotom": 0.15,
 			},
 			"2号草丛": {
-				"Tyrunt": 0.4,
-				"Morgrem": 0.1,
+				"Morgrem": 0.5,
 				"Duraludon": 0.1,
 				"Heracross": 0.4,
 			},
 			"3号草丛": {
-				"Spiritomb": 0.05,
-				"Skarmory": 0.45,
-				"Vullaby": 0.55,
-				"Honedge": 0.05,
+				"Spiritomb": 0.005,
+				"Skarmory": 0.495,
+				"Vullaby": 0.495,
+				"Honedge": 0.005,
 			},
 			"4号草丛": {
-				"Gligar": 0.05,
+				"Gligar": 0.01,
 				"Pyukumuku": 0.6,
 				"Rotom-Mow": 0.15,
-				"Slowpoke-Galar": 0.2,
+				"Slowpoke-Galar": 0.24,
 			},
 			"5号草丛": {
-				"Mimikyu": 0.05,
-				"Abra":0.05,
+				"Mimikyu": 0.02,
+				"Abra":0.02,
 				"Rotom-Frost": 0.15,
-				"Mime Jr.": 0.75,
+				"Mime Jr.": 0.81,
 			},
 			"6号草丛": {
-				"Mareanie": 0.2,
+				"Mareanie": 0.3,
 				"Turtonator": 0.2,
 				"Applin": 0.3,
-				"Buneary": 0.3,
+				"Buneary": 0.2,
 			}
 		}
 	},
@@ -524,16 +521,16 @@ exports.PetModeRoomConfig = {
 		"maxlevel": 80,
 		"lawn": {
 			"1号草丛": {
-				"Sableye": 0.2,
-				"Happiny": 0.5,
+				"Sableye": 0.05,
+				"Happiny": 0.65,
 				"Chansey": 0.1,
 				"Lapras": 0.2
 			},
 			"2号草丛": {
-				"Mawile": 0.55,
+				"Mawile": 0.64,
 				"Drilbur": 0.2,
 				"Rotom-Wash": 0.15,
-				"Riolu": 0.1,
+				"Riolu": 0.01,
 			},
 			"3号草丛": {
 				"Doublade": 0.15,
@@ -549,16 +546,16 @@ exports.PetModeRoomConfig = {
 				"Kangaskhan": 0.6
 			},
 			"5号草丛": {
-				"Mr. Mime": 0.3,
+				"Mr. Mime": 0.65,
 				"Mr. Mime-Galar": 0.15,
-				"Hawlucha": 0.1,
-				"Arrokuda": 0.45,
+				"Hawlucha": 0.05,
+				"Arrokuda": 0.15,
 			},
 			"6号草丛": {
-				"Barraskewda": 0.1,
+				"Barraskewda": 0.005,
 				"Rotom-Fan": 0.15,
-				"Vulpix-Alola": 0.1,
-				"Munchlax": 0.55,
+				"Vulpix-Alola": 0.005,
+				"Munchlax": 0.74,
 				"Snorlax": 0.1
 			}
 		}

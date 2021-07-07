@@ -390,6 +390,71 @@ export const Rulesets: {[k: string]: FormatData} = {
 				this.add('message', '小子，连这第一关都过不去，还想成为顶尖的训练师？');
 			}
 		}
-	}
+	},
+
+	pschinapetmodegym5: {
+		name: 'PS China Pet Mode Gym5',
+		ruleset: ['Evasion Moves Clause', 'Sleep Clause Mod'],
+		timer: {
+			starting: 600,
+			addPerTurn: 30,
+			maxPerTurn: 60,
+			maxFirstTurn: 60,
+			grace: 0,
+			timeoutAutoChoose: true,
+			dcTimerBank: false,
+		},
+		onBegin() {
+			const botSide = this.sides[1];
+			botSide.emitRequest = (update: AnyObject) => {
+				this.send('sideupdate', `${botSide.id}\n|request|${JSON.stringify(update)}`);
+				botSide.activeRequest = update;
+				setTimeout(() => {
+					if (update.forceSwitch) {
+						const alive = botSide.pokemon.filter(
+							x => !x.isActive && !x.fainted && x.name !== 'Venusaur'
+						).map(x => x.name);
+						if (alive.length > 0) {
+							botSide.chooseSwitch(this.prng.sample(alive));
+						} else {
+							botSide.chooseSwitch('Venusaur');
+							// this.add('message', '这是最后的试炼。来吧！让我看看你修行的成果。');
+						}
+						if (this.allChoicesDone()) {
+							this.commitDecisions();
+							this.sendUpdates();
+						}
+					} else {
+						const mega = botSide.active[0].canMegaEvo ? 'mega' : '';
+						for (let i = 0; i < 20; i++) {
+							botSide.chooseMove(this.sample(botSide.active[0].moves), 0, mega);
+							if (botSide.isChoiceDone()) break;
+						}
+					}
+				}, 10);
+			};
+			if (Dex.toID(this.sides[1].name) === BOTID) {
+				this.add('html', `<div class="broadcast-green"><strong>训练家${this.sides[0].name}开始挑战权谋道馆!</strong></div>`);
+			}
+		},
+		onBattleStart() {
+			// this.add('message', '这里是勇者修行的第一站，与之前相比，这里的修行恐怕会更加的令人绝望。穿上这件磁力服，在这里，坚定的意志将使属性克制不再那么重要，不过如果想要偷懒回复的话，可要做好被场地电击打断的准备。');
+		},
+		onBeforeTurn() {
+			this.field.setWeather("acidrain");
+			// this.field.setWeather("hail");
+		},
+		onFaint(pokemon) {
+			// if (pokemon.side.id === 'p2' && pokemon.side.pokemon.filter(pokemon => !pokemon.fainted).length <= 1) {
+			// 	if (addBadge(Dex.toID(this.sides[0].name), '权谋')) {
+			// 		this.add('html', `<div class="broadcast-green"><strong>恭喜您获得了 权谋徽章 !</strong></div>`);
+			// 	}
+			// 	this.add('message', '这是坚毅的证明，希望你和你的宝可梦能记住这段时间修行的成果。顺便帮我向那个老太婆打个招呼，可别被她的小伎俩给蒙住了眼睛。');
+			// }
+			// if (pokemon.side.id === 'p1' && pokemon.side.pokemon.filter(pokemon => !pokemon.fainted).length <= 1) {
+			// 	this.add('message', '小子，连这第一关都过不去，还想成为顶尖的训练师？');
+			// }
+		}
+	},
 
 };
