@@ -5,10 +5,12 @@
 	3. 交易记录
 	4. 防沉迷
 	5. 更新草丛
+	6. Acid Rain
+	7. git stash
 
-	6. bot定时/add
-	7. bot host tour
-	8. 用户ip映射图 便于自动加分
+	a. bot定时/add
+	b. bot host tour
+	c. 用户ip映射图 便于自动加分
 */
 
 import { FS } from "../../lib";
@@ -44,7 +46,7 @@ const ITEMSHEET = 'https://play.pokemonshowdown.com/sprites/itemicons-sheet.png'
 const TYPEICONS = 'https://play.pokemonshowdown.com/sprites/types';
 const CATICONS = 'https://play.pokemonshowdown.com/sprites/categories';
 
-const LAWNCD = 10000;
+const LAWNCD = 5000;
 const GYMCD = 300000;
 const BALLCD = 600000;
 
@@ -332,6 +334,7 @@ class Pet {
 		if (set.ability === preAbilities['1'] && postAbilities['1']) set.ability = postAbilities['1'];
 		else if (set.ability === preAbilities['H'] && postAbilities['H']) set.ability = postAbilities['H'];
 		else if (set.ability === preAbilities['S'] && postAbilities['S']) set.ability = postAbilities['S'];
+		else if (!preAbilities['1'] && postAbilities['1']) set.ability = prng.sample([postAbilities['0'], postAbilities['1']]);
 		else set.ability = postAbilities['0'];
 		set.species = targetSpecies;
 		return set;
