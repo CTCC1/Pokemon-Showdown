@@ -2,10 +2,9 @@
 	Pokemon Showdown China Pet Mode Version 1.0 Author: Starmind
 	1. 劣质王冠: 2, 银色王冠: 25, 金色王冠: 100, 特性胶囊: 50, 特性膏药: 100, 性格薄荷: 50
 	2. /add 选项 nv 能不能大师球
-	3. 交易记录
-	4. 防沉迷
-	6. Acid Rain 特效
-	7. git stash
+	3. 防沉迷
+	4. Acid Rain 特效
+	5. git rebase -i
 
 	a. bot定时/add
 	b. bot host tour
@@ -688,6 +687,12 @@ class PetUser {
 		if (!set) return false;
 		set = Pet.evo(set, targetSpecies, item);
 		this.property[position['type']][position['index']] = Teams.pack([set]);
+		if (set.species === 'Ninjask') {
+			set.species = 'Shedinja';
+			set.ability = 'Wonder Guard';
+			set.gender = 'N';
+			this.addPet(Teams.pack([set]));
+		}
 		return true;
 	}
 
