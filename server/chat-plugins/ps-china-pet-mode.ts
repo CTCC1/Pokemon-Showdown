@@ -1,8 +1,14 @@
 /*
 	Pokemon Showdown China Pet Mode Version 1.0 Author: Starmind
 	1. 劣质王冠: 2, 银色王冠: 25, 金色王冠: 100, 特性胶囊: 50, 特性膏药: 100, 性格薄荷: 50
-	2. bot定时/add /tour
-	3. /add 选项 能不能大师球
+	2. /add 选项 nv 能不能大师球
+	3. 盒子显示性别差异
+	4. 交易记录
+	5. 防沉迷
+
+	6. bot定时/add
+	7. bot host tour
+	8. 用户ip映射图 便于自动加分
 */
 
 import { FS } from "../../lib";
@@ -220,7 +226,7 @@ class Pet {
 			ability: this.randomAbility(species, hidden),
 			moves: this.sampleMoves(species.id, level),
 			nature: prng.sample(Dex.natures.all()).name,
-			gender: species.genderRatio ? (prng.randomChance(Math.floor(species.genderRatio.M * 1000), 1000) ? 'M' : 'F') : 'N',
+			gender: species.gender ? species.gender : (prng.randomChance(Math.floor(species.genderRatio.M * 1000), 1000) ? 'M' : 'F'),
 			evs: {hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0},
 			ivs: fullivs ? {hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31} : this.randomIvs(),
 			level: level,
@@ -256,6 +262,7 @@ class Pet {
 		set.level = floatLevel;
 		if (!set.species) set.species = set.name;
 		const species = Dex.species.get(set.species);
+		if (species.gender) set.gender = species.gender;
 		if (!set.ability) set.ability = species.abilities["0"];
 		if (!set.evs) set.evs = {hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0};
 		if (!set.ivs) set.ivs = {hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31};
