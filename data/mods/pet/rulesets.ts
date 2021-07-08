@@ -200,10 +200,31 @@ export const Rulesets: {[k: string]: FormatData} = {
 							this.sendUpdates();
 						}
 					} else {
-						const mega = botSide.active[0].canMegaEvo ? 'mega' : '';
-						for (let i = 0; i < 20; i++) {
-							botSide.chooseMove(this.sample(botSide.active[0].moves), 0, mega);
-							if (botSide.isChoiceDone()) break;
+						const activePoke = botSide.active[0];
+						const foeActivePoke = this.sides[0].active[0];
+						const hpRate = activePoke.hp / activePoke.maxhp;
+						const mega = activePoke.canMegaEvo ? 'mega' : '';
+						if ((activePoke.speed > foeActivePoke.speed) ? (hpRate < 0.5) : (hpRate < 0.8)) {
+							const healingMove = activePoke.moves.filter(moveid => {
+								return Dex.moves.get(moveid).flags['heal'];
+							})[0];
+							if (healingMove) botSide.chooseMove(healingMove, 0, mega);
+						}
+						if (Math.max(...Object.values(foeActivePoke.boosts))) {
+							if (activePoke.hasMove('spectralthief')) {
+								botSide.chooseMove('spectralthief', 0, mega);
+							} else {
+								const thief = botSide.pokemon.filter(x => {
+									return !x.fainted && x.hasMove('spectralthief');
+								})[0];
+								if (thief) botSide.chooseSwitch(thief.name);
+							}
+						}
+						let i = 0;
+						const validMoves = activePoke.getMoves().filter(movedata => movedata.pp).map(movedata => movedata.move);
+						while (!botSide.isChoiceDone() && i < 20) {
+							botSide.chooseMove(this.sample(validMoves), 0, mega);
+							i++;
 						}
 					}
 				}, 10);
