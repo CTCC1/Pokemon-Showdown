@@ -385,8 +385,10 @@ class PetBattle {
 		'maxlevel': number
 	}} = PetModeRoomConfig;
 
-	static gymConfig: {[gymid: string]: {
-		'rule': string, 'maxlevel': number, 'botteam': string, 'userteam': string
+	static gymConfig: {[gymname: string]: {
+		'maxlevel': number, 'botteam': string, 'userteam': string, 'ace': string,
+		'bonus'?: string, 'terrain'?: string, 'weather'?: string,
+		'msg': {'start': string, 'ace': string, 'win': string, 'lose': string}
 	}} = PetModeGymConfig;
 
 	static balls: {[ballname: string]: number} = {'Poke Ball': 1, 'Great Ball': 2, 'Ultra Ball': 4, 'Master Ball': Infinity};
@@ -1532,7 +1534,7 @@ export const commands: Chat.ChatCommands = {
 					const userSets = petUser.property['bag'].filter((x: string) => x);
 					const validateRes = PetBattle.validate(PetBattle.gymConfig[target]['userteam'], userSets);
 					if (validateRes) return this.popupReply(`根据${target}道馆的要求, ${validateRes}!`);
-					const rule = `gen8petmode @@@${PetBattle.gymConfig[target]['rule']}`;
+					const rule = `gen8petmode @@@pschinapetmodegym`;
 					const maxLevel = PetBattle.gymConfig[target]['maxlevel'];
 					const userTeam = userSets.map(set => {
 						const features = set.split('|');

@@ -23,6 +23,7 @@ exports.PetModeShopConfig = {
 		"Galarica Cuff": 40,
 		"Galarica Wreath": 40,
 		"Magmarizer": 40,
+		"Electirizer": 40,
 		"Protector": 40,
 		"Prism Scale": 40,
 		"Dawn Stone": 40,

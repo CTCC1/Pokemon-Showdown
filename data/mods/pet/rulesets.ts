@@ -1,4 +1,5 @@
 import { FS } from "../../../lib";
+import { PetModeGymConfig } from "../../../config/pet-mode/gym-config";
 
 const BOTID = 'pschinabot';
 const USERPATH = 'config/pet-mode/user-properties';
@@ -6,6 +7,12 @@ const DEPOSITPATH = 'config/pet-mode/deposit';
 
 const catchRate: {[speciesid: string]: number} = JSON.parse(FS('config/pet-mode/catch-rate.json').readIfExistsSync());
 const catchStatusCorrection: {[statusid: string]: number} = {'': 1, 'psn': 1.5, 'par': 1.5, 'brn': 1.5, 'slp': 2.5, 'frz': 2.5};
+const gymConfig: {[gymname: string]: {
+	'maxlevel': number, 'botteam': string, 'userteam': string, 'ace': string,
+	'bonus'?: string, 'terrain'?: string, 'weather'?: string,
+	'msg': {'start': string, 'ace': string, 'win': string, 'lose': string}
+}} = PetModeGymConfig;
+const userToGym: {[userid: string]: string} = {};
 
 function argmax(s: StatsTable): 'hp' | 'atk' | 'def' | 'spa' | 'spd' | 'spe' {
 	let maxValue = 0;
@@ -84,6 +91,21 @@ function addBox(userid: string) {
 	FS(`${USERPATH}/${userid}.json`).writeSync(JSON.stringify(userProperty));
 }
 
+function registerUser(userid: string): string | undefined {
+	let gymName = FS(`${DEPOSITPATH}/${userid}.txt`).readIfExistsSync();
+	if (gymConfig[gymName]) {
+		userToGym[userid] = gymName;
+		return gymName;
+	}
+}
+
+function checkWin(pokemonOnFaint: Pokemon, sides: Side[]): string | undefined {
+	const aliveSides = sides.filter(side => {
+		return side.pokemon.filter(pokemon => !pokemon.fainted).length > (pokemonOnFaint.side.id === side.id ? 1 : 0);
+	});
+	if (aliveSides.length === 1) return aliveSides[0].id;
+}
+
 export const Rulesets: {[k: string]: FormatData} = {
 
 	pschinapetmode: {
@@ -142,9 +164,9 @@ export const Rulesets: {[k: string]: FormatData} = {
 		},
 	},
 
-	pschinapetmodegym1: {
-		name: 'PS China Pet Mode Gym1',
-		ruleset: ['Evasion Moves Clause'],
+	pschinapetmodegym: {
+		name: 'PS China Pet Mode Gym',
+		ruleset: ['Sleep Clause Mod'],
 		timer: {
 			starting: 600,
 			addPerTurn: 30,
@@ -155,6 +177,10 @@ export const Rulesets: {[k: string]: FormatData} = {
 			dcTimerBank: false,
 		},
 		onBegin() {
+			const userName = this.sides[0].name;
+			const gymName = registerUser(Dex.toID(userName));
+			if (!gymName) return;
+			const gymSettings = gymConfig[gymName];
 			const botSide = this.sides[1];
 			botSide.emitRequest = (update: AnyObject) => {
 				this.send('sideupdate', `${botSide.id}\n|request|${JSON.stringify(update)}`);
@@ -162,133 +188,13 @@ export const Rulesets: {[k: string]: FormatData} = {
 				setTimeout(() => {
 					if (update.forceSwitch) {
 						const alive = botSide.pokemon.filter(
-							x => !x.isActive && !x.fainted && x.name !== 'Oricorio'
+							x => !x.isActive && !x.fainted && x.species.name !== gymSettings['ace']
 						).map(x => x.name);
 						if (alive.length > 0) {
 							botSide.chooseSwitch(this.prng.sample(alive));
 						} else {
-							botSide.chooseSwitch('Oricorio-Sensu');
-							this.add('message', '要进入高潮咯，希望你能跟上我的步伐');
-						}
-						if (this.allChoicesDone()) {
-							this.commitDecisions();
-							this.sendUpdates();
-						}
-					} else {
-						for (let i = 0; i < 20; i++) {
-							botSide.chooseMove(this.sample(botSide.active[0].moves));
-							if (botSide.isChoiceDone()) break;
-						}
-					}
-				}, 10);
-			};
-			if (Dex.toID(this.sides[1].name) === BOTID) {
-				this.add('html', `<div class="broadcast-green"><strong>训练家${this.sides[0].name}开始挑战苍蓝道馆!</strong></div>`);
-			}
-		},
-		onBattleStart() {
-			this.add('message', '欢迎来到，新人训练家都要经过的第一站——苍蓝道馆。来吧，让我们一起在苍蓝的天空起舞吧。');
-		},
-		onFaint(pokemon) {
-			if (pokemon.side.id === 'p2' && pokemon.side.pokemon.filter(pokemon => !pokemon.fainted).length <= 1) {
-				if (addBadge(Dex.toID(this.sides[0].name), '苍蓝')) {
-					this.add('html', `<div class="broadcast-green"><strong>恭喜您获得了 苍蓝徽章 !</strong></div>`);
-				}
-				this.add('message', '真是一场美妙的舞会，没想到你作为新人训练家竟如此出色。这枚苍蓝徽章是你应得的，收下他吧。');
-			}
-			if (pokemon.side.id === 'p1' && pokemon.side.pokemon.filter(pokemon => !pokemon.fainted).length <= 1) {
-				this.add('message', '学会飞行最难的就是第一次振翅的勇气，请再接再厉，这片天空属于未来的你们');
-			}
-		}
-	},
-
-	pschinapetmodegym2: {
-		name: 'PS China Pet Mode Gym2',
-		ruleset: ['Evasion Moves Clause', 'Sleep Clause Mod'],
-		timer: {
-			starting: 600,
-			addPerTurn: 30,
-			maxPerTurn: 60,
-			maxFirstTurn: 60,
-			grace: 0,
-			timeoutAutoChoose: true,
-			dcTimerBank: false,
-		},
-		onBegin() {
-			const botSide = this.sides[1];
-			botSide.emitRequest = (update: AnyObject) => {
-				this.send('sideupdate', `${botSide.id}\n|request|${JSON.stringify(update)}`);
-				botSide.activeRequest = update;
-				setTimeout(() => {
-					if (update.forceSwitch) {
-						const alive = botSide.pokemon.filter(
-							x => !x.isActive && !x.fainted && x.name !== 'Keldeo'
-						).map(x => x.name);
-						if (alive.length > 0) {
-							botSide.chooseSwitch(this.prng.sample(alive));
-						} else {
-							botSide.chooseSwitch('Keldeo-Resolute');
-							this.add('message', '决心。。。你的决心又是什么呢？');
-						}
-						if (this.allChoicesDone()) {
-							this.commitDecisions();
-							this.sendUpdates();
-						}
-					} else {
-						for (let i = 0; i < 20; i++) {
-							botSide.chooseMove(this.sample(botSide.active[0].moves));
-							if (botSide.isChoiceDone()) break;
-						}
-					}
-				}, 10);
-			};
-			if (Dex.toID(this.sides[1].name) === BOTID) {
-				this.add('html', `<div class="broadcast-green"><strong>训练家${this.sides[0].name}开始挑战湛蓝道馆!</strong></div>`);
-			}
-		},
-		onBattleStart() {
-			this.add('message', '经历过天空洗礼的你，能否经得住波涛的汹涌呢？');
-		},
-		onFaint(pokemon) {
-			if (pokemon.side.id === 'p2' && pokemon.side.pokemon.filter(pokemon => !pokemon.fainted).length <= 1) {
-				if (addBadge(Dex.toID(this.sides[0].name), '湛蓝')) {
-					this.add('html', `<div class="broadcast-green"><strong>恭喜您获得了 湛蓝徽章 !</strong></div>`);
-				}
-				this.add('message', '天空，海洋，下一个就是冰雪。。。。没什么，自言自语罢了。收下吧，这是湛蓝徽章，曾经我也是这么一步步走来的，希望有一天你也能看到山顶的风景');
-			}
-			if (pokemon.side.id === 'p1' && pokemon.side.pokemon.filter(pokemon => !pokemon.fainted).length <= 1) {
-				this.add('message', '海洋固然广阔，但只要你愿意扬帆，不畏波涛，就一定能驶向远方，请再接再厉。');
-			}
-		}
-	},
-
-	pschinapetmodegym3: {
-		name: 'PS China Pet Mode Gym3',
-		ruleset: ['Evasion Moves Clause', 'Sleep Clause Mod'],
-		timer: {
-			starting: 600,
-			addPerTurn: 30,
-			maxPerTurn: 60,
-			maxFirstTurn: 60,
-			grace: 0,
-			timeoutAutoChoose: true,
-			dcTimerBank: false,
-		},
-		onBegin() {
-			const botSide = this.sides[1];
-			botSide.emitRequest = (update: AnyObject) => {
-				this.send('sideupdate', `${botSide.id}\n|request|${JSON.stringify(update)}`);
-				botSide.activeRequest = update;
-				setTimeout(() => {
-					if (update.forceSwitch) {
-						const alive = botSide.pokemon.filter(
-							x => !x.isActive && !x.fainted && x.name !== 'Articuno'
-						).map(x => x.name);
-						if (alive.length > 0) {
-							botSide.chooseSwitch(this.prng.sample(alive));
-						} else {
-							botSide.chooseSwitch('Articuno');
-							this.add('message', '曾经我也是为他所救的一人，也是在这次建立起了我们的羁绊。');
+							botSide.chooseSwitch(gymSettings['ace']);
+							this.add('message', gymSettings['msg']['ace']);
 						}
 						if (this.allChoicesDone()) {
 							this.commitDecisions();
@@ -303,157 +209,43 @@ export const Rulesets: {[k: string]: FormatData} = {
 					}
 				}, 10);
 			};
-			if (Dex.toID(this.sides[1].name) === BOTID) {
-				this.add('html', `<div class="broadcast-green"><strong>训练家${this.sides[0].name}开始挑战冰蓝道馆!</strong></div>`);
-			}
+			this.add('html', `<div class="broadcast-green"><strong>训练家${userName}开始挑战${gymName}道馆!</strong></div>`);
 		},
 		onBattleStart() {
-			this.add('message', '这里是蓝色三馆的最后一站。在雪山当中最致命就是无尽的暴风雪与冰雹，但愿你能冲破这重重的险阻。');
+			const gymName = userToGym[Dex.toID(this.sides[0].name)];
+			if (gymName) this.add('message', gymConfig[gymName]['msg']['start']);
 		},
 		onBeforeTurn() {
-			this.field.setWeather('hail');
+			const gymName = userToGym[Dex.toID(this.sides[0].name)];
+			if (!gymName) return;
+			const gymSettings = gymConfig[gymName];
+			if (gymSettings['weather']) this.field.setWeather(gymSettings['weather']);
+			if (gymSettings['terrain']) this.field.setTerrain(gymSettings['terrain']);
 		},
 		onFaint(pokemon) {
-			if (pokemon.side.id === 'p2' && pokemon.side.pokemon.filter(pokemon => !pokemon.fainted).length <= 1) {
-				if (addBadge(Dex.toID(this.sides[0].name), '冰蓝')) {
-					this.add('html', `<div class="broadcast-green"><strong>恭喜您获得了 冰蓝徽章 !</strong></div>`);
-				}
-				this.add('message', '飞跃苍穹，不畏浩瀚，勇登高峰，这样的你已经完全是一个合格的训练师了。加油，更广阔的的天地在等待着你。');
-			}
-			if (pokemon.side.id === 'p1' && pokemon.side.pokemon.filter(pokemon => !pokemon.fainted).length <= 1) {
-				this.add('message', '暴风雪是最容易让人迷失方向的地方，但我相信只要你心中有着指引你的方向就一定不会迷茫，希望下次能让我看到更加强大的你。');
-			}
-		}
-	},
-
-	pschinapetmodegym4: {
-		name: 'PS China Pet Mode Gym4',
-		ruleset: ['Evasion Moves Clause', 'Sleep Clause Mod'],
-		timer: {
-			starting: 600,
-			addPerTurn: 30,
-			maxPerTurn: 60,
-			maxFirstTurn: 60,
-			grace: 0,
-			timeoutAutoChoose: true,
-			dcTimerBank: false,
-		},
-		onBegin() {
-			const botSide = this.sides[1];
-			botSide.emitRequest = (update: AnyObject) => {
-				this.send('sideupdate', `${botSide.id}\n|request|${JSON.stringify(update)}`);
-				botSide.activeRequest = update;
-				setTimeout(() => {
-					if (update.forceSwitch) {
-						const alive = botSide.pokemon.filter(
-							x => !x.isActive && !x.fainted && x.name !== 'Metagross'
-						).map(x => x.name);
-						if (alive.length > 0) {
-							botSide.chooseSwitch(this.prng.sample(alive));
-						} else {
-							botSide.chooseSwitch('Metagross');
-							this.add('message', '这是最后的试炼。来吧！让我看看你修行的成果。');
-						}
-						if (this.allChoicesDone()) {
-							this.commitDecisions();
-							this.sendUpdates();
-						}
-					} else {
-						const mega = botSide.active[0].canMegaEvo ? 'mega' : '';
-						for (let i = 0; i < 20; i++) {
-							botSide.chooseMove(this.sample(botSide.active[0].moves), 0, mega);
-							if (botSide.isChoiceDone()) break;
+			const userId = Dex.toID(this.sides[0].name);
+			const gymName = userToGym[userId];
+			const gymSettings = gymConfig[gymName];
+			if (!gymName) return;
+			switch (checkWin(pokemon, this.sides)) {
+				case 'p1':
+					if (addBadge(userId, gymName)) {
+						this.add('html', `<div class="broadcast-green"><strong>恭喜您获得了 ${gymName}徽章 !</strong></div>`);
+						switch (gymSettings['bonus']) {
+							case 'box':
+								addBox(userId);
+								this.add('html', `<div class="broadcast-green"><strong>您获得了一个新的盒子! 快去查看吧!</strong></div>`);
+								break;
 						}
 					}
-				}, 10);
-			};
-			if (Dex.toID(this.sides[1].name) === BOTID) {
-				this.add('html', `<div class="broadcast-green"><strong>训练家${this.sides[0].name}开始挑战坚毅道馆!</strong></div>`);
+					this.add('message', gymSettings['msg']['win']);
+					delete userToGym[userId];
+					break;
+				case 'p2':
+					this.add('message', gymSettings['msg']['lose']);
+					delete userToGym[userId];
+					break;
 			}
-		},
-		onBattleStart() {
-			this.add('message', '这里是勇者修行的第一站，与之前相比，这里的修行恐怕会更加的令人绝望。穿上这件磁力服，在这里，坚定的意志将使属性克制不再那么重要，不过如果想要偷懒回复的话，可要做好被场地电击打断的准备。');
-		},
-		onBeforeTurn() {
-			this.field.setTerrain('steelterrain');
-		},
-		onFaint(pokemon) {
-			if (pokemon.side.id === 'p2' && pokemon.side.pokemon.filter(pokemon => !pokemon.fainted).length <= 1) {
-				if (addBadge(Dex.toID(this.sides[0].name), '坚毅')) {
-					this.add('html', `<div class="broadcast-green"><strong>恭喜您获得了 坚毅徽章 !</strong></div>`);
-					addBox(Dex.toID(this.sides[0].name));
-					this.add('html', `<div class="broadcast-green"><strong>您获得了一个新的盒子! 快去查看吧!</strong></div>`)
-				}
-				this.add('message', '这是坚毅的证明，希望你和你的宝可梦能记住这段时间修行的成果。顺便帮我向那个老太婆打个招呼，可别被她的小伎俩给蒙住了眼睛。');
-			}
-			if (pokemon.side.id === 'p1' && pokemon.side.pokemon.filter(pokemon => !pokemon.fainted).length <= 1) {
-				this.add('message', '小子，连这第一关都过不去，还想成为顶尖的训练师？');
-			}
-		}
-	},
-
-	pschinapetmodegym5: {
-		name: 'PS China Pet Mode Gym5',
-		ruleset: ['Evasion Moves Clause', 'Sleep Clause Mod'],
-		timer: {
-			starting: 600,
-			addPerTurn: 30,
-			maxPerTurn: 60,
-			maxFirstTurn: 60,
-			grace: 0,
-			timeoutAutoChoose: true,
-			dcTimerBank: false,
-		},
-		onBegin() {
-			const botSide = this.sides[1];
-			botSide.emitRequest = (update: AnyObject) => {
-				this.send('sideupdate', `${botSide.id}\n|request|${JSON.stringify(update)}`);
-				botSide.activeRequest = update;
-				setTimeout(() => {
-					if (update.forceSwitch) {
-						const alive = botSide.pokemon.filter(
-							x => !x.isActive && !x.fainted && x.name !== 'Venusaur'
-						).map(x => x.name);
-						if (alive.length > 0) {
-							botSide.chooseSwitch(this.prng.sample(alive));
-						} else {
-							botSide.chooseSwitch('Venusaur');
-							// this.add('message', '这是最后的试炼。来吧！让我看看你修行的成果。');
-						}
-						if (this.allChoicesDone()) {
-							this.commitDecisions();
-							this.sendUpdates();
-						}
-					} else {
-						const mega = botSide.active[0].canMegaEvo ? 'mega' : '';
-						for (let i = 0; i < 20; i++) {
-							botSide.chooseMove(this.sample(botSide.active[0].moves), 0, mega);
-							if (botSide.isChoiceDone()) break;
-						}
-					}
-				}, 10);
-			};
-			if (Dex.toID(this.sides[1].name) === BOTID) {
-				this.add('html', `<div class="broadcast-green"><strong>训练家${this.sides[0].name}开始挑战权谋道馆!</strong></div>`);
-			}
-		},
-		onBattleStart() {
-			// this.add('message', '这里是勇者修行的第一站，与之前相比，这里的修行恐怕会更加的令人绝望。穿上这件磁力服，在这里，坚定的意志将使属性克制不再那么重要，不过如果想要偷懒回复的话，可要做好被场地电击打断的准备。');
-		},
-		onBeforeTurn() {
-			this.field.setWeather("acidrain");
-			// this.field.setWeather("hail");
-		},
-		onFaint(pokemon) {
-			// if (pokemon.side.id === 'p2' && pokemon.side.pokemon.filter(pokemon => !pokemon.fainted).length <= 1) {
-			// 	if (addBadge(Dex.toID(this.sides[0].name), '权谋')) {
-			// 		this.add('html', `<div class="broadcast-green"><strong>恭喜您获得了 权谋徽章 !</strong></div>`);
-			// 	}
-			// 	this.add('message', '这是坚毅的证明，希望你和你的宝可梦能记住这段时间修行的成果。顺便帮我向那个老太婆打个招呼，可别被她的小伎俩给蒙住了眼睛。');
-			// }
-			// if (pokemon.side.id === 'p1' && pokemon.side.pokemon.filter(pokemon => !pokemon.fainted).length <= 1) {
-			// 	this.add('message', '小子，连这第一关都过不去，还想成为顶尖的训练师？');
-			// }
 		}
 	},
 
