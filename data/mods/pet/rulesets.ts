@@ -1,7 +1,6 @@
 import { FS } from "../../../lib";
 import { PetModeGymConfig } from "../../../config/pet-mode/gym-config";
 
-const BOTID = 'pschinabot';
 const USERPATH = 'config/pet-mode/user-properties';
 const DEPOSITPATH = 'config/pet-mode/deposit';
 
