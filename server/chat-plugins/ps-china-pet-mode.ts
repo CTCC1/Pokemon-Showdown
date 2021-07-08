@@ -6,7 +6,6 @@
 	4. Acid Rain 特效
 	5. git rebase -i
 	6. 孵蛋系统
-	7. 对战AI: 平滑概率回血
 
 	a. bot定时/add
 	b. bot host tour

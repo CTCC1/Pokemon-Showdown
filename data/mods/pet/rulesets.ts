@@ -203,14 +203,16 @@ export const Rulesets: {[k: string]: FormatData} = {
 						const activePoke = botSide.active[0];
 						const foeActivePoke = this.sides[0].active[0];
 						const hpRate = activePoke.hp / activePoke.maxhp;
+						const healPress = activePoke.speed > foeActivePoke.speed ? 1 : 2;
+						const healRate = Math.pow(1 - hpRate, 3) + 3 * Math.pow(1 - hpRate, 2) * hpRate * healPress;
 						const mega = activePoke.canMegaEvo ? 'mega' : '';
-						if ((activePoke.speed > foeActivePoke.speed) ? (hpRate < 0.5) : (hpRate < 0.8)) {
+						if (this.prng.randomChance(healRate * 1000, 1000)) {
 							const healingMove = activePoke.moves.filter(moveid => {
 								return Dex.moves.get(moveid).flags['heal'];
 							})[0];
 							if (healingMove) botSide.chooseMove(healingMove, 0, mega);
 						}
-						if (Math.max(...Object.values(foeActivePoke.boosts))) {
+						if (Math.max(...Object.values(foeActivePoke.boosts)) >= 2) {
 							if (activePoke.hasMove('spectralthief')) {
 								botSide.chooseMove('spectralthief', 0, mega);
 							} else {
@@ -221,7 +223,9 @@ export const Rulesets: {[k: string]: FormatData} = {
 							}
 						}
 						let i = 0;
-						const validMoves = activePoke.getMoves().filter(movedata => movedata.pp).map(movedata => movedata.move);
+						const validMoves = activePoke.getMoves().filter(movedata => {
+							return movedata.pp && !Dex.moves.get(movedata.move).flags['heal'];
+						}).map(movedata => movedata.move);
 						while (!botSide.isChoiceDone() && i < 20) {
 							botSide.chooseMove(this.sample(validMoves), 0, mega);
 							i++;
