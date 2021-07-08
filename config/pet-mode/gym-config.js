@@ -49,18 +49,5 @@ exports.PetModeGymConfig = {
             "lose": "小子，连这第一关都过不去，还想成为顶尖的训练师？"
         },
         "bonus": "box"
-    },
-    "权谋": {
-        "maxlevel": 50,
-        "userteam": "No Evasion Moves, No Repeat Pokemon, No Baton Pass",
-        "botteam": "Gengar||Focus Sash|Levitate|ShadowBall,SludgeWave,Venoshock,Hex|Timid|252,,,,,252||,0,,,,||60|]Muk-Alola||AirBalloon|Merciless|PoisonJab,GunkShot|Careful|252,,252,,252,252||,,,,,0||60|]Crobat||BlackSludge|Infiltrator|CrossPoison,Taunt,GastroAcid,Roost|Jolly|252,,252,,252,252||||60|]Weezing-Galar||Safety Goggles|NeutralizingGas|Venoshock,ClearSmog|Bold|252,,252,,252,252||,0,,,,||60|]Dragalge||LumBerry|Adaptability|Venoshock,CoreEnforcer,ClearSmog,StrengthSap|Sassy|252,,252,,252,||,0,,,,||60|]Venusaur||Venusaurite|Overgrow|Venoshock,SappySeed,ClearSmog,JungleHealing|Impish|252,,252,,252,252||||60|",
-        "weather": "acidrain",
-        "ace": "Venusaur",
-            "msg": {
-            "start": "",
-            "ace": "",
-            "win": "",
-            "lose": ""
-        },
     }
 }
