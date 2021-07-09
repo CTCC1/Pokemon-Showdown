@@ -1,6 +1,15 @@
-import {FS} from '../../lib';
+import { FS } from '../../lib';
 
 if (!FS('logs/modlog/iplog').existsSync()) FS('logs/modlog/iplog').mkdir();
+
+class ScoreTournament extends Tournaments.Tournament {
+	
+	onBattleWin(room: GameRoom, winnerid: ID) {
+		super.onBattleWin(room, winnerid);
+		console.log(winnerid, this.playerTable[winnerid].wins, this.getRemainingPlayers());
+	}
+
+}
 
 export async function addScore(userid: string, score: number): Promise<number[]> {
 	let ladder = await Ladders("gen8ps").getLadder();
@@ -40,10 +49,7 @@ export async function addScore(userid: string, score: number): Promise<number[]>
 export const commands: Chat.ChatCommands = {
 	async pschinascore(target, room, user) {
 		this.checkCan('lock');
-		if (!room || !room.settings.staffRoom) {
-			this.errorReply("在staff room更新ps国服积分");
-			return false;
-		}
+		if (!room || !room.settings.staffRoom) return this.errorReply("在 Staff 房间更新PS国服积分");
 
 		const userid = target.split(',')[0]?.trim();  // 等积分转移完成后改用toID()
 		const score = target.split(',')[1]?.trim();
@@ -109,5 +115,21 @@ export const commands: Chat.ChatCommands = {
 		if (!foundReplay) {
 			return this.errorReply("Replay not found.");
 		}
+	},
+
+	't': 'scoretour',
+	scoretour(target, room, user) {
+		this.checkCan('gdeclare');
+		if (!room || room.roomid !== 'skypillar') return this.errorReply("请在 Sky Pillar 房间举办积分淘汰赛");
+		if (room.tour) return this.errorReply("请等待正在进行的淘汰赛结束");
+		this.parse(`/globaldeclare 本次`);
+		this.parse(`/tour create gen8randombattle, elimination`);
+		this.parse(`/tour playercap 2`);
+		this.parse(`/tour autostart on`);
+		this.parse(`/tour forcetimer on`);
+		this.parse(`/tour autodq 2`);
+		const tour = room.getGame(Tournaments.Tournament);
+		if (!tour) return this.errorReply("淘汰赛创建失败");
+		tour.onBattleWin = ScoreTournament.prototype.onBattleWin;
 	}
 };

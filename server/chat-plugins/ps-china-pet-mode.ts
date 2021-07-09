@@ -694,6 +694,7 @@ class PetUser {
 			set.species = 'Shedinja';
 			set.ability = 'Wonder Guard';
 			set.gender = 'N';
+			set.item = '';
 			this.addPet(Teams.pack([set]));
 		}
 		return true;
