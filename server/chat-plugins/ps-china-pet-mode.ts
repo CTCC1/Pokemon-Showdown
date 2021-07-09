@@ -1544,9 +1544,9 @@ export const commands: Chat.ChatCommands = {
 					}).join(']');
 					const botTeam = PetBattle.gymConfig[target]['botteam'];
 					petUser.battleInfo = 'gym';
+					FS(`${DEPOSITPATH}/${user.id}.txt`).safeWriteSync(target);
 					battleRoom = PetBattle.createBattle(user, bot, userTeam, botTeam, rule, false);
 					petUser.property['time']['gym'] = Date.now();
-					FS(`${DEPOSITPATH}/${user.id}.txt`).safeWriteSync(target);
 				} else {
 					const wildPokemon = Pet.wild(room.roomid, target, petUser.maxLevel(), petUser.levelRistriction(), wantLegend);
 					if (!wildPokemon) return this.popupReply('这片草丛太危险了!');
