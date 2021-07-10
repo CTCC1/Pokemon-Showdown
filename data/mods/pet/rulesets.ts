@@ -212,7 +212,8 @@ export const Rulesets: {[k: string]: FormatData} = {
 							})[0];
 							if (healingMove) botSide.chooseMove(healingMove, 0, mega);
 						}
-						if (Math.max(...Object.values(foeActivePoke.boosts)) >= 2) {
+						const foeBoost = eval(Object.values(foeActivePoke.boosts).filter(x => x > 0).join('+'));
+						if (!foeActivePoke.hasType('Normal') && foeBoost >= 2) {
 							if (activePoke.hasMove('spectralthief')) {
 								botSide.chooseMove('spectralthief', 0, mega);
 							} else {

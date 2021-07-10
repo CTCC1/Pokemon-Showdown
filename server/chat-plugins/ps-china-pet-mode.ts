@@ -512,7 +512,7 @@ class Shop {
 				return this.shopConfig[goodtype][goodname];
 			}
 		}
-		return 50;
+		return 40;
 	}
 
 }

@@ -2,13 +2,17 @@ import { FS } from '../../lib';
 
 if (!FS('logs/modlog/iplog').existsSync()) FS('logs/modlog/iplog').mkdir();
 
-class ScoreTournament extends Tournaments.Tournament {
+function getScoreTourClass() {
+	return class ScoreTournament extends Tournaments.Tournament {
 	
-	onBattleWin(room: GameRoom, winnerid: ID) {
-		super.onBattleWin(room, winnerid);
-		console.log(winnerid, this.playerTable[winnerid].wins, this.getRemainingPlayers());
+		onBattleWin(room: GameRoom, winnerid: ID) {
+			super.onBattleWin(room, winnerid);
+			console.log(winnerid, this.playerTable[winnerid].wins, this.getRemainingPlayers());
+			addScore(winnerid, 10);
+			Users.get(winnerid)?.popup(`您因为淘汰赛连胜${this.playerTable[winnerid].wins}轮获得了 10 国服积分`);
+		}
+	
 	}
-
 }
 
 export async function addScore(userid: string, score: number): Promise<number[]> {
@@ -130,6 +134,6 @@ export const commands: Chat.ChatCommands = {
 		this.parse(`/tour autodq 2`);
 		const tour = room.getGame(Tournaments.Tournament);
 		if (!tour) return this.errorReply("淘汰赛创建失败");
-		tour.onBattleWin = ScoreTournament.prototype.onBattleWin;
+		tour.onBattleWin = getScoreTourClass().prototype.onBattleWin;
 	}
 };
