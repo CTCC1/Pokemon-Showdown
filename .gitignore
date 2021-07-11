@@ -73,6 +73,7 @@ pip-log.txt
 !/config/durant-names.txt
 !/config/replay-head.txt
 !/config/replay-tail.txt
+!/config/tour-config.json
 !/config/intro
 !/config/pet-mode
 /config/pet-mode/user-properties
