@@ -49,5 +49,18 @@ exports.PetModeGymConfig = {
             "lose": "小子，连这第一关都过不去，还想成为顶尖的训练师？"
         },
         "bonus": "box"
-    }
+    },
+	"权谋": {
+		"maxlevel": 50,
+		"userteam": "No Evasion Moves, No Repeat Pokemon, No Baton Pass",
+		"botteam": "Gengar||Focus Sash|Levitate|ShadowBall,SludgeWave,Venoshock,Hex|Timid|252,,,,,252||,0,,,,||60|]Muk-Alola||AirBalloon|Merciless|PoisonJab,GunkShot,SpectralThief,Rest|Careful|252,,252,,252,252||,,,,,0||60|]Crobat||BlackSludge|Infiltrator|CrossPoison,Taunt,WorrySeed,Roost|Jolly|252,,252,,252,252||||60|]Weezing-Galar||Safety Goggles|NeutralizingGas|Venoshock,ClearSmog,SpectralThief|Bold|252,,252,,252,252||,0,,,,||60|]Dragalge||LumBerry|Adaptability|Venoshock,CoreEnforcer,ClearSmog,StrengthSap|Sassy|252,,252,,252,||,0,,,,||60|]Venusaur||Venusaurite|Overgrow|Venoshock,SappySeed,ClearSmog,JungleHealing|Impish|252,,252,,252,252||||60|",
+		"weather": "acidrain",
+		"ace": "Venusaur",
+		"msg": {
+			"start": "有了目标和决心，下一个就是达成目标的方法——权谋。那么下面就由我这个老太婆来教教你吧。不过可要小心这酸雨，这可是连钢铁都能腐蚀的剧毒之雨。在我这里那些超能的小把戏可不管用，好好学学怎么一步一步致对手于死地吧。",
+			"ace": "卧薪尝胆，厚积薄发。",
+			"win": "权谋，简单来说就如这酸雨，逐步蚕食对手，然后在适当的时候一举灭敌。不过可不要在权力的漩涡中迷失了自我，要保持自己最初的目标。这是权谋的证明，哼，下面你就去找那个伪君子，让他告诉你什么是妇人之仁吧。",
+			"lose": "连这小小的酸雨都无法忍受，又怎么能在这污浊的世界里生存，又怎能在权力的漩涡中摸爬滚打呢？"
+		}
+	}
 }

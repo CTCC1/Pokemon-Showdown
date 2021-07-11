@@ -202,34 +202,36 @@ export const Rulesets: {[k: string]: FormatData} = {
 					} else {
 						const activePoke = botSide.active[0];
 						const foeActivePoke = this.sides[0].active[0];
+						const mega = activePoke.canMegaEvo ? 'mega' : '';
+						// Heal
 						const hpRate = activePoke.hp / activePoke.maxhp;
 						const healPress = activePoke.speed > foeActivePoke.speed ? 1 : 2;
 						const healRate = Math.pow(1 - hpRate, 3) + 3 * Math.pow(1 - hpRate, 2) * hpRate * healPress;
-						const mega = activePoke.canMegaEvo ? 'mega' : '';
 						if (this.prng.randomChance(healRate * 1000, 1000)) {
 							const healingMove = activePoke.moves.filter(moveid => {
 								return Dex.moves.get(moveid).flags['heal'];
 							})[0];
-							if (healingMove) botSide.chooseMove(healingMove, 0, mega);
+							if (healingMove) return botSide.chooseMove(healingMove, 0, mega);
 						}
+						// Spectral Thief
 						const foeBoost = eval(Object.values(foeActivePoke.boosts).filter(x => x > 0).join('+'));
 						if (!foeActivePoke.hasType('Normal') && foeBoost >= 2) {
 							if (activePoke.hasMove('spectralthief')) {
-								botSide.chooseMove('spectralthief', 0, mega);
+								return botSide.chooseMove('spectralthief', 0, mega);
 							} else {
 								const thief = botSide.pokemon.filter(x => {
 									return !x.fainted && x.hasMove('spectralthief');
 								})[0];
-								if (thief) botSide.chooseSwitch(thief.name);
+								if (thief) return botSide.chooseSwitch(thief.name);
 							}
 						}
-						let i = 0;
+						// Other Moves
 						const validMoves = activePoke.getMoves().filter(movedata => {
 							return movedata.pp && !Dex.moves.get(movedata.move).flags['heal'];
 						}).map(movedata => movedata.move);
-						while (!botSide.isChoiceDone() && i < 20) {
+						if (validMoves.length === 0) return botSide.autoChoose();
+						for (let i = 0; !botSide.isChoiceDone() && i < 20; i++) {
 							botSide.chooseMove(this.sample(validMoves), 0, mega);
-							i++;
 						}
 					}
 				}, 10);

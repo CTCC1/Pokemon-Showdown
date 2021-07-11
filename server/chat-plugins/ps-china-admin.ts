@@ -1,18 +1,69 @@
 import { FS } from '../../lib';
+import type { PartialModlogEntry } from '../modlog';
 
 if (!FS('logs/modlog/iplog').existsSync()) FS('logs/modlog/iplog').mkdir();
 
+let userAlts: {[mainid: string]: {'alts': string[], 'ips': string[]}} = {};
+let altToMainId: {[altid: string]: string} = {};
+let ipToMainId: {[ip: string]: string} = {};
+
+function getTourFormat(): string | undefined {
+	try {
+		const date = new Date();
+		const tourConfig: {[hour: string]: string} = JSON.parse(FS('config/tour-config.json').readIfExistsSync())[date.getDay()];
+		for (let hour in tourConfig) {
+			const hourDiff = (date.getTime() - (parseInt(hour) - 8) * 1000 * 60 * 60) / (1000 * 60 * 60) % 24;
+			if (hourDiff < 1 || hourDiff > 23) return tourConfig[hourDiff];
+		}
+	} catch (err) {
+		return;
+	}
+}
+
 function getScoreTourClass() {
 	return class ScoreTournament extends Tournaments.Tournament {
-	
+
 		onBattleWin(room: GameRoom, winnerid: ID) {
 			super.onBattleWin(room, winnerid);
-			console.log(winnerid, this.playerTable[winnerid].wins, this.getRemainingPlayers());
-			addScore(winnerid, 10);
-			Users.get(winnerid)?.popup(`您因为淘汰赛连胜${this.playerTable[winnerid].wins}轮获得了 10 国服积分`);
+			let score = 0;
+			switch (this.playerTable[winnerid].wins) {
+				case 2:
+				case 3:
+				case 4:
+					score = 10;
+					break;
+				case 5:
+				case 6:
+					score = 20;
+			}
+			if (score) {
+				addScoreToMain(winnerid, score,	`您在 ${this.name} 连胜 ${this.playerTable[winnerid].wins} 轮`);
+			}
 		}
-	
+
 	}
+}
+
+export function getMainId(userid: string): string {
+	// Users.get(userid)?.ips
+	return userid;
+}
+
+export async function addScoreToMain(userid: string, score: number, msg: string) {
+	const mainId = getMainId(userid);
+	const isMain = mainId === userid;
+	const userExists = !!(await addScore(mainId, 0))[0];
+	const scores = await addScore(userid, score);
+	const entry: PartialModlogEntry = {
+		action: `自动定向加分: ${userid}${isMain ? '' : ` -> ${mainId}`}: ${scores[0]} + ${score} = ${scores[1]}`,
+		isGlobal: true,
+		note: userExists ? '' : '新用户',
+	};
+	Rooms.global.modlog(entry);
+	Rooms.get('staff')?.modlog(entry);
+	Users.get(userid)?.popup(
+		`${msg}, 获得国服积分 ${score} 分${isMain ? '' : `, 已发放到您的主账号 ${mainId} 上`}`
+	);
 }
 
 export async function addScore(userid: string, score: number): Promise<number[]> {
@@ -70,7 +121,7 @@ export const commands: Chat.ChatCommands = {
 			CNUser.popup(`您因为 ${reason} ${parsedScore > 0 ? '获得': '失去'}了 ${Math.abs(parsedScore)} 国服积分`);
 		}
 		const message = `用户ID: ${userid}, PS国服积分: ` +
-			`${changeScore[0]} ${parsedScore < 0 ? "-" : "+"} ${Math.abs(parsedScore)} -> ${changeScore[1]}, ` +
+			`${changeScore[0]} ${parsedScore < 0 ? "-" : "+"} ${Math.abs(parsedScore)} = ${changeScore[1]}, ` +
 			`原因:${reason}, 操作人:${user.name}.`;
 		this.globalModlog(message);
 		this.addModAction(message);
@@ -126,14 +177,20 @@ export const commands: Chat.ChatCommands = {
 		this.checkCan('gdeclare');
 		if (!room || room.roomid !== 'skypillar') return this.errorReply("请在 Sky Pillar 房间举办积分淘汰赛");
 		if (room.tour) return this.errorReply("请等待正在进行的淘汰赛结束");
-		this.parse(`/globaldeclare 本次`);
-		this.parse(`/tour create gen8randombattle, elimination`);
-		this.parse(`/tour playercap 2`);
-		this.parse(`/tour autostart on`);
+		const formatid = getTourFormat();
+		if (!formatid) return this.errorReply("日程表中没有正要举行的比赛");		
+		this.parse(`/globaldeclare Sky Pillar房间 ${formatid} 淘汰赛将于5分钟后开始, 奖励规则: http://47.94.147.145/topic/1464`);
+		this.parse(`/tour create ${formatid}, elimination`);
+		this.parse(`/tour playercap 64`);
+		this.parse(`/tour autostart 5`);
 		this.parse(`/tour forcetimer on`);
 		this.parse(`/tour autodq 2`);
 		const tour = room.getGame(Tournaments.Tournament);
 		if (!tour) return this.errorReply("淘汰赛创建失败");
 		tour.onBattleWin = getScoreTourClass().prototype.onBattleWin;
+	},
+
+	async updatealts(target, room, user) {
+		return;
 	}
 };
