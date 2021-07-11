@@ -13,7 +13,7 @@ function getTourFormat(): string | undefined {
 		const tourConfig: {[hour: string]: string} = JSON.parse(FS('config/tour-config.json').readIfExistsSync())[date.getDay()];
 		for (let hour in tourConfig) {
 			const hourDiff = (date.getTime() - (parseInt(hour) - 8) * 1000 * 60 * 60) / (1000 * 60 * 60) % 24;
-			if (hourDiff < 1 || hourDiff > 23) return tourConfig[hourDiff];
+			if (hourDiff < 1 || hourDiff > 23) return tourConfig[hour];
 		}
 	} catch (err) {
 		return;
@@ -53,6 +53,10 @@ export async function addScoreToMain(userid: string, score: number, msg: string)
 	const mainId = getMainId(userid);
 	const isMain = mainId === userid;
 	const userExists = !!(await addScore(mainId, 0))[0];
+	// Temp
+	if (!userExists) return Users.get(userid)?.popup(
+		`${msg}, 应获得国服积分 ${score} 分。由于未查到您的国服积分记录, 请联系管理员为您加分。`
+	);
 	const scores = await addScore(userid, score);
 	const entry: PartialModlogEntry = {
 		action: `自动定向加分: ${userid}${isMain ? '' : ` -> ${mainId}`}: ${scores[0]} + ${score} = ${scores[1]}`,
