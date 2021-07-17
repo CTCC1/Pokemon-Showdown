@@ -253,16 +253,14 @@ class Pet {
 
 	static wild(roomid: string, lawnid: string, maxLevel: number, restrictLevel: number, legend: boolean = false): string {
 		if (legend && PetBattle.legends[roomid]) return PetBattle.legends[roomid];
+		if (!PetBattle.roomConfig[roomid] || !PetBattle.roomConfig[roomid]['lawn'][lawnid]) return '';
 		if (restrictLevel <= PetBattle.roomConfig[roomid]['minlevel']) return '';
-		if (PetBattle.roomConfig[roomid] && PetBattle.roomConfig[roomid]['lawn'][lawnid]) {
-			return this.gen(
-				Utils.sample(PetBattle.roomConfig[roomid]['lawn'][lawnid]),
-				Math.min(restrictLevel, prng.sample([...new Array(11).keys()].map(x => {
-					return x + Math.min(maxLevel, PetBattle.roomConfig[roomid]['maxlevel']) - 5;
-				})))
-			);
-		}
-		return 'noconf';
+		return this.gen(
+			Utils.sample(PetBattle.roomConfig[roomid]['lawn'][lawnid]),
+			Math.min(restrictLevel, prng.sample([...new Array(11).keys()].map(x => {
+				return x + Math.min(maxLevel, PetBattle.roomConfig[roomid]['maxlevel']) - 5;
+			})))
+		);
 		// return this.gen(
 		// 	prng.sample(this.defaultWildMons),
 		// 	Math.min(restrictLevel, prng.sample([...new Array(11).keys()].map(x => x + Utils.restrict(maxLevel, 5, 20) - 5)))
@@ -1551,7 +1549,6 @@ export const commands: Chat.ChatCommands = {
 				} else {
 					const wildPokemon = Pet.wild(room.roomid, target, petUser.maxLevel(), petUser.levelRistriction(), wantLegend);
 					if (!wildPokemon) return this.popupReply('这片草丛太危险了!');
-					if (wildPokemon === 'noconf') return this.parse('/pet help lawn');
 					const rule = 'gen8petmode @@@pschinapetmodewild';
 					petUser.battleInfo = wildPokemon + (wantLegend ? `<=${room.roomid}` : '');
 					battleRoom = PetBattle.createBattle(user, bot, 'random', wildPokemon, rule, !wantLegend);
