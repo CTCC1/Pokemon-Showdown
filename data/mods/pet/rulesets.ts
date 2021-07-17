@@ -128,6 +128,7 @@ export const Rulesets: {[k: string]: FormatData} = {
 			botSide.emitRequest = (update: AnyObject) => {
 				this.send('sideupdate', `${botSide.id}\n|request|${JSON.stringify(update)}`);
 				botSide.activeRequest = update;
+				// @ts-ignore
 				setTimeout(() => {
 					for (let i = 0; i < 20; i++) {
 						botSide.chooseMove(this.sample(botSide.active[0].moves));
@@ -184,6 +185,7 @@ export const Rulesets: {[k: string]: FormatData} = {
 			botSide.emitRequest = (update: AnyObject) => {
 				this.send('sideupdate', `${botSide.id}\n|request|${JSON.stringify(update)}`);
 				botSide.activeRequest = update;
+				// @ts-ignore
 				setTimeout(() => {
 					if (update.forceSwitch) {
 						const alive = botSide.pokemon.filter(

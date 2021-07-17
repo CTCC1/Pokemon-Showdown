@@ -3315,10 +3315,10 @@ export const Formats: FormatList = [
 		ruleset: ['Obtainable', 'Species Clause', 'Nickname Clause', 'Item Clause', 'Team Preview', 'Cancel Mod', 'VGC Timer', 'Min Team Size = 4', 'Max Team Size = 6', 'Picked Team Size = 4', 'Adjust Level = 50', 'Min Source Gen = 8'],
 	},
 	{
-		name: "[Gen 7] Random Formats",
-		desc: `Randomized competitive lower tiers teams of mutiple generations.`,
+		name: "[Gen 7] Random Formats",
+		desc: `Randomized competitive lower tiers teams of mutiple generations.`,
 
-		team: 'random',
+		team: 'random',
 	},
 	{
 		name: "[Gen 7] Battle Tree 3v3",

@@ -1,11 +1,17 @@
 import { FS } from '../../lib';
 import type { PartialModlogEntry } from '../modlog';
+import type { TournamentPlayer } from '../tournaments';
 
 if (!FS('logs/modlog/iplog').existsSync()) FS('logs/modlog/iplog').mkdir();
 
 let userAlts: {[mainid: string]: {'alts': string[], 'ips': string[]}} = {};
 let altToMainId: {[altid: string]: string} = {};
 let ipToMainId: {[ip: string]: string} = {};
+
+function sleep(time: number) {
+	// @ts-ignore
+    return new Promise(resolve => setTimeout(resolve, time));
+}
 
 function getTourFormat(): string | undefined {
 	try {
@@ -23,8 +29,31 @@ function getTourFormat(): string | undefined {
 function getScoreTourClass() {
 	return class ScoreTournament extends Tournaments.Tournament {
 
+		addingScore: boolean = false;
+
+		disqualifyUser(userid: ID, output: Chat.CommandContext | null = null, reason: string | null = null, isSelfDQ = false) {
+			const player = this.playerTable[userid];	
+			let foe: TournamentPlayer | undefined;
+			for (const playerFrom of this.players) {
+				const match = playerFrom.inProgressMatch;
+				if (match && match.to === player) foe = playerFrom;
+			}
+			foe = foe || player.inProgressMatch?.to;
+			if (foe) {
+				foe.wins += 1;
+				this.addScore(foe.id);
+			}
+			return super.disqualifyUser(userid, output, reason, isSelfDQ);
+		}
+
 		onBattleWin(room: GameRoom, winnerid: ID) {
+			this.addScore(winnerid);
 			super.onBattleWin(room, winnerid);
+		}
+
+		async addScore(winnerid: string) {
+			while (this.addingScore) await sleep(10);
+			this.addingScore = true;
 			let score = 0;
 			switch (this.playerTable[winnerid].wins) {
 				case 2:
@@ -36,13 +65,18 @@ function getScoreTourClass() {
 				case 6:
 					score = 20;
 			}
-			if (score) {
-				addScoreToMain(winnerid, score,	`您在 ${this.name} 连胜 ${this.playerTable[winnerid].wins} 轮`);
+			if (score > 0) {
+				await addScoreToMain(winnerid, score, `{}在 ${this.name} 淘汰赛中连胜 ${this.playerTable[winnerid].wins} 轮`);
 			}
+			this.addingScore = false;
 		}
 
 	}
 }
+
+// function updateUserAlts(): string {
+
+// }
 
 export function getMainId(userid: string): string {
 	// Users.get(userid)?.ips
@@ -55,22 +89,24 @@ export async function addScoreToMain(userid: string, score: number, msg: string)
 	const userExists = !!(await addScore(mainId, 0))[0];
 	// Temp
 	if (!userExists) return Users.get(userid)?.popup(
-		`${msg}, 应获得国服积分 ${score} 分。由于未查到您的国服积分记录, 请联系管理员为您加分。`
+		`${msg.replace('{}', '您')}, 应获得国服积分 ${score} 分。由于未查到您的国服积分记录, 请联系管理员为您加分。`
 	);
 	const scores = await addScore(userid, score);
+	const logMsg = `${msg.replace('{}', userid)}国服积分: ${scores[0]} + ${score} = ${scores[1]}`;
 	const entry: PartialModlogEntry = {
-		action: `自动定向加分: ${userid}${isMain ? '' : ` -> ${mainId}`}: ${scores[0]} + ${score} = ${scores[1]}`,
+		action: logMsg,
 		isGlobal: true,
 		note: userExists ? '' : '新用户',
 	};
 	Rooms.global.modlog(entry);
-	Rooms.get('staff')?.modlog(entry);
+	Rooms.get('staff')?.send(`|modaction|${logMsg}`);
 	Users.get(userid)?.popup(
 		`${msg}, 获得国服积分 ${score} 分${isMain ? '' : `, 已发放到您的主账号 ${mainId} 上`}`
 	);
 }
 
 export async function addScore(userid: string, score: number): Promise<number[]> {
+	// @ts-ignore
 	let ladder = await Ladders("gen8ps").getLadder();
 	let userIndex = ladder.length;
 	for (let [i, entry] of ladder.entries()) {
@@ -101,6 +137,7 @@ export async function addScore(userid: string, score: number): Promise<number[]>
 	while (ladder[lastIndex][1] <= 0) lastIndex--;
 	ladder.splice(lastIndex + 1, ladder.length);
 
+	// @ts-ignore
 	Ladders("gen8ps").save();
 	return [oldScore, newScore];
 }
@@ -183,12 +220,13 @@ export const commands: Chat.ChatCommands = {
 		if (room.tour) return this.errorReply("请等待正在进行的淘汰赛结束");
 		const formatid = getTourFormat();
 		if (!formatid) return this.errorReply("日程表中没有正要举行的比赛");		
-		this.parse(`/globaldeclare Sky Pillar房间 ${formatid} 淘汰赛将于5分钟后开始, 奖励规则: http://47.94.147.145/topic/1464`);
+		this.parse(`/globaldeclare Sky Pillar房间 ${formatid} 淘汰赛将于5分钟后开始, 连胜第2、3、4轮时奖励10积分, 连胜第5、6轮时奖励20积分`);
 		this.parse(`/tour create ${formatid}, elimination`);
 		this.parse(`/tour playercap 64`);
 		this.parse(`/tour autostart 5`);
 		this.parse(`/tour forcetimer on`);
 		this.parse(`/tour autodq 2`);
+		this.parse(`!formats ${formatid}`);
 		const tour = room.getGame(Tournaments.Tournament);
 		if (!tour) return this.errorReply("淘汰赛创建失败");
 		tour.onBattleWin = getScoreTourClass().prototype.onBattleWin;

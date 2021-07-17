@@ -4,12 +4,8 @@
 	2. /add 选项 nv 能不能大师球
 	3. 防沉迷
 	4. Acid Rain 特效
-	5. git rebase -i
-	6. 孵蛋系统
-
-	a. bot定时/add
-	b. bot host tour
-	c. 用户ip映射图 便于自动加分
+	5. 孵蛋系统
+	6. /gift
 */
 
 import { FS } from "../../lib";
@@ -1036,6 +1032,7 @@ export const commands: Chat.ChatCommands = {
 		this.parse(`/pet box name ${target}`);
 	},
 
+	'link': 'ex',
 	ex(target) {
 		this.parse(`/pet box ex ${target}`);
 	},
