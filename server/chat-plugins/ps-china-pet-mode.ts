@@ -1,11 +1,9 @@
 /*
 	Pokemon Showdown China Pet Mode Version 1.0 Author: Starmind
-	1. 劣质王冠: 2, 银色王冠: 25, 金色王冠: 100, 特性胶囊: 50, 特性膏药: 100, 性格薄荷: 50
+	1. 假王冠: 2, 劣质王冠: 10, 银色王冠: 25, 金色王冠: 100, 特性胶囊: 50, 特性膏药: 100, 性格薄荷: 50, 盒子
 	2. /add 选项 nv 能不能大师球
-	3. 防沉迷
-	4. Acid Rain 特效
-	5. 孵蛋系统
-	6. /gift
+	3. Acid Rain 特效
+	4. 孵蛋系统
 */
 
 import { FS } from "../../lib";
@@ -558,6 +556,8 @@ class PetUser {
 	}
 
 	editProperty(propertyString: string): boolean {
+		const pet = Teams.pack(Teams.unpack(propertyString));
+		if (pet) return this.addPet(pet);
 		const cachedProperty = JSON.parse(JSON.stringify(this.property));
 		try {
 			const parsed = JSON.parse(propertyString);
@@ -891,11 +891,15 @@ function getUser(userid: string): PetUser {
 	return petUsers[userid] || (petUsers[userid] = new PetUser(userid));
 }
 
+function checkUser(userid: string): boolean {
+	return FS(`${USERPATH}/${toID(userid)}.json`).existsSync();
+}
+
 export function dropUser(userid: string) {
 	delete petUsers[userid];
 }
 
-function petBox(petUser: PetUser, target: string): string {
+function petBox(petUser: PetUser, target: string, admin: boolean = false): string {
 	if (!petUser.property) return '';
 	const st = (x: string) => `<b>${x}</b>`;
 
@@ -942,7 +946,10 @@ function petBox(petUser: PetUser, target: string): string {
 		} else if (petUser.operation?.indexOf('preex') === 0) {
 			setTitle = `用 ${set.name} 与${petUser.operation?.slice(5)}交换? ` +
 				Utils.boolButtons(`/pet box ex ${petUser.operation?.slice(5)}`, `/pet box reset ${target}`)
-		}
+		} else if (petUser.operation?.indexOf('gift') === 0) {
+			setTitle = `将 ${set.name} 赠送给${petUser.operation?.slice(4)}? ` +
+				Utils.boolButtons(`/gift ${petUser.operation?.slice(4)}!`, `/pet box reset ${target}`)
+		} 
 		const setButtons = [
 			Utils.button(`/pet box nameguide ${target}`, '昵称'),
 			Utils.button(`/pet box onmove ${target}`, '移动'),
@@ -952,6 +959,7 @@ function petBox(petUser: PetUser, target: string): string {
 			Utils.button(`/pet box drop ${target}`, '放生'),
 			Utils.button(`/pet box reset`, '返回')
 		]
+		if (admin) setButtons.splice(2, 0, Utils.button(`/gift`, '赠送'))
 
 		const bst = Dex.species.get(set.species).baseStats;
 		const th = (x: string | number) => `<th style="text-align: center; padding: 0">${x}</th>`;
@@ -978,7 +986,7 @@ function petBox(petUser: PetUser, target: string): string {
 		const sprite = `background: transparent url(${spriteURL}) no-repeat 90% 10% relative;`
 		pokeDiv = `<div style="width: 350px; ` +
 			`position: relative; display: inline-block;"><div style="line-height: 35px">${setTitle}</div>` +
-			`<div style=" display: inline-block; width: 50px; line-height: 32px; vertical-align: top;` +
+			`<div style=" display: inline-block; width: 50px; line-height: ${224 / setButtons.length}px; vertical-align: top;` +
 			`">${setButtons.join('<br/>')}</div>` +
 			`<div style="${sprite} display: inline-block; line-height: 28px; width: 300px;` +
 			`">${lines.map(x => `${x}`).join('<br/>')}<br/>${statsTable}</div>`;
@@ -1079,6 +1087,10 @@ export const commands: Chat.ChatCommands = {
 		this.parse(`/pet admin genpoke ${target}`);
 	},
 
+	gift(target) {
+		this.parse(`/pet admin gift ${target}`);
+	},
+
 	'petmode': 'pet',
 	pet: {
 
@@ -1091,7 +1103,7 @@ export const commands: Chat.ChatCommands = {
 				const petUser = getUser(user.id);
 				if (petUser.property) return this.parse('/pet init guide');
 				this.parse('/pet init clear');
-				user.sendTo(room.roomid, `|uhtml|pet-init-show|欢迎使用宠物系统!请选择您最初的伙伴：<br/>${Pet.initButtons}`);
+				user.sendTo(room.roomid, `|uhtml|pet-init-show|欢迎使用宠物系统! 请选择您最初的伙伴:<br/>${Pet.initButtons}`);
 			},
 
 			set(target, room, user) {
@@ -1113,7 +1125,7 @@ export const commands: Chat.ChatCommands = {
 				if (Pet.initMons.indexOf(target) < 0) return this.popupReply(`${target}不是合法初始的宝可梦`)
 
 				petUser.init();
-				petUser.addPet(Pet.gen(target, 5, true, 70));
+				petUser.addPet(Pet.gen(target, 5, true, 70, 0, 0));
 				petUser.addItem('Poke Ball', 5);
 				petUser.save();
 
@@ -1151,7 +1163,7 @@ export const commands: Chat.ChatCommands = {
 				this.parse('/pet shop clear new');
 				petUser.chatRoomId = room.roomid;
 				petUser.load();
-				const div = petBox(petUser, target);
+				const div = petBox(petUser, target, user.can("bypassall"));
 				this.parse(`/pet box clear ${target}`);
 				user.sendTo(room.roomid, `|uhtml${target === 'new' ? '' : 'change'}|pet-box-show|${div}`);
 			},
@@ -1167,7 +1179,6 @@ export const commands: Chat.ChatCommands = {
 			check(target, room, user) {
 				const petUser = getUser(user.id);
 				if (!petUser.property) return this.popupReply("您还未领取最初的伙伴!");
-				const userTeam = Teams.unpack(petUser.property['bag'].join(']'));
 				this.popupReply(petUser.checkMoves() || "您的队伍是合法的!");
 			},
 
@@ -1484,6 +1495,7 @@ export const commands: Chat.ChatCommands = {
 				}
 				petUser.save();
 				this.popupReply(replies.join('\n'));
+				this.parse(`/pet box show new`);
 			},
 
 			clear(target, room, user) {
@@ -1620,6 +1632,7 @@ export const commands: Chat.ChatCommands = {
 				const shiny = parseInt(targets[2]) || 0;
 				const hidden = parseInt(targets[3]) || 0;
 				const set = Pet.gen(species.id, level, true, 70, shiny, hidden);
+				if (!set) return this.popupReply(`种类不合法`);
 				const gender = set.split('|')[7];
 				PetBattle.legends[room.roomid] = set;
 				const legendStyle = 'font-size: 12pt; text-align: center; height: 170px';
@@ -1792,6 +1805,7 @@ export const commands: Chat.ChatCommands = {
 				user.sendTo(room.roomid, `|uhtml|pet-edit|${petUser.id}的盒子:<br/>` + 
 					`<input type="text" style="width: 100%" value='${JSON.stringify(petUser.property)}'/>` +
 					`修改盒子: /edit ${petUser.id}=>{"bag":["宝可梦1",...],"box":["宝可梦2",...],"items":{"道具1":数量1,...}}<br/>` +
+					`添加宠物: /edit ${petUser.id}=>宝可梦` +
 					`生成宠物: /genpoke 种类, 等级(, fullivs, shiny, hidden)<br/>` +
 					Utils.button(`/pet admin edit ${petUser.id}=>!`, '删除用户数据')
 				);
@@ -1833,6 +1847,30 @@ export const commands: Chat.ChatCommands = {
 				const hidden = target.indexOf("hidden") >= 0;
 				const set = Pet.gen(speciesid, level, fullivs, 70, shiny ? 1 : 0, hidden ? 1 : 0);
 				this.sendReply(set);
+			},
+
+			gift(target, room, user) {
+				this.checkCan('bypassall');
+				if (!target) return this.popupReply("请输入: /gift 用户id");
+				const petUser = getUser(user.id);
+				if (!petUser.property) return this.popupReply("您还未领取最初的伙伴!");
+				if (!petUser.onPosition) return this.popupReply("请先选中想要赠送的宝可梦!");
+				if (!checkUser(target)) return this.popupReply(`未找到用户 ${target} !`);
+				if (target.indexOf('!') < 0) {
+					petUser.operation = `gift${target}`;
+				} else {
+					const rcverId = toID(target);
+					const pet = petUser.getPet();
+					const gift = new PetUser(rcverId, GIFTPATH);
+					if (!gift.property) gift.init();
+					gift.addPet(pet);
+					gift.save();
+					petUser.removePet(petUser.onPosition);
+					petUser.save();
+					delete petUser.operation;
+					Users.get(rcverId)?.popup(`${user.name}赠送给您一只宝可梦! 请输入/pet点击领取礼物`);
+				}
+				this.parse(`/pet box show ${petUser.onPosition ? Object.values(petUser.onPosition).join(',') : ''}`);
 			},
 
 		},
