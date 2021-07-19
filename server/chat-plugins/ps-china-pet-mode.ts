@@ -1857,7 +1857,7 @@ export const commands: Chat.ChatCommands = {
 				petUser.addItem(randomItem, 1);
 				petUser.save();
 				this.popupReply(`您获得了1个 ${randomItem}!`);
-				this.parse(`/pet box show ${petUser.onPosition ? Object.values(petUser.onPosition).join(',') : ''}`)
+				this.parse(`/pet box`);
 			},
 
 			clear(target, room, user) {
