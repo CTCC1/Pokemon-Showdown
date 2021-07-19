@@ -232,4 +232,14 @@ exports.PetModeShopConfig = {
 		"Rusted Sword": 50,
 		"Rusted Shield": 50,
 	},
+	'util': {
+		'Rusty Bottle Cap': 2,
+		'Rocket Bottle Cap': 10,
+		'Bottle Cap': 25,
+		'Gold Bottle Cap': 100,
+		// 'Ability Capsule': 25,
+		// 'Ability Patch': 100,
+		// 'Milt': 50,
+		// 'Box': 50
+	}
 }

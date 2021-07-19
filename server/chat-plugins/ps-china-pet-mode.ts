@@ -4,6 +4,7 @@
 	2. /add 选项 nv 能不能大师球
 	3. Acid Rain 特效
 	4. 孵蛋系统
+	5. 精灵球
 */
 
 import { FS } from "../../lib";
@@ -19,9 +20,9 @@ import { PetModeGymConfig } from "../../config/pet-mode/gym-config";
 type userProperty = {
 	'bag': string[],
 	'box': string[],
-	'items': {[itemName: string]: number},
+	'items': { [itemName: string]: number },
 	'badges': string[],
-	'time': {'ball': number, 'draw': number, 'search': number, 'gym': number},
+	'time': { 'ball': number, 'draw': number, 'search': number, 'gym': number },
 };
 type petPosition = {'type': 'bag' | 'box', 'index': number};
 type statPosition = {'type': 'ivs' | 'evs', 'index': 'hp' | 'atk' | 'def' | 'spa' | 'spd' | 'spe'};
@@ -39,6 +40,7 @@ const POKESPRITESSHINY = 'https://play.pokemonshowdown.com/sprites/ani-shiny';
 const ITEMSHEET = 'https://play.pokemonshowdown.com/sprites/itemicons-sheet.png';
 const TYPEICONS = 'https://play.pokemonshowdown.com/sprites/types';
 const CATICONS = 'https://play.pokemonshowdown.com/sprites/categories';
+const ITEMFOLDER = 'http://47.94.147.145:8000/avatars/items';
 
 const LAWNCD = 2000;
 const GYMCD = 300000;
@@ -68,7 +70,7 @@ class Utils {
 		return maxIndex;
 	}
 
-	static sample(s: {[name: string]: number}): string {
+	static sample(s: { [name: string]: number }): string {
 		let r = Math.random();
 		let key = Object.keys(s)[0];
 		for (key in s) {
@@ -100,10 +102,19 @@ class Utils {
 	}
 
 	static itemStyle(name: string) {
+		switch (toID(name)) {
+			case 'box':
+			case 'mint':
+			case 'abilitycapsule':
+			case 'abilitypatch':
+			case 'rocketbottlecap':
+			case 'rustybottlecap':
+				return `background:transparent url(${ITEMFOLDER}/${toID(name)}.png) no-repeat; height: 24px; width: 24px;`;
+		}
 		const num = Dex.items.get(name).spritenum || 0;
 		let top = Math.floor(num / 16) * 24;
 		let left = (num % 16) * 24;
-		return `background:transparent url(${ITEMSHEET}?g8) no-repeat scroll -${left}px -${top}px; height: 24px; width: 24px;`
+		return `background:transparent url(${ITEMSHEET}?g8) no-repeat scroll -${left}px -${top}px; height: 24px; width: 24px;`;
 	}
 
 	static iconStyle(name: string, gender: string = 'N') {
@@ -143,9 +154,9 @@ class Pet {
 
 	static sprites = new Set(PokemonSprites);
 
-	static iconIndex: {[speciesid: string]: number} = PokemonIconIndexes;
+	static iconIndex: { [speciesid: string]: number } = PokemonIconIndexes;
 
-	static learnSets: {[speciesid: string]: {[moveid: string]: number}} = PetModeLearnSets;
+	static learnSets: { [speciesid: string]: { [moveid: string]: number } } = PetModeLearnSets;
 
 	static defaultWildMons = [
 		'Caterpie', 'Weedle', 'Ledyba', 'Spinarak', 'Wurmple', 'Kricketot', 'Sewaddle', 'Venipede',
@@ -179,9 +190,9 @@ class Pet {
 		'Goomy', 'Sliggoo', 'Goodra', 'Jangmo-o', 'Hakamo-o', 'Kommo-o', 'Dreepy', 'Drakloak', 'Dragapult'
 	];
 
-	static typeIcons: {[speciesname: string]: string} = {};
+	static typeIcons: { [speciesname: string]: string } = {};
 
-	static moveIcons: {[movename: string]: string} = {};
+	static moveIcons: { [movename: string]: string } = {};
 
 	static initButtons = [0, 1, 2].map(x => Pet.initMons.slice(x * 8, x * 8 + 8).map(
 		x => Utils.button(`/pet init set ${x}`, '', Utils.iconStyle(x))
@@ -366,25 +377,25 @@ Dex.species.all().forEach(species => {
 
 class PetBattle {
 
-	static legends: {[roomid: string]: string} = {};
+	static legends: { [roomid: string]: string } = {};
 
-	static nextRoom: {[roomid: string]: string} = {};
+	static nextRoom: { [roomid: string]: string } = {};
 
-	static previousRoom: {[roomid: string]: string} = {};
+	static previousRoom: { [roomid: string]: string } = {};
 
-	static roomConfig: {[roomid: string]: {
-		'lawn': {[lawnid: string]: {[species: string]: number}},
+	static roomConfig: { [roomid: string]: {
+		'lawn': { [lawnid: string]: { [species: string]: number } },
 		'minlevel': number,
 		'maxlevel': number
-	}} = PetModeRoomConfig;
+	} } = PetModeRoomConfig;
 
-	static gymConfig: {[gymname: string]: {
+	static gymConfig: { [gymname: string]: {
 		'maxlevel': number, 'botteam': string, 'userteam': string, 'ace': string,
 		'bonus'?: string, 'terrain'?: string, 'weather'?: string,
-		'msg': {'start': string, 'ace': string, 'win': string, 'lose': string}
-	}} = PetModeGymConfig;
+		'msg': { 'start': string, 'ace': string, 'win': string, 'lose': string }
+	} } = PetModeGymConfig;
 
-	static balls: {[ballname: string]: number} = {'Poke Ball': 1, 'Great Ball': 2, 'Ultra Ball': 4, 'Master Ball': Infinity};
+	static balls: { [ballname: string]: number } = {'Poke Ball': 1, 'Great Ball': 2, 'Ultra Ball': 4, 'Master Ball': Infinity};
 
 	static inBattle(userid: string): string | undefined {
 		const battleWithBot = (roomid: string) => {
@@ -474,13 +485,52 @@ for (let roomid in PetBattle.roomConfig) {
 
 class Shop {
 
-	static shopConfig: {[goodtype: string]: {[goodname: string]: number}} = PetModeShopConfig;
+	static shopConfig: { [goodtype: string]: { [goodname: string]: number} } = PetModeShopConfig;
 
-	static types: {[goodtype: string]: string} = {
-		'ball': '精灵球', 'draw': '进化道具', 'berry': '树果', 'battle': '对战道具', 'special': '专用对战道具'
+	static types: { [goodtype: string]: string } = {
+		'ball': '精灵球', 'draw': '进化道具', 'berry': '树果',
+		'battle': '对战道具', 'special': '专用对战道具', 'util': '其他道具'
 	};
 
-	static goodButtons: {[goodtype: string]: string} = {
+	static goodDesc: { [goodtype: string]: string } = {
+		'Box': '添加一个盒子',
+		'Mint': '宝可梦携带并使用后可以改变性格',
+		'Ability Capsule': '宝可梦携带并使用后可以改变特性 (不可改变为隐藏特性)',
+		'Ability Patch': '宝可梦携带并使用后可以改变为隐藏特性',
+		'Rocket Bottle Cap': '宝可梦携带并使用后可以使一项个体值随机提升',
+		'Rusty Bottle Cap': '宝可梦携带并使用后可以使一项个体值重置为随机值',
+		'Bottle Cap': '宝可梦携带并使用后可以使一项个体值提升至31',
+		'Gold Bottle Cap': '宝可梦携带并使用后可以使全部个体值提升至31',
+	};
+
+	static func: { [goodid: string]: (set: PokemonSet, arg: string) => boolean } = {
+		'rustybottlecap': (set: PokemonSet, arg: string) => {
+			if (Object.keys(set.ivs).indexOf(arg) < 0) return false;
+			// @ts-ignore
+			set.ivs[arg] = prng.sample([...new Array(32).keys()]);
+			return true;
+		},
+		'rocketbottlecap': (set: PokemonSet, arg: string) => {
+			if (Object.keys(set.ivs).indexOf(arg) < 0) return false;
+			// @ts-ignore
+			if (set.ivs[arg] >= 31) return false;
+			// @ts-ignore
+			set.ivs[arg] = set.ivs[arg] + 1 + prng.sample([...new Array(31 - set.ivs[arg]).keys()]);
+			return true;
+		},
+		'bottlecap': (set: PokemonSet, arg: string) => {
+			if (Object.keys(set.ivs).indexOf(arg) < 0) return false;
+			// @ts-ignore
+			set.ivs[arg] = 31;
+			return true;
+		},
+		'goldbottlecap': (set: PokemonSet, arg: string) => {
+			set.ivs = {hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31};
+			return true;
+		},
+	}
+
+	static goodButtons: { [goodtype: string]: string } = {
 		'ball': Object.keys(PetModeShopConfig['ball']).map(goodname => {
 			return Utils.button(`/pet shop show ball=>${goodname}`, '', Utils.itemStyle(goodname));
 		}).join(''),
@@ -496,6 +546,9 @@ class Shop {
 		'special': Object.keys(PetModeShopConfig['special']).map(goodname => {
 			return Utils.button(`/pet shop show special=>${goodname}`, '', Utils.itemStyle(goodname));
 		}).join(''),
+		'util': Object.keys(PetModeShopConfig['util']).map(goodname => {
+			return Utils.button(`/pet shop show util=>${goodname}`, '', Utils.itemStyle(goodname));
+		}).join(''),
 	};
 
 	static getPrice(goodname: string): number {
@@ -505,7 +558,7 @@ class Shop {
 			}
 		}
 		return 40;
-	}
+	};
 
 }
 
@@ -561,7 +614,7 @@ class PetUser {
 		const cachedProperty = JSON.parse(JSON.stringify(this.property));
 		try {
 			const parsed = JSON.parse(propertyString);
-			let items: {[itemName: string]: number} = {};
+			let items: { [itemName: string]: number } = {};
 			for (let item in parsed['items']) {
 				const parsedNum = parseInt(parsed['items'][item]);
 				if (parsedNum !== NaN) items[item] = parsedNum;
@@ -727,6 +780,21 @@ class PetUser {
 		return true;
 	}
 
+	useItem(arg: string): boolean {
+		if (!this.property) return false;
+		const pet = this.getPet();
+		if (!pet) return false;
+		const set = Pet.parseSet(pet);
+		if (!set) return false;
+		const itemid = toID(set.item);
+		if (Shop.func[itemid] && Shop.func[itemid](set, arg)) {
+			set.item = '';
+			this.setPet(Teams.pack([set]));
+			return true;
+		}
+		return false;
+	}
+
 	checkMoves(): string {
 		if (!this.property) return '您的队伍格式不合法';
 		for (let pet of this.property['bag']) {
@@ -861,8 +929,8 @@ class PetUser {
 		return {'sent': myPet.split('|')[0], 'received': friendPet.split('|')[0]};
 	}
 
-	merge(targetUser: PetUser): {'bag': string[], 'items': {[itemname: string]: number}} {
-		let added: {'bag': string[], 'items': {[itemname: string]: number}} = {'bag': [], 'items': {}};
+	merge(targetUser: PetUser): { 'bag': string[], 'items': { [itemname: string]: number } } {
+		let added: { 'bag': string[], 'items': { [itemname: string]: number } } = {'bag': [], 'items': {}};
 		if (!targetUser.property) return added;
 		let pokes = (targetUser.property['bag'] || []).filter(x => x);
 		targetUser.property['bag'] = [];
@@ -885,7 +953,7 @@ class PetUser {
 	}
 }
 
-const petUsers: {[userid: string]: PetUser} = {};
+const petUsers: { [userid: string]: PetUser } = {};
 
 function getUser(userid: string): PetUser {
 	return petUsers[userid] || (petUsers[userid] = new PetUser(userid));
@@ -949,7 +1017,20 @@ function petBox(petUser: PetUser, target: string, admin: boolean = false): strin
 		} else if (petUser.operation?.indexOf('gift') === 0) {
 			setTitle = `将 ${set.name} 赠送给${petUser.operation?.slice(4)}? ` +
 				Utils.boolButtons(`/gift ${petUser.operation?.slice(4)}!`, `/pet box reset ${target}`)
-		} 
+		} else if (petUser.operation === 'useitem') {
+			setTitle = `使用 ${set.item} ? `
+			switch (toID(set.item)) {
+				case 'rustybottlecap':
+				case 'rocketbottlecap':
+				case 'bottlecap':
+					setTitle += '<br/>';
+					Object.keys(set.ivs).forEach(key => setTitle += Utils.button(`/pet box useitem ${key}`, key));
+					setTitle += Utils.button(`/pet box reset ${target}`, '取消');
+					break;
+				default:
+					setTitle += Utils.boolButtons(`/pet box useitem default`, `/pet box reset ${target}`);
+			}
+		}
 		const setButtons = [
 			Utils.button(`/pet box nameguide ${target}`, '昵称'),
 			Utils.button(`/pet box onmove ${target}`, '移动'),
@@ -979,7 +1060,8 @@ function petBox(petUser: PetUser, target: string, admin: boolean = false): strin
 			`${set.name}&emsp;${st('种类')} ${set.species}&emsp;${Pet.typeIcons[set.species]}${set.shiny ? '☆' : ''}`,
 			`${st('性别')} ${{'M': '♂', 'F': '♀'}[set.gender] || '∅'}&emsp;${st('亲密度')} ${set.happiness}`,
 			`${st('等级')} ${Math.floor(set.level)} (${Math.floor((set.level - Math.floor(set.level)) * 100)}%)&emsp;` + 
-			`${st('道具')} ${set.item ? Utils.button(`/pet box item ${target}`, '', Utils.itemStyle(set.item)) : '无'}`,
+			`${st('道具')} ${set.item ? Utils.button(`/pet box item ${target}`, '&emsp;', Utils.itemStyle(set.item)) : '无'}` +
+			`${Shop.func[toID(set.item)] ? Utils.button(`/pet box useitem`, '使用') : ''}`,
 			`${st('性格')} ${set.nature}&emsp;${st('特性')} ${set.ability}`
 		]
 		const spriteURL = `${set.shiny ? POKESPRITESSHINY : POKESPRITES}/${Pet.spriteId(set.species, set.gender)}.gif`;
@@ -1273,6 +1355,26 @@ export const commands: Chat.ChatCommands = {
 				if (petUser.setItem(position, targets[1])) petUser.save();
 
 				this.parse(`/pet box show ${target}`);
+			},
+
+			useitem(target, room, user) {
+				if (!room) return this.popupReply("请在房间里使用宠物系统");
+				const petUser = getUser(user.id);
+				if (!petUser.property) return this.popupReply("您还未领取最初的伙伴!");
+				if (!petUser.onPosition) return this.popupReply("请先选中要使用道具的宝可梦!")
+
+				petUser.load();
+				target = toID(target);
+				if (!target) {
+					petUser.operation = 'useitem';
+				} else if (petUser.useItem(target)) {
+					petUser.save();
+					delete petUser.operation;
+				} else {
+					this.popupReply('道具使用失败!');
+				}
+
+				this.parse(`/pet box show ${petUser.onPosition ? Object.values(petUser.onPosition).join(',') : ''}`);
 			},
 
 			moves(target, room, user) {
@@ -1685,22 +1787,26 @@ export const commands: Chat.ChatCommands = {
 				if (goods[goodname]) {
 					const price = goods[goodname];
 					if (price > 0) {
-						title = `购买 ${goodname} ? (${price}积分/1个)<br/>${title}<br/>` +
+						title = `购买 ${goodname} ? ` +
+							`(${price}积分/1个${Shop.goodDesc[goodname] ? `, 效果: ${Shop.goodDesc[goodname]}` : ''})<br/>` +
 							Utils.button(`/pet shop buy ${goodtype}=>${goodname}!`, '购买5个!') +
 							Utils.button(`/pet shop buy ${goodtype}=>${goodname}`, '购买1个') +
-							Utils.button(`/pet shop show ${goodtype}`, '取消');
+							Utils.button(`/pet shop show ${goodtype}`, '取消') +
+							`<br/><br/>${title}`;
 					} else {
-						title = `领取5个 ${goodname} ?<br/>${title}<br/>` +
-							`${Utils.boolButtons(`/pet shop buy ${goodtype}=>${goodname}!`, `/pet shop show ${goodtype}`)}`;
+						title = `领取5个 ${goodname} ?<br/>` +
+							`${Utils.boolButtons(`/pet shop buy ${goodtype}=>${goodname}!`, `/pet shop show ${goodtype}`)}` +
+							`<br/><br/>${title}`;
 					}
 				} else {
-					title = `请选择商品:<br/>${title}<br/>`
+					title = `请选择商品:<br/>${title}`
 				}
-				title = `<div><b>${Utils.button('/pet shop buy ball=>Poke Ball!', '领取5个精灵球!')}` +
-					`${Utils.button('/pet shop draw', '领取随机道具!')}<br/>${title}</b></div>`;
+				title = `<div><b>${title}</b><br/><br/></div>`;
 				user.sendTo(room.roomid, `|uhtml${target === 'new' ? '' : 'change'}|pet-shop-show|` +
 					`${title}<div style="border: ridge;">${Shop.goodButtons[goodtype]}</div>` +
-					`${Utils.button(`/score pop`, '查看积分')}${Utils.button(`/pet box`, '返回')}`);
+					`${Utils.button('/pet shop buy ball=>Poke Ball!', '领取5个精灵球!')}` +
+					`${Utils.button('/pet shop draw', '领取随机道具!')}` +
+					`${Utils.button(`/score pop`, '查看积分')}${Utils.button(`/pet box show new`, '返回')}`);
 			},
 
 			async buy(target, room, user) {
