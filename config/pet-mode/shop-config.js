@@ -237,9 +237,9 @@ exports.PetModeShopConfig = {
 		'Rocket Bottle Cap': 10,
 		'Bottle Cap': 25,
 		'Gold Bottle Cap': 100,
-		// 'Ability Capsule': 25,
-		// 'Ability Patch': 100,
-		// 'Milt': 50,
-		// 'Box': 50
+		'Ability Capsule': 25,
+		'Ability Patch': 100,
+		'Milt': 50,
+		'Box': 50
 	}
 }

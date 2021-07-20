@@ -1,6 +1,6 @@
 /*
 	Pokemon Showdown China Pet Mode Version 1.0 Author: Starmind
-	1. 假王冠: 2, 劣质王冠: 10, 银色王冠: 25, 金色王冠: 100, 特性胶囊: 50, 特性膏药: 100, 性格薄荷: 50, 盒子
+	1. Pet Mode野生/道馆对战不打log
 	2. /add 选项 nv 能不能大师球
 	3. Acid Rain 特效
 	4. 孵蛋系统
@@ -529,12 +529,31 @@ class Shop {
 			return true;
 		},
 		'abilitycapsule': (set: PokemonSet, arg: string) => {
+			const abilities = Dex.species.get(set.species).abilities;
+			if (!abilities['1']) return false;
+			if (toID(set.ability) === toID(abilities['0'])) {
+				set.ability = abilities['1'];
+				return true;
+			} else if (toID(set.ability) === toID(abilities['1'])) {
+				set.ability = abilities['0'];
+				return true;
+			}
 			return false;
 		},
 		'abilitypatch': (set: PokemonSet, arg: string) => {
-			return false;
+			const abilities = Dex.species.get(set.species).abilities;
+			if (!abilities['H']) return false;
+			if (toID(set.ability) === toID(abilities['H'])) return false;
+			set.ability = abilities['H'];
+			return true;
 		},
 		'milt': (set: PokemonSet, arg: string) => {
+			for (let nature of Dex.natures.all()) {
+				if (toID(arg) === nature.id && toID(set.nature) !== nature.id) {
+					set.nature = nature.name;
+					return true;
+				}
+			}
 			return false;
 		},
 	}
@@ -1055,6 +1074,10 @@ function petBox(petUser: PetUser, target: string, admin: boolean = false): strin
 					setTitle += '<br/>';
 					Object.keys(set.ivs).forEach(key => setTitle += Utils.button(`/pet box useitem ${key}`, key));
 					setTitle += Utils.button(`/pet box reset ${target}`, '取消');
+					break;
+				case 'milt':
+					setTitle += '<br/>';
+					Dex.natures.all().forEach(nature => setTitle += Utils.button(`/pet box useitem ${nature.id}`, nature.name));
 					break;
 				default:
 					setTitle += Utils.boolButtons(`/pet box useitem default`, `/pet box reset ${target}`);

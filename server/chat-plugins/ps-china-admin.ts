@@ -13,16 +13,6 @@ function sleep(time: number) {
     return new Promise(resolve => setTimeout(resolve, time));
 }
 
-function sleepUntil(check: () => boolean, todo: () => void) {
-	sleep(10).then(() => {
-		if (check()) {
-			todo();
-		} else {
-			sleepUntil(check, todo);
-		}
-	})
-}
-
 function getTourFormat(): string | undefined {
 	try {
 		const date = new Date();
