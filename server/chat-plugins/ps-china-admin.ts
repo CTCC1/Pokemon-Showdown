@@ -13,6 +13,16 @@ function sleep(time: number) {
     return new Promise(resolve => setTimeout(resolve, time));
 }
 
+function sleepUntil(check: () => boolean, todo: () => void) {
+	sleep(10).then(() => {
+		if (check()) {
+			todo();
+		} else {
+			sleepUntil(check, todo);
+		}
+	})
+}
+
 function getTourFormat(): string | undefined {
 	try {
 		const date = new Date();
@@ -29,46 +39,27 @@ function getTourFormat(): string | undefined {
 function getScoreTourClass() {
 	return class ScoreTournament extends Tournaments.Tournament {
 
-		addingScore: boolean = false;
-
 		disqualifyUser(userid: ID, output: Chat.CommandContext | null = null, reason: string | null = null, isSelfDQ = false) {
-			const player = this.playerTable[userid];	
+			const player = this.playerTable[userid];
+			// Find foe player
 			let foe: TournamentPlayer | undefined;
 			for (const playerFrom of this.players) {
 				const match = playerFrom.inProgressMatch;
 				if (match && match.to === player) foe = playerFrom;
 			}
 			foe = foe || player.inProgressMatch?.to;
+			foe = foe || player.pendingChallenge?.from || player.pendingChallenge?.to;
+			// Add score to foe
 			if (foe) {
 				foe.wins += 1;
-				this.addScore(foe.id);
+				addTourScore(this.name, foe.id, foe.wins);
 			}
 			return super.disqualifyUser(userid, output, reason, isSelfDQ);
 		}
 
 		onBattleWin(room: GameRoom, winnerid: ID) {
-			this.addScore(winnerid);
 			super.onBattleWin(room, winnerid);
-		}
-
-		async addScore(winnerid: string) {
-			while (this.addingScore) await sleep(10);
-			this.addingScore = true;
-			let score = 0;
-			switch (this.playerTable[winnerid].wins) {
-				case 2:
-				case 3:
-				case 4:
-					score = 10;
-					break;
-				case 5:
-				case 6:
-					score = 20;
-			}
-			if (score > 0) {
-				await addScoreToMain(winnerid, score, `{}在 ${this.name} 淘汰赛中连胜 ${this.playerTable[winnerid].wins} 轮`);
-			}
-			this.addingScore = false;
+			addTourScore(this.name, winnerid, this.playerTable[winnerid].wins);
 		}
 
 	}
@@ -81,6 +72,23 @@ function getScoreTourClass() {
 export function getMainId(userid: string): string {
 	// Users.get(userid)?.ips
 	return userid;
+}
+
+function addTourScore(tourname: string, userid: string, wins: number) {
+	let score = 0;
+	switch (wins) {
+		case 2:
+		case 3:
+		case 4:
+			score = 10;
+			break;
+		case 5:
+		case 6:
+			score = 20;
+	}
+	if (score > 0) {
+		addScoreToMain(userid, score, `{}在 ${tourname} 淘汰赛中连胜 ${wins} 轮`);
+	}
 }
 
 export async function addScoreToMain(userid: string, score: number, msg: string) {
@@ -101,11 +109,15 @@ export async function addScoreToMain(userid: string, score: number, msg: string)
 	Rooms.global.modlog(entry);
 	Rooms.get('staff')?.send(`|modaction|${logMsg}`);
 	Users.get(userid)?.popup(
-		`${msg}, 获得国服积分 ${score} 分${isMain ? '' : `, 已发放到您的主账号 ${mainId} 上`}`
+		`${msg.replace('{}', '您')}, 获得国服积分 ${score} 分${isMain ? '' : `, 已发放到您的主账号 ${mainId} 上`}`
 	);
 }
 
+let addingScore: boolean = false;
+
 export async function addScore(userid: string, score: number): Promise<number[]> {
+	while (addingScore) await sleep(1);
+	addingScore = true;
 	// @ts-ignore
 	let ladder = await Ladders("gen8ps").getLadder();
 	let userIndex = ladder.length;
@@ -117,9 +129,13 @@ export async function addScore(userid: string, score: number): Promise<number[]>
 	}
 	if (userIndex === ladder.length) ladder.push([userid, 0, userid, 0, 0, 0, '']);
 	let oldScore = ladder[userIndex][1];
-	if (score === 0) return [oldScore, oldScore];
+	if (score === 0) {
+		addingScore = false;
+		return [oldScore, oldScore];
+	}
 	let newScore = oldScore + score;
 	if (newScore < 0) {
+		addingScore = false;
 		return [];
 	}
 	ladder[userIndex][1] = newScore;
@@ -139,6 +155,7 @@ export async function addScore(userid: string, score: number): Promise<number[]>
 
 	// @ts-ignore
 	Ladders("gen8ps").save();
+	addingScore = false;
 	return [oldScore, newScore];
 }
 
@@ -230,6 +247,7 @@ export const commands: Chat.ChatCommands = {
 		const tour = room.getGame(Tournaments.Tournament);
 		if (!tour) return this.errorReply("淘汰赛创建失败");
 		tour.onBattleWin = getScoreTourClass().prototype.onBattleWin;
+		tour.disqualifyUser = getScoreTourClass().prototype.disqualifyUser;
 	},
 
 	async updatealts(target, room, user) {

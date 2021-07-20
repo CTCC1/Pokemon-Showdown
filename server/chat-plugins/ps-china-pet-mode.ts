@@ -528,6 +528,15 @@ class Shop {
 			set.ivs = {hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31};
 			return true;
 		},
+		'abilitycapsule': (set: PokemonSet, arg: string) => {
+			return false;
+		},
+		'abilitypatch': (set: PokemonSet, arg: string) => {
+			return false;
+		},
+		'milt': (set: PokemonSet, arg: string) => {
+			return false;
+		},
 	}
 
 	static goodButtons: { [goodtype: string]: string } = {
@@ -638,6 +647,26 @@ class PetUser {
 		this.property = this.cachedProperty;
 		this.cachedProperty = undefined;
 		return true;
+	}
+
+	getBoxPriceBase(): number {
+		if (!this.property) return 1;
+		const bought = this.boxNum() - this.property.badges.filter(gymid => PetBattle.gymConfig[gymid]?.bonus === 'box').length - 1;
+		if (bought < 1) return 1;
+		let a = 1, b = 1, c;
+		new Array(bought).forEach(() => { c = a, a = b, b += c; });
+		return b;
+	}
+
+	addBox(): boolean {
+		if (!this.property) return false;
+		this.property['box'] = this.property['box'].concat(new Array(30).fill(''));
+		return true;
+	}
+
+	boxNum(): number {
+		if (!this.property) return 1;
+		return Math.ceil(this.property['box'].length / 30);
 	}
 
 	badgeNum(): number {
@@ -1098,7 +1127,7 @@ function petBox(petUser: PetUser, target: string, admin: boolean = false): strin
 	const shopButton = Utils.button('/pet shop', '商店');
 	const checkButton = Utils.button('/pet box check', '检查队伍');
 	const exportButton = Utils.button('/pet box export', '导出队伍');
-	const pageNum = Math.ceil(petUser.property['box'].length / 30);
+	const pageNum = petUser.boxNum();
 	let lastPageButton = '';
 	let nextPageButton = '';
 	if (pageNum > 1) {
@@ -1254,7 +1283,7 @@ export const commands: Chat.ChatCommands = {
 				if (!room) return this.popupReply("请在房间里使用宠物系统");
 				const petUser = getUser(user.id);
 				if (!petUser.property) return this.popupReply("您还未领取最初的伙伴!");
-				petUser.onPage = (parseInt(target) || 0) % (Math.ceil(petUser.property['box'].length / 30));
+				petUser.onPage = (parseInt(target) || 0) % petUser.boxNum();
 				this.parse(`/pet box show ${petUser.onPosition ? Object.values(petUser.onPosition).join(',') : ''}`);
 			},
 
@@ -1785,7 +1814,8 @@ export const commands: Chat.ChatCommands = {
 				const goodname = targets[1];
 				let title = Object.keys(Shop.types).map(x => Utils.button(`/pet shop show ${x}`, Shop.types[x])).join('');
 				if (goods[goodname]) {
-					const price = goods[goodname];
+					let price = goods[goodname];
+					if (toID(goodname) === 'box') price *= petUser.getBoxPriceBase();
 					if (price > 0) {
 						title = `购买 ${goodname} ? ` +
 							`(${price}积分/1个${Shop.goodDesc[goodname] ? `, 效果: ${Shop.goodDesc[goodname]}` : ''})<br/>` +
@@ -1822,7 +1852,8 @@ export const commands: Chat.ChatCommands = {
 				goodname = goodnames[0];
 				let num = goodnames.length > 1 ? 5 : 1;
 				if (!goods[goodname]) return this.popupReply(`没有名为 ${goodname} 的${Shop.types[goodtype]}!`);
-				const price = goods[goodname];
+				let price = goods[goodname];
+				if (toID(goodname) === 'box') price *= petUser.getBoxPriceBase();
 				petUser.load();
 				if (price > 0) {
 					const changeScores = await addScore(user.name, -price * num);
@@ -1841,7 +1872,11 @@ export const commands: Chat.ChatCommands = {
 					}
 					if (num > 0) petUser.property['time']['ball'] = Date.now();
 				}
-				petUser.addItem(goodname, num);
+				if (toID(goodname) === 'box') {
+					petUser.addBox();
+				} else {
+					petUser.addItem(goodname, num);
+				}
 				petUser.save();
 				this.parse('/pet box');
 			},
