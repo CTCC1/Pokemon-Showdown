@@ -104,7 +104,7 @@ class Utils {
 	static itemStyle(name: string) {
 		switch (toID(name)) {
 			case 'box':
-			case 'mint':
+			case 'naturemint':
 			case 'abilitycapsule':
 			case 'abilitypatch':
 			case 'rocketbottlecap':
@@ -494,7 +494,7 @@ class Shop {
 
 	static goodDesc: { [goodtype: string]: string } = {
 		'Box': '添加一个盒子',
-		'Mint': '宝可梦携带并使用后可以改变性格',
+		'Nature Mint': '宝可梦携带并使用后可以改变性格',
 		'Ability Capsule': '宝可梦携带并使用后可以改变特性 (不可改变为隐藏特性)',
 		'Ability Patch': '宝可梦携带并使用后可以改变为隐藏特性',
 		'Rocket Bottle Cap': '宝可梦携带并使用后可以使一项个体值随机提升',
@@ -547,7 +547,7 @@ class Shop {
 			set.ability = abilities['H'];
 			return true;
 		},
-		'milt': (set: PokemonSet, arg: string) => {
+		'naturemint': (set: PokemonSet, arg: string) => {
 			for (let nature of Dex.natures.all()) {
 				if (toID(arg) === nature.id && toID(set.nature) !== nature.id) {
 					set.nature = nature.name;
@@ -670,10 +670,14 @@ class PetUser {
 
 	getBoxPriceBase(): number {
 		if (!this.property) return 1;
-		const bought = this.boxNum() - this.property.badges.filter(gymid => PetBattle.gymConfig[gymid]?.bonus === 'box').length - 1;
-		if (bought < 1) return 1;
 		let a = 1, b = 1, c;
-		new Array(bought).forEach(() => { c = a, a = b, b += c; });
+		for (
+			let bought = this.boxNum() - this.property.badges.filter(
+				gymid => PetBattle.gymConfig[gymid]?.bonus === 'box'
+			).length - 1;
+			bought > 0;
+			c = a, a = b, b += c, bought--
+		);
 		return b;
 	}
 
@@ -1022,12 +1026,12 @@ function petBox(petUser: PetUser, target: string, admin: boolean = false): strin
 	let pokeDiv = ``;
 	const set = petUser.checkPet(petUser.parsePosition(target));
 	if (set) {
-		let setTitle = set.level >= petUser.levelRistriction() ?
-			`<b>达到${petUser.badgeNum()}个徽章的等级上限</b>` : '<br/>';
+		let showDesc = true;
+		let setTitle = set.level >= petUser.levelRistriction() ? `达到${petUser.badgeNum()}个徽章的等级上限` : '<br/>';
 		if (petUser.operation === 'move') {
-			setTitle = st('请选择位置');
+			setTitle = '请选择位置';
 		} else if (petUser.operation === 'drop' + target) {
-			setTitle = st(`确认放生 ${set.name} ? `) + Utils.boolButtons(
+			setTitle = `确认放生 ${set.name} ? ` + Utils.boolButtons(
 				`/pet box drop ${target}!`,
 				`/pet box drop ${target}`
 			);
@@ -1040,18 +1044,18 @@ function petBox(petUser: PetUser, target: string, admin: boolean = false): strin
 					['hp', 'atk', 'def', 'spa', 'spd', 'spe'].indexOf(statPosition[1])
 				]
 				if (statType && statIndex) {
-					setTitle = st(`确认清空 ${set.name} 的${statIndex}${statType}? `) + Utils.boolButtons(
+					setTitle = `确认清空 ${set.name} 的${statIndex}${statType}? ` + Utils.boolButtons(
 						`/pet box resetstat ${statOperation}!`,
 						`/pet box reset ${target}`
 					);
 				}
 			}
 		} else if (petUser.operation === 'evo') {
-			setTitle = st('请选择进化型: ') + Pet.validEvos(set).map(x => {
+			setTitle = '请选择进化型: ' + Pet.validEvos(set).map(x => {
 				return Utils.button(`/pet box evo ${target}=>${x[0]}`, '&emsp;', Utils.iconStyle(x[0], set.gender));
 			}).join('') + ' ' + Utils.button(`/pet box evo ${target}`, '取消');
 		} else if (petUser.operation?.indexOf('evo') === 0) {
-			setTitle = st(`确认将 ${set.name} 进化为 ${petUser.operation?.slice(3)}? `) + Utils.boolButtons(
+			setTitle = `确认将 ${set.name} 进化为 ${petUser.operation?.slice(3)}? ` + Utils.boolButtons(
 				`/pet box evo ${target}=>${petUser.operation?.slice(3)}`,
 				`/pet box evo ${target}`
 			);
@@ -1071,18 +1075,22 @@ function petBox(petUser: PetUser, target: string, admin: boolean = false): strin
 				case 'rustybottlecap':
 				case 'rocketbottlecap':
 				case 'bottlecap':
-					setTitle += '<br/>';
-					Object.keys(set.ivs).forEach(key => setTitle += Utils.button(`/pet box useitem ${key}`, key));
-					setTitle += Utils.button(`/pet box reset ${target}`, '取消');
+					setTitle += `${Utils.button(`/pet box reset ${target}`, '取消')}<br/><div style="padding: 5px; border: ridge;">`;
+					setTitle += Object.keys(set.ivs).map(key => Utils.button(`/pet box useitem ${key}`, key)).join(' ');
+					setTitle += `</div>`;
+					showDesc = false;
 					break;
-				case 'milt':
-					setTitle += '<br/>';
-					Dex.natures.all().forEach(nature => setTitle += Utils.button(`/pet box useitem ${nature.id}`, nature.name));
+				case 'naturemint':
+					setTitle += `${Utils.button(`/pet box reset ${target}`, '取消')}<br/><div style="padding: 5px; border: ridge;">`;
+					setTitle += Dex.natures.all().map(nature => Utils.button(`/pet box useitem ${nature.id}`, nature.name)).join(' ');
+					setTitle += `</div>`;
+					showDesc = false;
 					break;
 				default:
 					setTitle += Utils.boolButtons(`/pet box useitem default`, `/pet box reset ${target}`);
 			}
 		}
+		setTitle = st(setTitle);
 		const setButtons = [
 			Utils.button(`/pet box nameguide ${target}`, '昵称'),
 			Utils.button(`/pet box onmove ${target}`, '移动'),
@@ -1118,12 +1126,15 @@ function petBox(petUser: PetUser, target: string, admin: boolean = false): strin
 		]
 		const spriteURL = `${set.shiny ? POKESPRITESSHINY : POKESPRITES}/${Pet.spriteId(set.species, set.gender)}.gif`;
 		const sprite = `background: transparent url(${spriteURL}) no-repeat 90% 10% relative;`
-		pokeDiv = `<div style="width: 350px; ` +
-			`position: relative; display: inline-block;"><div style="line-height: 35px">${setTitle}</div>` +
-			`<div style=" display: inline-block; width: 50px; line-height: ${224 / setButtons.length}px; vertical-align: top;` +
-			`">${setButtons.join('<br/>')}</div>` +
-			`<div style="${sprite} display: inline-block; line-height: 28px; width: 300px;` +
-			`">${lines.map(x => `${x}`).join('<br/>')}<br/>${statsTable}</div>`;
+		pokeDiv = `<div style="line-height: 35px">${setTitle}</div>`;
+		if (showDesc) {
+			pokeDiv += `<div style=" display: inline-block; width: 50px; ` +
+				`line-height: ${224 / setButtons.length}px; vertical-align: top;` +
+				`">${setButtons.join('<br/>')}</div>` +
+				`<div style="${sprite} display: inline-block; line-height: 28px; width: 300px;` +
+				`">${lines.map(x => `${x}`).join('<br/>')}<br/>${statsTable}`;
+		}
+		pokeDiv = `<div style="width: 350px; position: relative; display: inline-block;">${pokeDiv}</div>`;
 	}
 
 	const boxTitle = `${st('用户ID')} ${petUser.id}&emsp;${st('徽章数')} ${petUser.badgeNum()}`;
@@ -1875,6 +1886,7 @@ export const commands: Chat.ChatCommands = {
 				goodname = goodnames[0];
 				let num = goodnames.length > 1 ? 5 : 1;
 				if (!goods[goodname]) return this.popupReply(`没有名为 ${goodname} 的${Shop.types[goodtype]}!`);
+				if (toID(goodname) === 'box' && num > 1) return this.popupReply(`不可以一次性购买多个盒子!`);
 				let price = goods[goodname];
 				if (toID(goodname) === 'box') price *= petUser.getBoxPriceBase();
 				petUser.load();

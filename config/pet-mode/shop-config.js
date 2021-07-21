@@ -238,8 +238,8 @@ exports.PetModeShopConfig = {
 		'Bottle Cap': 25,
 		'Gold Bottle Cap': 100,
 		'Ability Capsule': 25,
-		'Ability Patch': 100,
-		'Milt': 50,
+		// 'Ability Patch': 100,
+		'Nature Mint': 50,
 		'Box': 50
 	}
 }
